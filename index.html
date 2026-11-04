@@ -130,9 +130,13 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .glab small{text-transform:none;letter-spacing:0;font-size:11px;
   margin-left:6px;color:var(--ink-2)}
 .grow{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
-.grow .g{font-family:var(--m);font-size:12.5px;font-weight:600;
-  min-width:30px;text-align:center;padding:4px 6px;border-radius:3px;
-  border:1px solid var(--rule);background:var(--card);color:var(--ink-2)}
+.grow .g{font-family:var(--m);font-size:12.5px;min-width:38px;
+  text-align:center;padding:4px 6px;border-radius:3px;
+  border:1px solid var(--rule);background:var(--card);color:var(--ink-2);
+  display:flex;flex-direction:column;gap:1px;line-height:1.15}
+.grow .g b{font-weight:600;font-size:13px}
+.grow .g small{font-size:9px;letter-spacing:.04em;opacity:.75}
+.grow .g small.mn{opacity:.5}
 .grow .g.hit{border-color:var(--clover);color:var(--clover);
   background:var(--clover-soft)}
 .grow .g.miss{border-color:var(--rule);color:var(--ink-2)}
@@ -367,21 +371,32 @@ function games(p){
   const ev = p.ev || {};
   const rec = ev.recent || [];
   if (!rec.length) return '';
+  // Each box score carries its own opponent and date. The opponents
+  // used to sit in a separate row, which meant matching them to values
+  // by counting across -- the thing that sent you to ESPN to find out
+  // who Grayson Allen scored against.
   const cells = rec.map(g => `<span class="g ${g.c ? 'hit' : 'miss'}"
-      title="${esc(g.d || '')} vs ${esc(g.o || '?')}">${g.v}</span>`).join('');
+      title="${esc(g.d || '')}">
+      <b>${g.v}</b><small>${esc(g.o || '?')}</small>
+      ${g.m != null ? `<small class="mn">${g.m}'</small>` : ''}</span>`).join('');
   const vsn = ev.vs_opp_n || 0;
   const vs = (ev.vs_opp || []);
   const vsCleared = vs.filter(x => x.c).length;
   const allow = ev.opp_allowed || [];
   return `<div class="games">
     <div class="glab">Last ${rec.length} · newest first
-      <small>${esc(rec.map(g => g.o).filter(Boolean).slice(0,6).join(' '))}</small></div>
+      <small>value · opponent${rec.some(g=>g.m!=null) ? ' · minutes' : ''}</small></div>
     <div class="grow">${cells}</div>
     ${vsn ? `<div class="glab">vs this opponent
         <small>${vsCleared} of ${vs.length} cleared${vsn < 3
           ? ' — too few meetings to read' : ''}</small></div>` : ''}
     ${allow.length ? `<div class="glab">opponent conceded lately
         <small>${allow.join(' · ')}</small></div>` : ''}
+    ${ev.pos_vs_opp && ev.pos_vs_opp.n ? `<div class="glab">
+        vs ${esc(ev.pos_vs_opp.position)}s
+        <small>${ev.pos_vs_opp.mean} allowed vs ${ev.pos_vs_opp.league_mean}
+          league average · ${ev.pos_vs_opp.n} seen${ev.pos_vs_opp.n < 4
+            ? ', too few to lean on' : ''}</small></div>` : ''}
   </div>`;
 }
 
