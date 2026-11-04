@@ -149,6 +149,16 @@ footer{margin-top:30px;padding-top:16px;border-top:2px solid var(--ink);
     green15_data.json is published beside this page.</p>
   </div>
 
+<section id="boardsec">
+  <div class="shead"><h2>Tonight's board</h2>
+    <span class="eyebrow" id="boardmeta"></span></div>
+  <p class="note" id="boardnote"></p>
+  <div class="tscroll"><table>
+    <thead><tr><th>Pick</th><th>Price</th><th>Clover</th><th>Edge</th></tr></thead>
+    <tbody id="boardrows"></tbody>
+  </table></div>
+</section>
+
 <section>
   <div class="shead"><h2>Does the filter discriminate?</h2>
     <span class="pill ok">Established</span></div>
@@ -289,6 +299,40 @@ const G='var(--over)', R='var(--flat)';
 const bet = D.buckets_bet, pas = D.buckets.PASS;
 document.getElementById('ivbars').innerHTML =
   intervalRow('BET','',bet,G) + intervalRow('PASS','',pas,R);
+
+// tonight's board
+const B = D.board || {slate_size:0, playable_count:0, top:[]};
+const bmeta = document.getElementById('boardmeta');
+const bnote = document.getElementById('boardnote');
+const brows = document.getElementById('boardrows');
+if (!B.top || !B.top.length) {
+  document.getElementById('boardsec').hidden = true;
+} else {
+  bmeta.textContent = `${B.playable_count} of ${B.slate_size} cleared Playable`;
+  bnote.textContent = B.playable_count === 0
+    ? `Nothing on tonight's ${B.slate_size}-prop slate cleared the Playable bar. `
+      + `These are the top-ranked rows, shown so the ranking is visible — not picks.`
+    : `Ranked by Clover score across ${B.slate_size} evaluated props. `
+      + `A ranking, not a recommendation list: rows below Playable are shown `
+      + `so you can see what the engine declined.`;
+  brows.innerHTML = B.top.map(r => {
+    const play = (r.score || 0) >= 8;
+    // Sample size lives in the pick cell rather than its own column:
+    // at phone width a separate narrow column collided with Edge and
+    // rendered "n=8" and "4.0%" as "84.0%".
+    const thin = (r.games || 0) < 8;
+    return `<tr${play ? '' : ' class="dim"'}>
+      <td>${r.player || ''} ${r.side || ''} ${r.line ?? ''}
+        <small class="dim"> ${(r.market||'').replace(/_/g,' ')}</small>
+        <small class="${thin ? 'neg' : 'dim'}" style="display:block">
+          ${r.games ?? '?'} games · ${r.green ?? 0} green,
+          ${r.red ?? 0} red, ${r.dark ?? 0} dark</small></td>
+      <td>${r.price > 0 ? '+' : ''}${r.price ?? ''}</td>
+      <td class="${play ? 'pos' : 'dim'}">${r.score ?? '-'}/15<br>
+        <small>${r.tier || ''}</small></td>
+      <td>${r.edge != null ? (100*r.edge).toFixed(1)+'%' : '-'}</td></tr>`;
+  }).join('');
+}
 
 // price bands
 document.getElementById('bands').innerHTML = D.bands.map(b=>{
