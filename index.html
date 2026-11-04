@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Green15 Ledger</title>
+<title>Green15 Clover</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Green15">
@@ -12,73 +12,135 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#101309">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a ledger. Stacked rule-separated bands, figures right-aligned in
-   mono, every rate drawn as its confidence interval rather than a point. */
+/* Layout: a ledger you can interrogate. Sticky tabs, a filter rail,
+   rows that open into their own evidence, a parlay tray that docks. */
 :root{
   --paper:#F4F3EE; --ink:#14180F; --ink-2:#4A5043; --rule:#D6D6CC;
-  --card:#FBFAF6; --clover:#1F6F43; --clover-soft:#DCEBE1;
+  --card:#FBFAF6; --raise:#EDEBE3; --clover:#1F6F43; --clover-soft:#DCEBE1;
   --over:#1F6F43; --under:#A33A2A; --flat:#8A8A7C; --mark:#C7B079;
   --d:'Archivo',system-ui,sans-serif; --b:'IBM Plex Sans',system-ui,sans-serif;
   --m:'IBM Plex Mono',ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
-  --card:#171B10; --clover:#5FBF86; --clover-soft:#1C2A1F;
+  --card:#171B10; --raise:#1E2318; --clover:#5FBF86; --clover-soft:#1C2A1F;
   --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
-  --card:#171B10; --clover:#5FBF86; --clover-soft:#1C2A1F;
+  --card:#171B10; --raise:#1E2318; --clover:#5FBF86; --clover-soft:#1C2A1F;
   --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
   color-scheme:dark}
 
+*{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--b);
-  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-.wrap{max-width:860px;margin:0 auto;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-bottom:132px}
+.wrap{max-width:900px;margin:0 auto;
   padding-left:max(16px,env(safe-area-inset-left,0px));
-  padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:28px 64px}
-.num{font-family:var(--m);font-variant-numeric:tabular-nums}
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num,.mono{font-family:var(--m);font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:var(--d);text-wrap:balance;margin:0}
-h1{font-weight:900;font-size:clamp(30px,7vw,46px);letter-spacing:-.02em;line-height:1}
-h2{font-weight:700;font-size:19px;letter-spacing:-.01em}
-h3{font-weight:700;font-size:15px}
-.eyebrow{font-family:var(--m);font-size:11px;letter-spacing:.14em;
+h1{font-weight:900;font-size:clamp(26px,6.5vw,40px);letter-spacing:-.02em;line-height:1}
+h2{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink-2)}
 p{margin:0}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--clover);outline-offset:2px}
 
-header{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:8px}
-.hrow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:baseline;
-  justify-content:space-between}
-.meta{display:flex;gap:18px;flex-wrap:wrap}
-.meta div{min-width:0}
-.meta .k{font-family:var(--m);font-size:10px;letter-spacing:.12em;
+body::before{content:"";position:fixed;inset:0 0 auto;
+  height:env(safe-area-inset-top,0px);z-index:30;background:var(--paper)}
+header{padding-block:18px 10px}
+.hrow{display:flex;gap:12px;align-items:baseline;justify-content:space-between;
+  flex-wrap:wrap}
+.stat{font-family:var(--m);font-size:12px;color:var(--ink-2)}
+.stat b{color:var(--ink);font-size:14px}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--paper);border-bottom:2px solid var(--ink);
+  display:flex;gap:2px;padding-top:4px}
+nav.tabs button{font-family:var(--d);font-weight:700;font-size:13px;
+  letter-spacing:.02em;padding:9px 12px;border-bottom:3px solid transparent;
+  color:var(--ink-2);white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--clover)}
+nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left:4px}
+
+.controls{display:flex;flex-direction:column;gap:8px;padding-block:12px}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--rule);border-radius:3px;padding:9px 11px}
+.search input{flex:1;min-width:0;background:none;border:none;color:inherit;
+  font:inherit;outline:none}
+.search input::placeholder{color:var(--ink-2)}
+.search button{color:var(--ink-2);font-family:var(--m);font-size:12px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;
+  scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{font-family:var(--m);font-size:11px;letter-spacing:.04em;
+  padding:5px 10px;border:1px solid var(--rule);border-radius:999px;
+  white-space:nowrap;color:var(--ink-2);background:var(--card)}
+.chip[aria-pressed="true"]{color:var(--paper);background:var(--ink);
+  border-color:var(--ink)}
+.chip.grp{opacity:.55;border-style:dashed;pointer-events:none;
+  background:none;letter-spacing:.1em;text-transform:uppercase}
+
+.row{border-bottom:1px solid var(--rule)}
+/* One grid row per prop: pick / price / score / add. The add button
+   had its own full-width row, which on a 900-prop board doubled the
+   list length for one control. */
+.rowhead{display:grid;grid-template-columns:1fr auto 58px auto;gap:9px;
+  align-items:center;width:100%;text-align:left;padding:10px 0}
+/* Buttons centre their text by default; inside the grid that made
+   every player name float mid-cell. */
+.pick{min-width:0;text-align:left;padding:0}
+.pick .nm{font-weight:600;font-size:14px;line-height:1.3;
+  display:block;overflow-wrap:anywhere}
+.pick .sub{font-family:var(--m);font-size:11px;color:var(--ink-2);
+  display:block;margin-top:2px}
+.pick .sub .thin{color:var(--under)}
+.px{font-family:var(--m);font-size:13px;font-weight:600;text-align:right!important}
+.sc{font-family:var(--m);font-size:11px;text-align:right}
+.sc b{font-size:15px;display:block;line-height:1.1}
+.pips{display:flex;gap:2px;margin-top:3px;justify-content:flex-end}
+.pip{width:4px;height:4px;border-radius:1px;background:var(--rule)}
+.pip.green{background:var(--clover)} .pip.red{background:var(--under)}
+.pip.yellow{background:var(--mark)}
+.add{border:1px solid var(--rule);border-radius:3px;padding:7px 8px;
+  font-family:var(--m);font-size:15px;line-height:1;color:var(--ink-2);
+  background:var(--card);min-width:34px;text-align:center}
+.add[aria-pressed="true"]{background:var(--clover);color:var(--paper);
+  border-color:var(--clover)}
+
+.detail{padding:4px 0 16px;display:grid;gap:9px}
+.leaf{display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:start}
+.dot{width:9px;height:9px;border-radius:50% 0 50% 50%;transform:rotate(45deg);
+  margin-top:5px;background:var(--rule)}
+.dot.green{background:var(--clover)} .dot.red{background:var(--under)}
+.dot.yellow{background:var(--mark)}
+.leaf .lb{font-family:var(--m);font-size:11px;letter-spacing:.04em;
   text-transform:uppercase;color:var(--ink-2)}
-.meta .v{font-family:var(--m);font-size:15px;font-weight:600}
+.leaf .rs{font-size:13.5px}
+.leaf.dark .rs{color:var(--ink-2)}
+.facts{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--m);
+  font-size:11.5px;color:var(--ink-2);padding:8px 0;border-top:1px solid var(--rule)}
+.facts b{color:var(--ink)}
 
-section{border-bottom:1px solid var(--rule);padding-block:26px}
-section:last-of-type{border-bottom:none}
-.shead{display:flex;gap:12px;align-items:baseline;justify-content:space-between;
-  flex-wrap:wrap;margin-bottom:4px}
-.note{color:var(--ink-2);font-size:13.5px;max-width:62ch;margin-top:8px}
+.tray{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--card);
+  border-top:2px solid var(--ink);
+  padding:12px max(16px,env(safe-area-inset-right,0px))
+          calc(12px + env(safe-area-inset-bottom,0px))
+          max(16px,env(safe-area-inset-left,0px))}
+.tray .inner{max-width:900px;margin:0 auto}
+.trayrow{display:flex;gap:14px;align-items:baseline;justify-content:space-between;
+  flex-wrap:wrap}
+.trayrow .big{font-family:var(--m);font-size:20px;font-weight:600}
+.traynote{font-size:12.5px;color:var(--ink-2);margin-top:7px}
+.traynote.warn{color:var(--under)}
+.legs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.legs span{font-family:var(--m);font-size:10.5px;border:1px solid var(--rule);
+  border-radius:999px;padding:3px 8px;color:var(--ink-2)}
 
-/* interval bars — the one chart, drawn to one shared 30-80% scale */
-.scale{position:relative;margin-top:18px}
-.axis{position:relative;height:16px;border-bottom:1px solid var(--rule)}
-.tick{position:absolute;top:0;bottom:0;border-left:1px dotted var(--rule)}
-.tick span{position:absolute;top:0;left:3px;font-family:var(--m);
-  font-size:10px;color:var(--ink-2)}
-.tick.key{border-left:1px solid var(--ink-2)}
-.ivrow{display:grid;grid-template-columns:92px 1fr 64px;gap:10px;
-  align-items:center;padding:7px 0}
-.ivlab{font-family:var(--m);font-size:12px;font-weight:600;min-width:0}
-.ivlab small{display:block;font-weight:400;color:var(--ink-2);font-size:10.5px}
-.track{position:relative;height:20px;min-width:0}
-.bar{position:absolute;top:6px;height:8px;border-radius:4px;opacity:.3}
-.pt{position:absolute;top:2px;width:3px;height:16px;border-radius:2px}
-.ivval{font-family:var(--m);font-size:13px;font-weight:600;text-align:right}
-
-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
 th{font-family:var(--m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--ink-2);text-align:right;padding:0 0 7px;font-weight:400;
   border-bottom:1px solid var(--rule);white-space:nowrap}
@@ -86,44 +148,31 @@ th:first-child{text-align:left}
 td{padding:7px 0;border-bottom:1px solid var(--rule);text-align:right;
   font-family:var(--m);font-variant-numeric:tabular-nums}
 td:first-child{text-align:left;font-family:var(--b);min-width:0}
-tr.flag td{background:color-mix(in srgb,var(--under) 9%,transparent)}
-.pos{color:var(--over);font-weight:600}
-.neg{color:var(--under);font-weight:600}
+.pos{color:var(--over);font-weight:600} .neg{color:var(--under);font-weight:600}
 .dim{color:var(--ink-2)}
 .tscroll{overflow-x:auto}
-
-.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-  margin-top:16px}
-.card{background:var(--card);border:1px solid var(--rule);border-radius:3px;
-  padding:14px;display:flex;flex-direction:column;gap:7px}
-.card.lead{border-color:var(--clover);border-width:2px}
-.ctop{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.cname{font-family:var(--d);font-weight:700;font-size:14px;letter-spacing:.02em}
-.crate{font-family:var(--m);font-size:26px;font-weight:600;line-height:1}
-.cmeta{font-family:var(--m);font-size:11px;color:var(--ink-2)}
-.pill{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
-  padding:2px 6px;border-radius:2px;border:1px solid currentColor;white-space:nowrap}
-.pill.un{color:var(--flat)}
-.pill.ok{color:var(--clover)}
-
-.leaves{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
-.leaf{width:10px;height:10px;border-radius:50% 0 50% 50%;transform:rotate(45deg);
-  background:var(--rule)}
-.leaf.on{background:var(--clover)}
-
+.empty{padding:28px 0;color:var(--ink-2);font-size:14px}
 .callout{background:var(--clover-soft);border-left:3px solid var(--clover);
-  padding:14px 16px;margin-top:18px;border-radius:0 3px 3px 0}
-.callout p+p{margin-top:9px}
-.warn{border-left-color:var(--mark);
+  padding:13px 15px;margin-top:16px;border-radius:0 3px 3px 0;font-size:14px}
+.callout.warn{border-left-color:var(--mark);
   background:color-mix(in srgb,var(--mark) 12%,transparent)}
-ul{margin:9px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
-li{margin-bottom:6px}
-li strong{color:var(--ink);font-weight:600}
-footer{margin-top:30px;padding-top:16px;border-top:2px solid var(--ink);
-  font-family:var(--m);font-size:11px;color:var(--ink-2);
-  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+section{padding-block:16px}
+.scale{position:relative;margin-top:16px}
+.axis{position:relative;height:16px;border-bottom:1px solid var(--rule)}
+.tick{position:absolute;top:0;bottom:0;border-left:1px dotted var(--rule)}
+.tick span{position:absolute;top:0;left:3px;font-family:var(--m);font-size:10px;
+  color:var(--ink-2)}
+.tick.key{border-left:1px solid var(--ink-2)}
+.ivrow{display:grid;grid-template-columns:86px 1fr 60px;gap:10px;
+  align-items:center;padding:7px 0}
+.ivlab{font-family:var(--m);font-size:12px;font-weight:600}
+.ivlab small{display:block;font-weight:400;color:var(--ink-2);font-size:10.5px}
+.track{position:relative;height:20px;min-width:0}
+.bar{position:absolute;top:6px;height:8px;border-radius:4px;opacity:.3}
+.pt{position:absolute;top:2px;width:3px;height:16px;border-radius:2px}
+.ivval{font-family:var(--m);font-size:13px;font-weight:600;text-align:right}
 @media (prefers-reduced-motion:no-preference){
-  .bar,.pt{transition:left .4s ease,width .4s ease}}
+  .add,.chip,.detail{transition:background .15s ease,color .15s ease}}
 </style>
 </head>
 <body>
@@ -132,273 +181,400 @@ footer{margin-top:30px;padding-top:16px;border-top:2px solid var(--ink);
 <header>
   <div class="hrow">
     <div>
-      <div class="eyebrow">Graded ledger · <span id="stamp">loading…</span></div>
+      <div class="eyebrow">Clover board · <span id="stamp">loading…</span></div>
       <h1>Green15</h1>
     </div>
-    <div class="meta">
-      <div><div class="k">Graded</div><div class="v">1,890</div></div>
-      <div><div class="k">Bet</div><div class="v">269</div></div>
-      <div><div class="k">Control</div><div class="v">1,621</div></div>
-    </div>
+    <div class="stat" id="headstat"></div>
   </div>
 </header>
 
-<div class="callout warn" id="loadfail" hidden>
-    <p><strong>Couldn't load the latest data.</strong> The page is showing
-    nothing rather than stale numbers. Check that the Action ran and that
-    green15_data.json is published beside this page.</p>
-  </div>
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="board">Board<span class="cnt" id="cBoard"></span></button>
+  <button role="tab" aria-selected="false" data-tab="trending">Trending<span class="cnt" id="cTrend"></span></button>
+  <button role="tab" aria-selected="false" data-tab="record">Record</button>
+</nav>
 
-<section id="boardsec">
-  <div class="shead"><h2>Tonight's board</h2>
-    <span class="eyebrow" id="boardmeta"></span></div>
-  <p class="note" id="boardnote"></p>
-  <div class="tscroll"><table>
-    <thead><tr><th>Pick</th><th>Price</th><th>Clover</th><th>Edge</th></tr></thead>
-    <tbody id="boardrows"></tbody>
-  </table></div>
-</section>
-
-<section>
-  <div class="shead"><h2>Does the filter discriminate?</h2>
-    <span class="pill ok">Established</span></div>
-  <p class="note">Every candidate the engine rejected was graded too. That makes
-  the only comparison that matters possible: what it took, against what it
-  passed on. Bars show the 95% confidence interval; the vertical mark is the
-  observed rate.</p>
-
-  <div class="scale">
-    <div class="axis" id="axis"></div>
-    <div id="ivbars"></div>
-  </div>
-
-  <div class="callout">
-    <p><strong>+10.4 points, z = +3.19.</strong> The intervals don't overlap.
-    Passes land on a coin flip; selections don't. This is the first sample in
-    the project able to show that, because it is the first one where rejected
-    candidates were also graded.</p>
-    <p>It does <em>not</em> say the book made money. At these prices it
-    returned <span class="num">+1.70%</span>.</p>
-  </div>
-</section>
-
-<section>
-  <div class="shead"><h2>Where the edge is spent</h2>
-    <span class="eyebrow">269 priced bets</span></div>
-  <p class="note">A filter that picks ten points above chance and returns almost
-  nothing is not broken — its output is being handed back at the window. Each
-  band is measured against the break-even its own prices demand.</p>
-  <div class="tscroll"><table>
-    <thead><tr><th>Price band</th><th>n</th><th>Hit</th><th>Break-even</th>
-      <th>Gap</th><th>ROI</th><th>Units</th></tr></thead>
-    <tbody id="bands"></tbody>
-  </table></div>
-  <div class="callout warn">
-    <p><strong>One band is the whole leak.</strong> −199 to −151 is 28% of bet
-    volume and −7.65 units. A process clearing ~59% cannot pay a 63.2%
-    break-even. The engine now hard-rejects it, while exempting ≤ −200, which is
-    profitable and a different population — heavy favorites the model also rates
-    highly, not mid-priced coin flips.</p>
-    <p>That rule was derived from these same 267 rows. The honest test is the
-    next hundred bets, which is why rejected candidates keep getting graded.</p>
-  </div>
-</section>
-
-<section>
-  <div class="shead"><h2>Confidence tiers</h2>
-    <span class="eyebrow">engine's own rating</span></div>
-  <p class="note">Leaves show sample weight, not quality — one leaf per 40
-  graded. A tier claims nothing until it has a record to claim it with.</p>
-  <div class="cards" id="tiers"></div>
-</section>
-
-<section>
-  <div class="shead"><h2>By sport</h2><span class="eyebrow">bet rows only</span></div>
-  <div class="tscroll"><table>
-    <thead><tr><th>Sport</th><th>n</th><th>Hit</th><th>Units</th></tr></thead>
-    <tbody id="sports"></tbody>
-  </table></div>
-  <p class="note">NHL is 65% of the volume and −17.43 units. NFL is 18% and
-  +14.30. The engine is being pointed mostly at its worst sport.</p>
-</section>
-
-<section>
-  <div class="shead"><h2>By market</h2><span class="eyebrow">n ≥ 10, all graded rows</span></div>
-  <div class="tscroll"><table>
-    <thead><tr><th>Market</th><th>n</th><th>Hit</th><th>vs 50%</th></tr></thead>
-    <tbody id="markets"></tbody>
-  </table></div>
-  <p class="note">These include passes, so they describe what the engine
-  <em>looked at</em>, not what it bet. Shots on goal dominates the slate at
-  roughly a coin flip.</p>
-</section>
-
-<section>
-  <div class="shead"><h2>What this does not establish</h2>
-    <span class="pill un">Read before using</span></div>
-  <ul>
-    <li><strong>Profitability.</strong> +1.70% on 267 bets is inside the noise.
-    Discrimination and profit are separate claims and only the first has
-    support.</li>
-    <li><strong>Closing-line value.</strong> Negative across every bucket,
-    including passes — the signature of a measurement fault, not a skill
-    verdict. Prices are read at one book and closes at another, so it is
-    largely reporting the spread between them.</li>
-    <li><strong>Clover leaf scoring.</strong> Historical rows carry no leaves,
-    so their Clover tier is meaningless. Tiers here are the engine's own
-    PLAY/LEAN/FADE buckets, kept separate on purpose.</li>
-    <li><strong>Anything at n &lt; 20.</strong> FADE is 6-for-6. That is a
-    coin landing heads six times.</li>
-  </ul>
-</section>
-
-<footer>
-  <span>1,890 graded · 26 days · deduplicated by selection</span>
-  <span>Wilson 95% · flat 1u</span>
-</footer>
+<div id="loadfail" hidden class="callout warn">
+  <strong>Couldn't load the latest data.</strong> Showing nothing rather than
+  stale numbers. Check that the Action ran and that green15_data.json sits
+  beside this page.
 </div>
 
-<script>
-let D = null;
+<!-- ───────────────────────── BOARD ───────────────────────── -->
+<div id="tab-board">
+  <div class="controls">
+    <div class="search">
+      <input id="q" type="search" placeholder="Search player or market…"
+             autocomplete="off" spellcheck="false">
+      <button id="qclear" hidden>clear</button>
+    </div>
+    <div class="chips" id="filters"></div>
+  </div>
+  <p class="eyebrow" id="boardmeta"></p>
+  <div id="rows"></div>
+  <div class="empty" id="norows" hidden></div>
+</div>
 
-function fmtAgo(iso){
-  if(!iso) return '';
-  const d = (Date.now() - new Date(iso).getTime())/36e5;
-  if(d < 1) return 'updated just now';
-  if(d < 24) return `updated ${Math.round(d)}h ago`;
-  return `updated ${Math.round(d/24)}d ago`;
+<!-- ──────────────────────── TRENDING ─────────────────────── -->
+<div id="tab-trending" hidden>
+  <section>
+    <h2>Playing time on the move</h2>
+    <p class="traynote">Role change is the one thing here that leads the market
+    rather than following it. A box-score average takes weeks to absorb a
+    minutes jump and the line takes days, so this ranks by usage against each
+    player's own baseline — not by recent scoring, which is already priced.</p>
+    <div class="tscroll"><table>
+      <thead><tr><th>Player</th><th>Recent</th><th>Baseline</th><th>Change</th><th>n</th></tr></thead>
+      <tbody id="trendrows"></tbody>
+    </table></div>
+    <div class="empty" id="notrend" hidden>No player has moved more than 6%
+      off their own baseline on this slate.</div>
+  </section>
+</div>
+
+<!-- ───────────────────────── RECORD ──────────────────────── -->
+<div id="tab-record" hidden>
+  <section>
+    <div class="hrow"><h2>Does the filter discriminate?</h2></div>
+    <p class="traynote">Every candidate the engine rejected was graded too, so
+    what it took can be compared against what it passed on. Bars are 95%
+    confidence intervals; the mark is the observed rate.</p>
+    <div class="scale"><div class="axis" id="axis"></div><div id="ivbars"></div></div>
+    <div class="callout" id="disc"></div>
+  </section>
+  <section>
+    <h2>Where the edge is spent</h2>
+    <div class="tscroll"><table>
+      <thead><tr><th>Price band</th><th>n</th><th>Hit</th><th>Break-even</th>
+        <th>ROI</th><th>Units</th></tr></thead>
+      <tbody id="bands"></tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>By sport</h2>
+    <div class="tscroll"><table>
+      <thead><tr><th>Sport</th><th>n</th><th>Hit</th><th>Units</th></tr></thead>
+      <tbody id="sports"></tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>By market</h2>
+    <div class="tscroll"><table>
+      <thead><tr><th>Market</th><th>n</th><th>Hit</th><th>vs 50%</th></tr></thead>
+      <tbody id="markets"></tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>What this does not establish</h2>
+    <ul style="color:var(--ink-2);font-size:13.5px;padding-left:18px">
+      <li style="margin-bottom:6px"><b style="color:var(--ink)">Profitability.</b>
+        Discrimination and profit are separate claims; only the first has support.</li>
+      <li style="margin-bottom:6px"><b style="color:var(--ink)">Closing-line value.</b>
+        Negative across every bucket including passes — the signature of a
+        measurement fault, not a verdict.</li>
+      <li style="margin-bottom:6px"><b style="color:var(--ink)">Anything at n&nbsp;&lt;&nbsp;20.</b>
+        A tier can look perfect and mean nothing.</li>
+    </ul>
+  </section>
+</div>
+</div>
+
+<!-- ──────────────────── PARLAY TRAY ──────────────────── -->
+<div class="tray" id="tray" hidden>
+  <div class="inner">
+    <div class="trayrow">
+      <div><span class="eyebrow">Parlay</span>
+        <div class="big" id="pOdds">—</div></div>
+      <div style="text-align:right"><span class="eyebrow">Hits</span>
+        <div class="big" id="pProb">—</div></div>
+      <div style="text-align:right"><span class="eyebrow">Break-even</span>
+        <div class="big" id="pBE">—</div></div>
+      <button class="add" id="pClear">clear</button>
+    </div>
+    <div class="legs" id="pLegs"></div>
+    <p class="traynote" id="pNote"></p>
+  </div>
+</div>
+<script>
+let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
+const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set()};
+const $ = id => document.getElementById(id);
+
+const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
+const am  = d => d >= 2 ? `+${Math.round((d-1)*100)}` : `${Math.round(-100/(d-1))}`;
+const ago = iso => {
+  if (!iso) return '';
+  const h = (Date.now() - new Date(iso).getTime())/36e5;
+  return h < 1 ? 'updated just now' : h < 24 ? `updated ${Math.round(h)}h ago`
+                                             : `updated ${Math.round(h/24)}d ago`;
+};
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- filters ---------- */
+const FILTERS = [
+  ['Sport','sport',['NBA','NHL','NFL']],
+  ['Tier','tier',['Legendary','Elite','Strong','Playable','Fringe','Weak']],
+  ['Side','side',['Over','Under']],
+  ['Bar','bar',['8+ games','edge 2%+','no red leaf']],
+];
+function drawFilters(){
+  $('filters').innerHTML = FILTERS.map(([label,key,vals]) =>
+    `<span class="chip grp">${label}</span>` + vals.map(v =>
+      `<button class="chip" data-k="${key}" data-v="${esc(v)}"
+        aria-pressed="false">${esc(v)}</button>`).join('')).join('');
+  $('filters').onclick = e => {
+    const b = e.target.closest('.chip[data-k]'); if (!b) return;
+    const on = b.getAttribute('aria-pressed') === 'true';
+    b.setAttribute('aria-pressed', String(!on));
+    F[b.dataset.k][on ? 'delete' : 'add'](b.dataset.v);
+    draw();
+  };
 }
 
-function render(){
+function matches(p){
+  const q = ($('q').value || '').trim().toLowerCase();
+  if (q && !(`${p.pl} ${p.mk}`.toLowerCase().includes(q))) return false;
+  if (F.sport.size && !F.sport.has(p.sp)) return false;
+  if (F.tier.size  && !F.tier.has(p.ti))  return false;
+  if (F.side.size  && !F.side.has(p.sd))  return false;
+  for (const b of F.bar) {
+    if (b === '8+ games'  && (p.n || 0) < 8) return false;
+    if (b === 'edge 2%+'  && (p.ed || 0) < 0.02) return false;
+    if (b === 'no red leaf' && (p.lv || []).some(l => l[1] === 'red')) return false;
+  }
+  return true;
+}
 
-const LO = 30, HI = 85;
-const pos = v => ((v - LO) / (HI - LO)) * 100;
-
-// axis
-const axis = document.getElementById('axis');
-[35,40,45,50,55,60,65,70,75,80].forEach(v=>{
-  const t=document.createElement('div');
-  t.className='tick'+(v===50?' key':'');
-  t.style.left=pos(v)+'%';
-  if(v%10===0||v===50) t.innerHTML='<span>'+v+'%</span>';
-  axis.appendChild(t);
-});
-
-function intervalRow(label, sub, d, color){
-  const lo=100*d.ci_low, hi=100*d.ci_high, r=100*d.rate;
-  return `<div class="ivrow">
-    <div class="ivlab">${label}<small>n = ${d.n.toLocaleString()}</small></div>
-    <div class="track">
-      <div class="bar" style="left:${pos(lo)}%;width:${pos(hi)-pos(lo)}%;background:${color}"></div>
-      <div class="pt" style="left:${pos(r)}%;background:${color}"></div>
-    </div>
-    <div class="ivval" style="color:${color}">${r.toFixed(1)}%</div>
+/* ---------- board ---------- */
+function pips(lv){
+  return `<div class="pips">${(lv||[]).map(l =>
+    `<i class="pip ${l[1]}"></i>`).join('')}</div>`;
+}
+function detail(p){
+  const facts = [
+    p.cl != null && p.dc ? `<span>cleared <b>${p.cl}/${p.dc}</b></span>` : '',
+    p.mp != null ? `<span>model <b>${(100*p.mp).toFixed(1)}%</b></span>` : '',
+    p.fp != null ? `<span>market <b>${(100*p.fp).toFixed(1)}%</b></span>` : '',
+    p.ed != null ? `<span>edge <b>${(100*p.ed).toFixed(1)}%</b></span>` : '',
+  ].join('');
+  return `<div class="detail">
+    <div class="facts">${facts}</div>
+    ${(p.lv||[]).map(l => `<div class="leaf ${l[1]}">
+      <i class="dot ${l[1]}"></i>
+      <div><span class="lb">${esc(l[0])}</span>
+        <div class="rs">${esc(l[2])}</div></div></div>`).join('')}
   </div>`;
 }
-const G='var(--over)', R='var(--flat)';
-const bet = D.buckets_bet, pas = D.buckets.PASS;
-document.getElementById('ivbars').innerHTML =
-  intervalRow('BET','',bet,G) + intervalRow('PASS','',pas,R);
-
-// tonight's board
-const B = D.board || {slate_size:0, playable_count:0, top:[]};
-const bmeta = document.getElementById('boardmeta');
-const bnote = document.getElementById('boardnote');
-const brows = document.getElementById('boardrows');
-if (!B.top || !B.top.length) {
-  document.getElementById('boardsec').hidden = true;
-} else {
-  bmeta.textContent = `${B.playable_count} of ${B.slate_size} cleared Playable`;
-  bnote.textContent = B.playable_count === 0
-    ? `Nothing on tonight's ${B.slate_size}-prop slate cleared the Playable bar. `
-      + `These are the top-ranked rows, shown so the ranking is visible — not picks.`
-    : `Ranked by Clover score across ${B.slate_size} evaluated props. `
-      + `A ranking, not a recommendation list: rows below Playable are shown `
-      + `so you can see what the engine declined.`;
-  brows.innerHTML = B.top.map(r => {
-    const play = (r.score || 0) >= 8;
-    // Sample size lives in the pick cell rather than its own column:
-    // at phone width a separate narrow column collided with Edge and
-    // rendered "n=8" and "4.0%" as "84.0%".
-    const thin = (r.games || 0) < 8;
-    return `<tr${play ? '' : ' class="dim"'}>
-      <td>${r.player || ''} ${r.side || ''} ${r.line ?? ''}
-        <small class="dim"> ${(r.market||'').replace(/_/g,' ')}</small>
-        <small class="${thin ? 'neg' : 'dim'}" style="display:block">
-          ${r.games ?? '?'} games · ${r.green ?? 0} green,
-          ${r.red ?? 0} red, ${r.dark ?? 0} dark</small></td>
-      <td>${r.price > 0 ? '+' : ''}${r.price ?? ''}</td>
-      <td class="${play ? 'pos' : 'dim'}">${r.score ?? '-'}/15<br>
-        <small>${r.tier || ''}</small></td>
-      <td>${r.edge != null ? (100*r.edge).toFixed(1)+'%' : '-'}</td></tr>`;
+function draw(){
+  const list = PROPS.filter(matches)
+    .sort((a,b) => (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0));
+  $('cBoard').textContent = list.length;
+  $('qclear').hidden = !$('q').value;
+  $('norows').hidden = list.length > 0;
+  if (!list.length) {
+    $('norows').textContent = PROPS.length
+      ? 'Nothing on this slate matches those filters.'
+      : 'No board published yet — run generate.';
+    $('rows').innerHTML = '';
+    return;
+  }
+  $('rows').innerHTML = list.map(p => {
+    const open = OPEN.has(p.i), on = SEL.has(p.i), thin = (p.n||0) < 8;
+    return `<div class="row">
+      <div class="rowhead">
+        <button class="pick" data-open="${p.i}" aria-expanded="${open}">
+          <span class="nm">${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>
+          <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${esc(p.sp)}
+            · <span class="${thin?'thin':''}">${p.n ?? '?'} games</span></span>
+        </button>
+        <button class="pick px" data-open="${p.i}" style="text-align:right">
+          ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
+        </button>
+        <span class="sc"><b>${p.sc ?? '-'}</b>${esc(p.ti||'')}${pips(p.lv)}</span>
+        <button class="add" data-sel="${p.i}" aria-pressed="${on}"
+          title="${on ? 'remove from parlay' : 'add to parlay'}"
+          aria-label="${on ? 'remove from parlay' : 'add to parlay'}"
+        >${on ? '\u2713' : '+'}</button>
+      </div>
+      ${open ? detail(p) : ''}</div>`;
   }).join('');
 }
 
-// price bands
-document.getElementById('bands').innerHTML = D.bands.map(b=>{
-  const gap=(b.hit-b.be), neg=b.roi<0;
-  return `<tr class="${neg&&b.n>40?'flag':''}">
-    <td>${b.band}</td><td>${b.n}</td><td>${b.hit.toFixed(1)}%</td>
-    <td class="dim">${b.be.toFixed(1)}%</td>
-    <td class="${gap<0?'neg':'pos'}">${gap>0?'+':''}${gap.toFixed(1)}</td>
-    <td class="${neg?'neg':'pos'}">${b.roi>0?'+':''}${b.roi.toFixed(1)}%</td>
-    <td class="${neg?'neg':'pos'}">${b.units>0?'+':''}${b.units.toFixed(2)}</td></tr>`;
-}).join('');
+/* ---------- parlay ---------- */
+function parlay(){
+  const legs = [...SEL.values()];
+  $('tray').hidden = legs.length === 0;
+  if (!legs.length) return;
 
-// tiers
-const ORDER=['PLAY','LEAN','FADE','PASS'];
-const BLURB={PLAY:'highest conviction',LEAN:'qualified, lower weight',
-  FADE:'bet against the model',PASS:'rejected — the control group'};
-document.getElementById('tiers').innerHTML = ORDER.map(k=>{
-  const t=D.buckets[k]; if(!t) return '';
-  const proven=t.n>=20, rate=100*t.rate;
-  const leaves=Math.min(15,Math.max(1,Math.round(t.n/40)));
-  return `<div class="card${k==='PLAY'?' lead':''}">
-    <div class="ctop"><span class="cname">${k}</span>
-      <span class="pill ${proven?'ok':'un'}">${proven?'n = '+t.n:'unproven'}</span></div>
-    <div class="crate" style="color:${rate>=50?'var(--over)':'var(--flat)'}">${rate.toFixed(1)}%</div>
-    <div class="cmeta">${t.w}–${t.l} · CI ${(100*t.ci_low).toFixed(1)}–${(100*t.ci_high).toFixed(1)}
-      · ROI ${t.roi===null?'—':(t.roi>0?'+':'')+t.roi.toFixed(2)+'%'}</div>
-    <div class="leaves">${Array.from({length:15},(_,i)=>
-      `<div class="leaf${i<leaves?' on':''}"></div>`).join('')}</div>
-    <div class="cmeta">${BLURB[k]}</div></div>`;
-}).join('');
+  const d = legs.reduce((a,p) => a * dec(p.pr), 1);
+  // Joint probability assuming independence. Flagged below, because
+  // legs from one game are not independent and this overstates them.
+  const joint = legs.reduce((a,p) => a * (p.mp ?? 0.5), 1);
+  const be = 1/d;
+  $('pOdds').textContent = am(d);
+  $('pProb').textContent = `${(100*joint).toFixed(1)}%`;
+  $('pBE').textContent = `${(100*be).toFixed(1)}%`;
+  $('pLegs').innerHTML = legs.map(p =>
+    `<span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>`).join('');
 
-// sports
-document.getElementById('sports').innerHTML = Object.entries(D.sports).map(([s,v])=>
-  `<tr><td>${s}</td><td>${v.n}</td>
-   <td class="${v.hit>=50?'pos':'neg'}">${v.hit.toFixed(1)}%</td>
-   <td class="${v.units>=0?'pos':'neg'}">${v.units>0?'+':''}${v.units.toFixed(2)}</td></tr>`
-).join('');
+  // The hold: what the book keeps once every leg's vig compounds.
+  const fairD = legs.reduce((a,p) => a * (1/(p.fp ?? 0.5)), 1);
+  const hold = (1 - d/fairD) * 100;
+  const games = new Set(legs.map(p => p.mu).filter(Boolean));
+  const sameGame = games.size < legs.length;
 
-// markets
-document.getElementById('markets').innerHTML = Object.entries(D.markets).map(([m,v])=>{
-  const r=100*v.rate, d=r-50;
-  return `<tr><td>${m.replace(/_/g,' ')}</td><td>${v.n}</td>
-    <td>${r.toFixed(1)}%</td>
-    <td class="${d>=0?'pos':'neg'}">${d>0?'+':''}${d.toFixed(1)}</td></tr>`;
-}).join('');
+  // No expected-value figure is shown, deliberately.
+  //
+  // EV from these probabilities would read "+212% per unit" on a
+  // three-leg ticket, and it would be fiction. Each leg carries the
+  // model's own calibration error -- the v1.9 system measured itself
+  // saying 60-69% on outcomes that hit 55% -- and a parlay multiplies
+  // that error once per leg. A number that large on a screen is an
+  // instruction, whatever the caveat beside it.
+  //
+  // What is shown instead is the sensitivity: the same ticket if every
+  // leg is overconfident by five points, which is smaller than the
+  // error actually measured.
+  const shaded = legs.reduce((a,p) => a * Math.max(0.01, (p.mp ?? 0.5) - 0.05), 1);
 
+  let note = `The book keeps <b>${hold.toFixed(1)}%</b> of this ticket once each
+    leg's margin compounds — one leg is around 4.5%. You need
+    <b>${(100*be).toFixed(1)}%</b> to break even.`;
+  note += `<br><br>If every leg is overconfident by five points — less than
+    this model's measured error — the ${(100*joint).toFixed(1)}% above becomes
+    <b>${(100*shaded).toFixed(1)}%</b>. Error compounds once per leg, which is
+    why parlay probabilities are the least trustworthy number here.`;
+  if (sameGame) note += ` Legs share a game, so they are correlated and
+    ${(100*joint).toFixed(1)}% is overstated again.`;
+
+  const n = legs.length;
+  let cls = 'traynote';
+  if (n >= 4) {
+    cls = 'traynote warn';
+    note += `<br><br><b>${n} legs.</b> Your ledger is <b>0–38</b> on tickets of
+      eight or more, and that was arithmetic, not luck: at a true 60% per leg
+      an eight-leg ticket cashes 1.7% of the time. The clearest case in your
+      own data is two slips from one day off the same pool — a 3-leg went
+      3-for-3 and paid +383, a 9-leg went 6-for-9 and paid nothing.`;
+  }
+  $('pNote').className = cls;
+  $('pNote').innerHTML = note;
 }
 
-// Same-origin fetch: the JSON is published next to this page by the
-// GitHub Action, so there is no CORS and no API key. The cache-buster
-// matters -- Pages serves with a long max-age and the whole point is
-// seeing last night's grading, not last week's.
+/* ---------- trending ---------- */
+function drawTrending(){
+  const t = D.trending || [];
+  $('cTrend').textContent = t.length;
+  $('notrend').hidden = t.length > 0;
+  $('trendrows').innerHTML = t.map(r => `<tr>
+    <td>${esc(r.player)} <small class="dim">${esc(r.sport)}</small></td>
+    <td>${r.recent}</td><td class="dim">${r.baseline}</td>
+    <td class="${r.up?'pos':'neg'}">${r.delta > 0 ? '+' : ''}${r.delta}%</td>
+    <td class="${r.n >= 8 ? 'dim' : 'neg'}">${r.n}</td></tr>`).join('');
+}
+
+/* ---------- record ---------- */
+const LO = 30, HI = 85, pos = v => ((v-LO)/(HI-LO))*100;
+function drawRecord(){
+  const ax = $('axis');
+  ax.innerHTML = [35,40,45,50,55,60,65,70,75,80].map(v =>
+    `<div class="tick${v===50?' key':''}" style="left:${pos(v)}%">
+      ${(v%10===0||v===50)?`<span>${v}%</span>`:''}</div>`).join('');
+
+  const row = (lab,d,col) => {
+    const lo=100*d.ci_low, hi=100*d.ci_high, r=100*d.rate;
+    return `<div class="ivrow"><div class="ivlab">${lab}
+      <small>n = ${d.n.toLocaleString()}</small></div>
+      <div class="track">
+        <div class="bar" style="left:${pos(lo)}%;width:${pos(hi)-pos(lo)}%;background:${col}"></div>
+        <div class="pt" style="left:${pos(r)}%;background:${col}"></div></div>
+      <div class="ivval" style="color:${col}">${r.toFixed(1)}%</div></div>`;
+  };
+  const bet = D.buckets_bet, pas = (D.buckets||{}).PASS;
+  $('ivbars').innerHTML = (bet ? row('BET', bet, 'var(--over)') : '')
+                        + (pas ? row('PASS', pas, 'var(--flat)') : '');
+
+  const dc = D.discrimination;
+  $('disc').innerHTML = dc
+    ? `<b>${dc.gap_points > 0 ? '+' : ''}${dc.gap_points} points, z = ${dc.z}.</b>
+       Passes land near a coin flip; selections do not. It does <em>not</em> say
+       the book made money — at these prices it returned
+       <b>${bet && bet.roi != null ? (bet.roi>0?'+':'')+bet.roi+'%' : 'n/a'}</b>.`
+    : 'Not enough graded rows yet to compare bets against passes.';
+
+  $('bands').innerHTML = (D.bands||[]).map(b => {
+    const neg = b.roi < 0;
+    return `<tr><td>${esc(b.band)}</td><td>${b.n}</td><td>${b.hit.toFixed(1)}%</td>
+      <td class="dim">${b.be.toFixed(1)}%</td>
+      <td class="${neg?'neg':'pos'}">${b.roi>0?'+':''}${b.roi.toFixed(1)}%</td>
+      <td class="${neg?'neg':'pos'}">${b.units>0?'+':''}${b.units.toFixed(2)}</td></tr>`;
+  }).join('');
+
+  $('sports').innerHTML = Object.entries(D.sports||{}).map(([s,v]) =>
+    `<tr><td>${esc(s)}</td><td>${v.n}</td>
+     <td class="${v.hit>=50?'pos':'neg'}">${v.hit.toFixed(1)}%</td>
+     <td class="${(v.units??0)>=0?'pos':'neg'}">${v.units>0?'+':''}${(v.units??0).toFixed(2)}</td></tr>`
+  ).join('');
+
+  $('markets').innerHTML = Object.entries(D.markets||{}).map(([m,v]) => {
+    const r = 100*v.rate, d = r-50;
+    return `<tr><td>${esc(m.replace(/_/g,' '))}</td><td>${v.n}</td>
+      <td>${r.toFixed(1)}%</td>
+      <td class="${d>=0?'pos':'neg'}">${d>0?'+':''}${d.toFixed(1)}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- wiring ---------- */
+document.querySelector('nav.tabs').onclick = e => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  for (const t of document.querySelectorAll('nav.tabs button'))
+    t.setAttribute('aria-selected', String(t === b));
+  for (const id of ['board','trending','record'])
+    $('tab-'+id).hidden = id !== b.dataset.tab;
+};
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]');
+  if (o) { const i = +o.dataset.open;
+           OPEN.has(i) ? OPEN.delete(i) : OPEN.add(i); draw(); return; }
+  const s = e.target.closest('[data-sel]');
+  if (s) {
+    const i = +s.dataset.sel;
+    const on = SEL.has(i);
+    on ? SEL.delete(i) : SEL.set(i, PROPS.find(p => p.i === i));
+    // Update just this button. Re-rendering the whole list on every
+    // tap throws away scroll position, which on a 900-row board means
+    // losing your place each time you add a leg.
+    s.setAttribute('aria-pressed', String(!on));
+    s.textContent = on ? '+' : '\u2713';
+    s.title = s.ariaLabel = on ? 'add to parlay' : 'remove from parlay';
+    parlay();
+  }
+});
+$('q').addEventListener('input', draw);
+$('qclear').onclick = () => { $('q').value = ''; draw(); $('q').focus(); };
+$('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
+
 (async () => {
-  const slot = document.getElementById('stamp');
   try {
-    const r = await fetch('./green15_data.json?v=' + Date.now(), {cache: 'no-store'});
+    const r = await fetch('./green15_data.json?v=' + Date.now(), {cache:'no-store'});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     D = await r.json();
-    render();
-    if (slot) slot.textContent = fmtAgo(D.generated_at);
   } catch (err) {
-    // A failed load must not leave stale or invented numbers on screen.
-    if (slot) slot.textContent = 'data unavailable';
-    const h = document.getElementById('loadfail');
-    if (h) h.hidden = false;
+    $('stamp').textContent = 'data unavailable';
+    $('loadfail').hidden = false;
+    return;
   }
+  const b = D.board || {};
+  PROPS = b.props || [];
+  $('stamp').textContent = ago(D.generated_at);
+  $('headstat').innerHTML =
+    `<b>${b.playable_count ?? 0}</b> of <b>${b.slate_size ?? 0}</b> playable
+     &nbsp;·&nbsp; record <b>${D.buckets_bet ? (100*D.buckets_bet.rate).toFixed(1)+'%' : '—'}</b>
+     on ${D.buckets_bet ? D.buckets_bet.n : 0}`;
+  $('boardmeta').textContent =
+    `${b.slate_size ?? 0} props evaluated · ranked by Clover score · a ranking, not a recommendation list`;
+  drawFilters(); draw(); drawTrending(); drawRecord();
 })();
 </script>
 
