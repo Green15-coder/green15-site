@@ -124,6 +124,18 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .facts{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--m);
   font-size:11.5px;color:var(--ink-2);padding:8px 0;border-top:1px solid var(--rule)}
 .facts b{color:var(--ink)}
+.games{padding:2px 0 6px}
+.glab{font-family:var(--m);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);margin-top:8px}
+.glab small{text-transform:none;letter-spacing:0;font-size:11px;
+  margin-left:6px;color:var(--ink-2)}
+.grow{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.grow .g{font-family:var(--m);font-size:12.5px;font-weight:600;
+  min-width:30px;text-align:center;padding:4px 6px;border-radius:3px;
+  border:1px solid var(--rule);background:var(--card);color:var(--ink-2)}
+.grow .g.hit{border-color:var(--clover);color:var(--clover);
+  background:var(--clover-soft)}
+.grow .g.miss{border-color:var(--rule);color:var(--ink-2)}
 
 .tray{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--card);
   border-top:2px solid var(--ink);
@@ -351,6 +363,28 @@ function pips(lv){
   return `<div class="pips">${(lv||[]).map(l =>
     `<i class="pip ${l[1]}"></i>`).join('')}</div>`;
 }
+function games(p){
+  const ev = p.ev || {};
+  const rec = ev.recent || [];
+  if (!rec.length) return '';
+  const cells = rec.map(g => `<span class="g ${g.c ? 'hit' : 'miss'}"
+      title="${esc(g.d || '')} vs ${esc(g.o || '?')}">${g.v}</span>`).join('');
+  const vsn = ev.vs_opp_n || 0;
+  const vs = (ev.vs_opp || []);
+  const vsCleared = vs.filter(x => x.c).length;
+  const allow = ev.opp_allowed || [];
+  return `<div class="games">
+    <div class="glab">Last ${rec.length} · newest first
+      <small>${esc(rec.map(g => g.o).filter(Boolean).slice(0,6).join(' '))}</small></div>
+    <div class="grow">${cells}</div>
+    ${vsn ? `<div class="glab">vs this opponent
+        <small>${vsCleared} of ${vs.length} cleared${vsn < 3
+          ? ' — too few meetings to read' : ''}</small></div>` : ''}
+    ${allow.length ? `<div class="glab">opponent conceded lately
+        <small>${allow.join(' · ')}</small></div>` : ''}
+  </div>`;
+}
+
 function detail(p){
   const facts = [
     p.cl != null && p.dc ? `<span>cleared <b>${p.cl}/${p.dc}</b></span>` : '',
@@ -360,6 +394,7 @@ function detail(p){
   ].join('');
   return `<div class="detail">
     <div class="facts">${facts}</div>
+    ${games(p)}
     ${(p.lv||[]).map(l => `<div class="leaf ${l[1]}">
       <i class="dot ${l[1]}"></i>
       <div><span class="lb">${esc(l[0])}</span>
