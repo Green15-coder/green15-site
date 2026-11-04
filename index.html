@@ -137,6 +137,12 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .grow .g b{font-weight:600;font-size:13px}
 .grow .g small{font-size:9px;letter-spacing:.04em;opacity:.75}
 .grow .g small.mn{opacity:.5}
+.oplog{display:grid;gap:3px;margin-top:5px}
+.opg{display:flex;gap:7px;align-items:baseline;flex-wrap:wrap;
+  font-family:var(--m);font-size:11.5px}
+.opg .od{color:var(--ink-2);min-width:58px;font-size:10.5px}
+.opg .op{color:var(--ink-2)}
+.opg .op b{color:var(--ink);font-weight:600}
 .grow .g.hit{border-color:var(--clover);color:var(--clover);
   background:var(--clover-soft)}
 .grow .g.miss{border-color:var(--rule);color:var(--ink-2)}
@@ -377,7 +383,7 @@ function games(p){
   // who Grayson Allen scored against.
   const cells = rec.map(g => `<span class="g ${g.c ? 'hit' : 'miss'}"
       title="${esc(g.d || '')}">
-      <b>${g.v}</b><small>${esc(g.o || '?')}</small>
+      <b>${g.v}</b><small>${g.ha === 'home' ? 'vs' : g.ha === 'away' ? '@' : ''}${esc(g.o || '?')}</small>
       ${g.m != null ? `<small class="mn">${g.m}'</small>` : ''}</span>`).join('');
   const vsn = ev.vs_opp_n || 0;
   const vs = (ev.vs_opp || []);
@@ -392,6 +398,30 @@ function games(p){
           ? ' — too few meetings to read' : ''}</small></div>` : ''}
     ${allow.length ? `<div class="glab">opponent conceded lately
         <small>${allow.join(' · ')}</small></div>` : ''}
+    ${ev.home_away && (ev.home_away.home || ev.home_away.away) ? `<div class="glab">
+        home / away${ev.home_away.tonight ? ` — tonight ${esc(ev.home_away.tonight)}` : ''}
+        <small>${['home','away'].map(k => ev.home_away[k]
+          ? `${k} ${ev.home_away[k].cleared}/${ev.home_away[k].n} cleared, avg ${ev.home_away[k].mean}`
+          : '').filter(Boolean).join(' · ')}</small></div>` : ''}
+    ${ev.rest_days != null ? `<div class="glab">rest
+        <small>${ev.back_to_back
+          ? `second night of a back-to-back`
+          : `${ev.rest_days} days since last game`}${
+          ev.b2b_games ? ` · his back-to-backs avg ${ev.b2b_mean} vs ${ev.rested_mean} rested (${ev.b2b_games} seen)` : ''}</small></div>` : ''}
+    ${ev.game_total ? `<div class="glab">game environment
+        <small>total ${ev.game_total}${ev.spread != null ? ` · spread ${ev.spread}` : ''}${
+          ev.team_total_fav ? ` · implied team totals ${ev.team_total_dog}/${ev.team_total_fav}` : ''}</small></div>` : ''}
+    ${(ev.opp_log || []).length ? `<div class="glab">
+        ${esc(p.mu ? p.mu.split(' @ ').slice(-1)[0] : 'opponent')}'s last
+        ${ev.opp_log.length}${ev.pos_vs_opp && ev.pos_vs_opp.position
+          ? ` vs ${esc(ev.pos_vs_opp.position)}s` : ''}
+        <small>who did the damage</small></div>
+      <div class="oplog">${ev.opp_log.map(gm => `<div class="opg">
+        <span class="od">${esc((gm.date||'').slice(5))}${gm.vs ? ' ' + esc(gm.vs) : ''}</span>
+        ${gm.players
+          ? gm.players.map(x => `<span class="op"><b>${x.v}</b>
+              ${esc(String(x.p).split(' ').slice(-1)[0])}</span>`).join('')
+          : `<span class="op"><b>${gm.v}</b></span>`}</div>`).join('')}</div>` : ''}
     ${ev.pos_vs_opp && ev.pos_vs_opp.n ? `<div class="glab">
         vs ${esc(ev.pos_vs_opp.position)}s
         <small>${ev.pos_vs_opp.mean} allowed vs ${ev.pos_vs_opp.league_mean}
@@ -406,6 +436,11 @@ function detail(p){
     p.mp != null ? `<span>model <b>${(100*p.mp).toFixed(1)}%</b></span>` : '',
     p.fp != null ? `<span>market <b>${(100*p.fp).toFixed(1)}%</b></span>` : '',
     p.ed != null ? `<span>edge <b>${(100*p.ed).toFixed(1)}%</b></span>` : '',
+    p.bk ? `<span><b>${p.bk}</b> books</span>` : '',
+    p.bb ? `<span>best at <b>${esc(p.bb)}</b></span>` : '',
+    (p.rg && p.rg[0] !== p.rg[1])
+      ? `<span>range <b>${p.rg[0] > 0 ? '+' : ''}${p.rg[0]} to ${p.rg[1] > 0 ? '+' : ''}${p.rg[1]}</b></span>`
+      : '',
   ].join('');
   return `<div class="detail">
     <div class="facts">${facts}</div>
