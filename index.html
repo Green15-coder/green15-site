@@ -59,7 +59,12 @@ header{padding-block:18px 10px}
 
 nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
   background:var(--paper);border-bottom:2px solid var(--ink);
-  display:flex;gap:2px;padding-top:4px}
+  display:flex;gap:2px;padding-top:4px;
+  /* Six tabs do not fit at 402px. Scroll rather than wrap: a wrapped
+     tab row changes height as you move between sections, which makes
+     the sticky header jump. */
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{font-family:var(--d);font-weight:700;font-size:13px;
   letter-spacing:.02em;padding:9px 12px;border-bottom:3px solid transparent;
   color:var(--ink-2);white-space:nowrap}
@@ -174,6 +179,11 @@ td:first-child{text-align:left;font-family:var(--b);min-width:0}
 .dim{color:var(--ink-2)}
 .tscroll{overflow-x:auto}
 .empty{padding:28px 0;color:var(--ink-2);font-size:14px}
+.gamehead{grid-template-columns:1fr auto auto auto}
+.gamehead .sc b{display:inline;font-size:15px;margin-right:3px}
+nav.tabs .cnt.neg{color:var(--under);font-weight:600}
+#bank{width:70px;background:none;border:none;color:inherit;font:inherit;
+  font-family:var(--m);outline:none}
 .callout{background:var(--clover-soft);border-left:3px solid var(--clover);
   padding:13px 15px;margin-top:16px;border-radius:0 3px 3px 0;font-size:14px}
 .callout.warn{border-left-color:var(--mark);
@@ -213,7 +223,10 @@ section{padding-block:16px}
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="board">Board<span class="cnt" id="cBoard"></span></button>
   <button role="tab" aria-selected="false" data-tab="trending">Trending<span class="cnt" id="cTrend"></span></button>
+  <button role="tab" aria-selected="false" data-tab="games">Today<span class="cnt" id="cGames"></span></button>
+  <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
   <button role="tab" aria-selected="false" data-tab="record">Record</button>
+  <button role="tab" aria-selected="false" data-tab="health">Health<span class="cnt" id="cHealth"></span></button>
 </nav>
 
 <div id="loadfail" hidden class="callout warn">
@@ -235,6 +248,48 @@ section{padding-block:16px}
   <p class="eyebrow" id="boardmeta"></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
+</div>
+
+<!-- ───────────────────────── TODAY ──────────────────────── -->
+<div id="tab-games" hidden>
+  <section>
+    <h2>Tonight's slate</h2>
+    <p class="traynote" id="slatenote"></p>
+    <div id="gamerows"></div>
+    <div class="empty" id="nogames" hidden>No games on the board.</div>
+  </section>
+</div>
+
+<!-- ───────────────────────── STAKE ──────────────────────── -->
+<div id="tab-stake" hidden>
+  <section>
+    <div class="hrow"><h2>Staking</h2>
+      <div class="search" style="max-width:190px">
+        <span class="eyebrow">Bankroll</span>
+        <input id="bank" type="number" min="1" step="1" value="100"
+               inputmode="decimal" style="text-align:right">
+      </div></div>
+    <p class="traynote" id="stakenote"></p>
+    <div class="tscroll"><table>
+      <thead><tr><th>Selection</th><th>Price</th><th>% of roll</th><th>Stake</th></tr></thead>
+      <tbody id="stakerows"></tbody>
+    </table></div>
+    <div class="callout warn" id="stakeblocked"></div>
+  </section>
+</div>
+
+<!-- ───────────────────────── HEALTH ─────────────────────── -->
+<div id="tab-health" hidden>
+  <section>
+    <h2>Data health</h2>
+    <p class="traynote" id="healthnote"></p>
+    <div id="healthrows"></div>
+    <div class="tscroll"><table id="healthtbl">
+      <thead><tr><th>League</th><th>Games</th><th>With odds</th>
+        <th>Priced</th><th>No log</th><th>Out</th></tr></thead>
+      <tbody id="healthdetail"></tbody>
+    </table></div>
+  </section>
 </div>
 
 <!-- ──────────────────────── TRENDING ─────────────────────── -->
@@ -378,7 +433,7 @@ function drawFilters(){
 
 function matches(p){
   const q = ($('q').value || '').trim().toLowerCase();
-  if (q && !(`${p.pl} ${p.mk}`.toLowerCase().includes(q))) return false;
+  if (q && !(`${p.pl} ${p.mk} ${p.mu||''}`.toLowerCase().includes(q))) return false;
   if (F.sport.size && !F.sport.has(p.sp)) return false;
   if (F.tier.size  && !F.tier.has(p.ti))  return false;
   if (F.side.size  && !F.side.has(p.sd))  return false;
@@ -590,6 +645,116 @@ function parlay(){
   $('pNote').innerHTML = note;
 }
 
+/* ---------- today / slate ---------- */
+function drawGames(){
+  const gs = D.games || [];
+  $('cGames').textContent = gs.length;
+  $('nogames').hidden = gs.length > 0;
+  $('slatenote').textContent = gs.length
+    ? `${gs.length} games with props on the board, ordered by how many `
+      + `cleared Playable. Tap a game to filter the board to it.`
+    : '';
+  $('gamerows').innerHTML = gs.map(g => {
+    const tiers = Object.entries(g.tiers || {})
+      .sort((a,b) => b[1]-a[1])
+      .map(([t,n]) => `${n} ${t.toLowerCase()}`).join(' · ');
+    const b = g.best || {};
+    return `<div class="row"><button class="rowhead gamehead"
+        data-game="${esc(g.matchup)}">
+      <div class="pick">
+        <span class="nm">${esc(g.matchup)}</span>
+        <span class="sub">${esc(g.sport || '')} · ${g.props} props${
+          g.spread != null ? ` · spread ${g.spread}` : ''}${
+          g.total != null ? ` · total ${g.total}` : ''}</span>
+        <span class="sub">${esc(tiers)}</span>
+        ${b.pl ? `<span class="sub">top: ${esc(b.pl)} ${esc(b.sd||'')} ${b.ln ?? ''}
+          <b>${b.sc ?? '-'}/15</b></span>` : ''}
+      </div>
+      <span class="px ${g.priced_at ? ageClass(g.priced_at) : 'dim'}"
+        style="font-size:10.5px">${g.priced_at ? ageText(g.priced_at) : ''}</span>
+      <span class="sc"><b>${g.playable}</b>playable</span>
+      <span class="add">→</span>
+    </button></div>`;
+  }).join('');
+}
+
+/* ---------- staking ---------- */
+function drawStakes(){
+  const S = D.stakes || {rows:[], blocked:{}};
+  const roll = Math.max(1, parseFloat($('bank').value) || 100);
+  if (S.error) { $('stakenote').textContent = S.error; return; }
+
+  $('stakenote').innerHTML =
+    `Eighth-Kelly on the anchored edge, scaled by each tier's own graded
+     record, capped at <b>${(100*S.max_per_bet).toFixed(1)}%</b> per bet and
+     <b>${(100*S.max_per_day).toFixed(1)}%</b> per day. Sizes shown assume an
+     external trigger exists — news, a 1.5pt move, or beating consensus by 2.
+     Model edge alone never stakes.`;
+
+  // The minimum is applied here, against the real bankroll, so a
+  // stake too small to be worth placing says so rather than showing
+  // a figure nobody would bet.
+  const min = S.min_stake ?? 0.25;
+  const shown = (S.rows || []).map(r => ({...r, $: roll * r.pct}));
+  const tooSmall = shown.filter(r => r.$ < min).length;
+  $('stakerows').innerHTML = shown.map(r => `<tr${r.$ < min ? ' class="dim"' : ''}>
+    <td>${esc(r.pl)} ${esc(r.sd)} ${r.ln ?? ''}
+      <small class="dim">${esc((r.mk||'').replace(/_/g,' '))}</small></td>
+    <td>${r.pr > 0 ? '+' : ''}${r.pr}</td>
+    <td class="dim">${(100*r.pct).toFixed(2)}%</td>
+    <td class="${r.$ < min ? 'dim' : 'pos'}">${r.$ < min
+      ? `under $${min}` : `$${r.$.toFixed(2)}`}</td></tr>`).join('')
+    || `<tr><td colspan="4" class="dim">Nothing sized.</td></tr>`;
+  if (tooSmall) {
+    $('stakenote').innerHTML += `<br><br><b>${tooSmall} of ${shown.length}</b>
+      size below the $${min} minimum at a $${roll.toFixed(0)} bankroll — which
+      is the bankroll telling you the edge is too thin to bet at this size,
+      not a rounding problem.`;
+  }
+
+  const bl = Object.entries(S.blocked || {}).sort((a,b) => b[1]-a[1]);
+  $('stakeblocked').innerHTML = bl.length
+    ? `<b>${bl.reduce((a,[,n]) => a+n, 0)} candidates sized to zero.</b><br>`
+      + bl.map(([why,n]) => `${n} — ${esc(why)}`).join('<br>')
+    : '';
+  $('stakeblocked').hidden = !bl.length;
+}
+
+/* ---------- data health ---------- */
+function drawHealth(){
+  const H = D.health || {leagues:[]};
+  const bad = (H.leagues||[]).filter(l => l.state !== 'ok' && l.state !== 'idle');
+  $('cHealth').textContent = bad.length || '';
+  $('cHealth').className = 'cnt' + (bad.length ? ' neg' : '');
+
+  $('healthnote').innerHTML = H.ran_at
+    ? `Last engine run ${ageText(H.ran_at)}${
+        H.complete === false ? ' — <b class="neg">partial</b>' : ''}.
+       ${H.odds_calls ?? 0} odds calls, ${H.box_scores ?? 0} box scores,
+       ${H.credits != null ? `<b>${H.credits}</b> credits left` : 'credits unknown'}.`
+    : 'No engine run recorded yet.';
+
+  const ICON = {ok:'●', degraded:'▲', failed:'✕', idle:'○'};
+  const CLS  = {ok:'pos', degraded:'', failed:'neg', idle:'dim'};
+  $('healthrows').innerHTML = (H.leagues||[]).map(l => `<div class="row">
+    <div class="rowhead" style="grid-template-columns:1fr auto">
+      <div class="pick"><span class="nm ${CLS[l.state]}">
+        ${ICON[l.state]} ${esc(l.league)} — ${esc(l.state)}</span>
+        <span class="sub">${esc(l.why)}</span>
+        ${l.unmapped && l.unmapped.length
+          ? `<span class="sub neg">unmapped markets: ${esc(l.unmapped.join(', '))}</span>`
+          : ''}</div>
+      <span class="px dim" style="font-size:10.5px">${l.candidates} props</span>
+    </div></div>`).join('')
+    || '<div class="empty">No run diagnostics published.</div>';
+
+  $('healthdetail').innerHTML = (H.leagues||[]).map(l => `<tr>
+    <td>${esc(l.league)}</td><td>${l.events}</td><td>${l.with_odds}</td>
+    <td>${l.outcomes}</td>
+    <td class="${l.no_logs ? 'neg' : 'dim'}">${l.no_logs}</td>
+    <td class="dim">${l.skipped_out}</td></tr>`).join('');
+}
+
 /* ---------- trending ---------- */
 function drawTrending(){
   const t = D.trending || [];
@@ -658,7 +823,7 @@ document.querySelector('nav.tabs').onclick = e => {
   const b = e.target.closest('button[data-tab]'); if (!b) return;
   for (const t of document.querySelectorAll('nav.tabs button'))
     t.setAttribute('aria-selected', String(t === b));
-  for (const id of ['board','trending','record'])
+  for (const id of ['board','games','stake','record','health','trending'])
     $('tab-'+id).hidden = id !== b.dataset.tab;
 };
 document.addEventListener('click', e => {
@@ -680,6 +845,19 @@ document.addEventListener('click', e => {
   }
 });
 $('q').addEventListener('input', draw);
+$('bank').addEventListener('input', drawStakes);
+// Tapping a game filters the board to it.
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-game]');
+  if (!g) return;
+  $('q').value = g.dataset.game;
+  for (const t of document.querySelectorAll('nav.tabs button'))
+    t.setAttribute('aria-selected', String(t.dataset.tab === 'board'));
+  for (const id of ['board','games','stake','record','health','trending'])
+    $('tab-'+id).hidden = id !== 'board';
+  draw();
+  window.scrollTo(0,0);
+});
 $('qclear').onclick = () => { $('q').value = ''; draw(); $('q').focus(); };
 $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
 
@@ -702,7 +880,8 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
      on ${D.buckets_bet ? D.buckets_bet.n : 0}`;
   $('boardmeta').textContent =
     `${b.slate_size ?? 0} props evaluated · ranked by Clover score · a ranking, not a recommendation list`;
-  drawFilters(); draw(); drawTrending(); drawRecord();
+  drawFilters(); draw(); drawGames(); drawStakes();
+  drawTrending(); drawRecord(); drawHealth();
 })();
 </script>
 
