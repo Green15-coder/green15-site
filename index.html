@@ -330,6 +330,28 @@ const ago = iso => {
   return h < 1 ? 'updated just now' : h < 24 ? `updated ${Math.round(h)}h ago`
                                              : `updated ${Math.round(h/24)}d ago`;
 };
+// Price age. The blueprint's rule is that a stale-data warning must
+// never be hidden behind a settings page, so it sits in the first row
+// of every prop's evidence.
+const STALE_MIN = 90;
+function ageMin(iso){
+  if (!iso) return null;
+  const m = (Date.now() - new Date(iso).getTime())/6e4;
+  return isFinite(m) ? m : null;
+}
+function ageText(iso){
+  const m = ageMin(iso);
+  if (m == null) return 'unknown';
+  if (m < 1) return 'just now';
+  if (m < 90) return `${Math.round(m)}m ago`;
+  if (m < 1440) return `${Math.round(m/60)}h ago`;
+  return `${Math.round(m/1440)}d ago`;
+}
+function ageClass(iso){
+  const m = ageMin(iso);
+  return (m != null && m > STALE_MIN) ? 'neg' : 'dim';
+}
+
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -436,6 +458,7 @@ function detail(p){
     p.mp != null ? `<span>model <b>${(100*p.mp).toFixed(1)}%</b></span>` : '',
     p.fp != null ? `<span>market <b>${(100*p.fp).toFixed(1)}%</b></span>` : '',
     p.ed != null ? `<span>edge <b>${(100*p.ed).toFixed(1)}%</b></span>` : '',
+    p.at ? `<span class="${ageClass(p.at)}">priced <b>${ageText(p.at)}</b></span>` : '',
     p.bk ? `<span><b>${p.bk}</b> books</span>` : '',
     p.bb ? `<span>best at <b>${esc(p.bb)}</b></span>` : '',
     (p.rg && p.rg[0] !== p.rg[1])
@@ -492,23 +515,38 @@ function parlay(){
   $('tray').hidden = legs.length === 0;
   if (!legs.length) return;
 
+  const games = new Set(legs.map(p => p.mu).filter(Boolean));
+  const sameGame = games.size < legs.length;
+
+  // Multiplying same-game leg prices does NOT give the SGP price a
+  // book would offer. Books price correlation into the combined
+  // number, usually well below the naive product, so showing that
+  // product as "the odds" overstates the payout AND the implied
+  // probability at the same time.
   const d = legs.reduce((a,p) => a * dec(p.pr), 1);
   // Joint probability assuming independence. Flagged below, because
   // legs from one game are not independent and this overstates them.
   const joint = legs.reduce((a,p) => a * (p.mp ?? 0.5), 1);
   const be = 1/d;
-  $('pOdds').textContent = am(d);
-  $('pProb').textContent = `${(100*joint).toFixed(1)}%`;
-  $('pBE').textContent = `${(100*be).toFixed(1)}%`;
+  if (sameGame) {
+    $('pOdds').textContent = 'not verified';
+    $('pOdds').style.fontSize = '14px';
+    $('pProb').textContent = 'not estimated';
+    $('pProb').style.fontSize = '14px';
+    $('pBE').textContent = '—';
+  } else {
+    $('pOdds').style.fontSize = '';
+    $('pProb').style.fontSize = '';
+    $('pOdds').textContent = am(d);
+    $('pProb').textContent = `${(100*joint).toFixed(1)}%`;
+    $('pBE').textContent = `${(100*be).toFixed(1)}%`;
+  }
   $('pLegs').innerHTML = legs.map(p =>
     `<span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>`).join('');
 
   // The hold: what the book keeps once every leg's vig compounds.
   const fairD = legs.reduce((a,p) => a * (1/(p.fp ?? 0.5)), 1);
   const hold = (1 - d/fairD) * 100;
-  const games = new Set(legs.map(p => p.mu).filter(Boolean));
-  const sameGame = games.size < legs.length;
-
   // No expected-value figure is shown, deliberately.
   //
   // EV from these probabilities would read "+212% per unit" on a
@@ -523,15 +561,20 @@ function parlay(){
   // error actually measured.
   const shaded = legs.reduce((a,p) => a * Math.max(0.01, (p.mp ?? 0.5) - 0.05), 1);
 
-  let note = `The book keeps <b>${hold.toFixed(1)}%</b> of this ticket once each
-    leg's margin compounds — one leg is around 4.5%. You need
-    <b>${(100*be).toFixed(1)}%</b> to break even.`;
-  note += `<br><br>If every leg is overconfident by five points — less than
+  let note = sameGame
+    ? `<b>Combined price not verified.</b> These legs share a game, so a
+       book prices the correlation in — usually well below the product of
+       the individual prices. Multiplying them would overstate both the
+       payout and the chance of cashing. Enter the book's actual combined
+       number to evaluate this ticket.`
+    : `The book keeps <b>${hold.toFixed(1)}%</b> of this ticket once each
+       leg's margin compounds — one leg is around 4.5%. You need
+       <b>${(100*be).toFixed(1)}%</b> to break even.`;
+  if (!sameGame) note += `<br><br>If every leg is overconfident by five points — less than
     this model's measured error — the ${(100*joint).toFixed(1)}% above becomes
     <b>${(100*shaded).toFixed(1)}%</b>. Error compounds once per leg, which is
     why parlay probabilities are the least trustworthy number here.`;
-  if (sameGame) note += ` Legs share a game, so they are correlated and
-    ${(100*joint).toFixed(1)}% is overstated again.`;
+
 
   const n = legs.length;
   let cls = 'traynote';
