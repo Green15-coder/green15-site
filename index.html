@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Green15 Ledger</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Green15">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F4F3EE">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#101309">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a ledger. Stacked rule-separated bands, figures right-aligned in
+   mono, every rate drawn as its confidence interval rather than a point. */
+:root{
+  --paper:#F4F3EE; --ink:#14180F; --ink-2:#4A5043; --rule:#D6D6CC;
+  --card:#FBFAF6; --clover:#1F6F43; --clover-soft:#DCEBE1;
+  --over:#1F6F43; --under:#A33A2A; --flat:#8A8A7C; --mark:#C7B079;
+  --d:'Archivo',system-ui,sans-serif; --b:'IBM Plex Sans',system-ui,sans-serif;
+  --m:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
+  --card:#171B10; --clover:#5FBF86; --clover-soft:#1C2A1F;
+  --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
+  --card:#171B10; --clover:#5FBF86; --clover-soft:#1C2A1F;
+  --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
+  color-scheme:dark}
+
+body{background:var(--paper);color:var(--ink);font-family:var(--b);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:28px 64px}
+.num{font-family:var(--m);font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--d);text-wrap:balance;margin:0}
+h1{font-weight:900;font-size:clamp(30px,7vw,46px);letter-spacing:-.02em;line-height:1}
+h2{font-weight:700;font-size:19px;letter-spacing:-.01em}
+h3{font-weight:700;font-size:15px}
+.eyebrow{font-family:var(--m);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2)}
+p{margin:0}
+
+header{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:8px}
+.hrow{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:baseline;
+  justify-content:space-between}
+.meta{display:flex;gap:18px;flex-wrap:wrap}
+.meta div{min-width:0}
+.meta .k{font-family:var(--m);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-2)}
+.meta .v{font-family:var(--m);font-size:15px;font-weight:600}
+
+section{border-bottom:1px solid var(--rule);padding-block:26px}
+section:last-of-type{border-bottom:none}
+.shead{display:flex;gap:12px;align-items:baseline;justify-content:space-between;
+  flex-wrap:wrap;margin-bottom:4px}
+.note{color:var(--ink-2);font-size:13.5px;max-width:62ch;margin-top:8px}
+
+/* interval bars — the one chart, drawn to one shared 30-80% scale */
+.scale{position:relative;margin-top:18px}
+.axis{position:relative;height:16px;border-bottom:1px solid var(--rule)}
+.tick{position:absolute;top:0;bottom:0;border-left:1px dotted var(--rule)}
+.tick span{position:absolute;top:0;left:3px;font-family:var(--m);
+  font-size:10px;color:var(--ink-2)}
+.tick.key{border-left:1px solid var(--ink-2)}
+.ivrow{display:grid;grid-template-columns:92px 1fr 64px;gap:10px;
+  align-items:center;padding:7px 0}
+.ivlab{font-family:var(--m);font-size:12px;font-weight:600;min-width:0}
+.ivlab small{display:block;font-weight:400;color:var(--ink-2);font-size:10.5px}
+.track{position:relative;height:20px;min-width:0}
+.bar{position:absolute;top:6px;height:8px;border-radius:4px;opacity:.3}
+.pt{position:absolute;top:2px;width:3px;height:16px;border-radius:2px}
+.ivval{font-family:var(--m);font-size:13px;font-weight:600;text-align:right}
+
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+th{font-family:var(--m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-2);text-align:right;padding:0 0 7px;font-weight:400;
+  border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:7px 0;border-bottom:1px solid var(--rule);text-align:right;
+  font-family:var(--m);font-variant-numeric:tabular-nums}
+td:first-child{text-align:left;font-family:var(--b);min-width:0}
+tr.flag td{background:color-mix(in srgb,var(--under) 9%,transparent)}
+.pos{color:var(--over);font-weight:600}
+.neg{color:var(--under);font-weight:600}
+.dim{color:var(--ink-2)}
+.tscroll{overflow-x:auto}
+
+.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  margin-top:16px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  padding:14px;display:flex;flex-direction:column;gap:7px}
+.card.lead{border-color:var(--clover);border-width:2px}
+.ctop{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cname{font-family:var(--d);font-weight:700;font-size:14px;letter-spacing:.02em}
+.crate{font-family:var(--m);font-size:26px;font-weight:600;line-height:1}
+.cmeta{font-family:var(--m);font-size:11px;color:var(--ink-2)}
+.pill{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;border:1px solid currentColor;white-space:nowrap}
+.pill.un{color:var(--flat)}
+.pill.ok{color:var(--clover)}
+
+.leaves{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.leaf{width:10px;height:10px;border-radius:50% 0 50% 50%;transform:rotate(45deg);
+  background:var(--rule)}
+.leaf.on{background:var(--clover)}
+
+.callout{background:var(--clover-soft);border-left:3px solid var(--clover);
+  padding:14px 16px;margin-top:18px;border-radius:0 3px 3px 0}
+.callout p+p{margin-top:9px}
+.warn{border-left-color:var(--mark);
+  background:color-mix(in srgb,var(--mark) 12%,transparent)}
+ul{margin:9px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
+li{margin-bottom:6px}
+li strong{color:var(--ink);font-weight:600}
+footer{margin-top:30px;padding-top:16px;border-top:2px solid var(--ink);
+  font-family:var(--m);font-size:11px;color:var(--ink-2);
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (prefers-reduced-motion:no-preference){
+  .bar,.pt{transition:left .4s ease,width .4s ease}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="hrow">
+    <div>
+      <div class="eyebrow">Graded ledger · <span id="stamp">loading…</span></div>
+      <h1>Green15</h1>
+    </div>
+    <div class="meta">
+      <div><div class="k">Graded</div><div class="v">1,890</div></div>
+      <div><div class="k">Bet</div><div class="v">269</div></div>
+      <div><div class="k">Control</div><div class="v">1,621</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="callout warn" id="loadfail" hidden>
+    <p><strong>Couldn't load the latest data.</strong> The page is showing
+    nothing rather than stale numbers. Check that the Action ran and that
+    green15_data.json is published beside this page.</p>
+  </div>
+
+<section>
+  <div class="shead"><h2>Does the filter discriminate?</h2>
+    <span class="pill ok">Established</span></div>
+  <p class="note">Every candidate the engine rejected was graded too. That makes
+  the only comparison that matters possible: what it took, against what it
+  passed on. Bars show the 95% confidence interval; the vertical mark is the
+  observed rate.</p>
+
+  <div class="scale">
+    <div class="axis" id="axis"></div>
+    <div id="ivbars"></div>
+  </div>
+
+  <div class="callout">
+    <p><strong>+10.4 points, z = +3.19.</strong> The intervals don't overlap.
+    Passes land on a coin flip; selections don't. This is the first sample in
+    the project able to show that, because it is the first one where rejected
+    candidates were also graded.</p>
+    <p>It does <em>not</em> say the book made money. At these prices it
+    returned <span class="num">+1.70%</span>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Where the edge is spent</h2>
+    <span class="eyebrow">269 priced bets</span></div>
+  <p class="note">A filter that picks ten points above chance and returns almost
+  nothing is not broken — its output is being handed back at the window. Each
+  band is measured against the break-even its own prices demand.</p>
+  <div class="tscroll"><table>
+    <thead><tr><th>Price band</th><th>n</th><th>Hit</th><th>Break-even</th>
+      <th>Gap</th><th>ROI</th><th>Units</th></tr></thead>
+    <tbody id="bands"></tbody>
+  </table></div>
+  <div class="callout warn">
+    <p><strong>One band is the whole leak.</strong> −199 to −151 is 28% of bet
+    volume and −7.65 units. A process clearing ~59% cannot pay a 63.2%
+    break-even. The engine now hard-rejects it, while exempting ≤ −200, which is
+    profitable and a different population — heavy favorites the model also rates
+    highly, not mid-priced coin flips.</p>
+    <p>That rule was derived from these same 267 rows. The honest test is the
+    next hundred bets, which is why rejected candidates keep getting graded.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><h2>Confidence tiers</h2>
+    <span class="eyebrow">engine's own rating</span></div>
+  <p class="note">Leaves show sample weight, not quality — one leaf per 40
+  graded. A tier claims nothing until it has a record to claim it with.</p>
+  <div class="cards" id="tiers"></div>
+</section>
+
+<section>
+  <div class="shead"><h2>By sport</h2><span class="eyebrow">bet rows only</span></div>
+  <div class="tscroll"><table>
+    <thead><tr><th>Sport</th><th>n</th><th>Hit</th><th>Units</th></tr></thead>
+    <tbody id="sports"></tbody>
+  </table></div>
+  <p class="note">NHL is 65% of the volume and −17.43 units. NFL is 18% and
+  +14.30. The engine is being pointed mostly at its worst sport.</p>
+</section>
+
+<section>
+  <div class="shead"><h2>By market</h2><span class="eyebrow">n ≥ 10, all graded rows</span></div>
+  <div class="tscroll"><table>
+    <thead><tr><th>Market</th><th>n</th><th>Hit</th><th>vs 50%</th></tr></thead>
+    <tbody id="markets"></tbody>
+  </table></div>
+  <p class="note">These include passes, so they describe what the engine
+  <em>looked at</em>, not what it bet. Shots on goal dominates the slate at
+  roughly a coin flip.</p>
+</section>
+
+<section>
+  <div class="shead"><h2>What this does not establish</h2>
+    <span class="pill un">Read before using</span></div>
+  <ul>
+    <li><strong>Profitability.</strong> +1.70% on 267 bets is inside the noise.
+    Discrimination and profit are separate claims and only the first has
+    support.</li>
+    <li><strong>Closing-line value.</strong> Negative across every bucket,
+    including passes — the signature of a measurement fault, not a skill
+    verdict. Prices are read at one book and closes at another, so it is
+    largely reporting the spread between them.</li>
+    <li><strong>Clover leaf scoring.</strong> Historical rows carry no leaves,
+    so their Clover tier is meaningless. Tiers here are the engine's own
+    PLAY/LEAN/FADE buckets, kept separate on purpose.</li>
+    <li><strong>Anything at n &lt; 20.</strong> FADE is 6-for-6. That is a
+    coin landing heads six times.</li>
+  </ul>
+</section>
+
+<footer>
+  <span>1,890 graded · 26 days · deduplicated by selection</span>
+  <span>Wilson 95% · flat 1u</span>
+</footer>
+</div>
+
+<script>
+let D = null;
+
+function fmtAgo(iso){
+  if(!iso) return '';
+  const d = (Date.now() - new Date(iso).getTime())/36e5;
+  if(d < 1) return 'updated just now';
+  if(d < 24) return `updated ${Math.round(d)}h ago`;
+  return `updated ${Math.round(d/24)}d ago`;
+}
+
+function render(){
+
+const LO = 30, HI = 85;
+const pos = v => ((v - LO) / (HI - LO)) * 100;
+
+// axis
+const axis = document.getElementById('axis');
+[35,40,45,50,55,60,65,70,75,80].forEach(v=>{
+  const t=document.createElement('div');
+  t.className='tick'+(v===50?' key':'');
+  t.style.left=pos(v)+'%';
+  if(v%10===0||v===50) t.innerHTML='<span>'+v+'%</span>';
+  axis.appendChild(t);
+});
+
+function intervalRow(label, sub, d, color){
+  const lo=100*d.ci_low, hi=100*d.ci_high, r=100*d.rate;
+  return `<div class="ivrow">
+    <div class="ivlab">${label}<small>n = ${d.n.toLocaleString()}</small></div>
+    <div class="track">
+      <div class="bar" style="left:${pos(lo)}%;width:${pos(hi)-pos(lo)}%;background:${color}"></div>
+      <div class="pt" style="left:${pos(r)}%;background:${color}"></div>
+    </div>
+    <div class="ivval" style="color:${color}">${r.toFixed(1)}%</div>
+  </div>`;
+}
+const G='var(--over)', R='var(--flat)';
+const bet = D.buckets_bet, pas = D.buckets.PASS;
+document.getElementById('ivbars').innerHTML =
+  intervalRow('BET','',bet,G) + intervalRow('PASS','',pas,R);
+
+// price bands
+document.getElementById('bands').innerHTML = D.bands.map(b=>{
+  const gap=(b.hit-b.be), neg=b.roi<0;
+  return `<tr class="${neg&&b.n>40?'flag':''}">
+    <td>${b.band}</td><td>${b.n}</td><td>${b.hit.toFixed(1)}%</td>
+    <td class="dim">${b.be.toFixed(1)}%</td>
+    <td class="${gap<0?'neg':'pos'}">${gap>0?'+':''}${gap.toFixed(1)}</td>
+    <td class="${neg?'neg':'pos'}">${b.roi>0?'+':''}${b.roi.toFixed(1)}%</td>
+    <td class="${neg?'neg':'pos'}">${b.units>0?'+':''}${b.units.toFixed(2)}</td></tr>`;
+}).join('');
+
+// tiers
+const ORDER=['PLAY','LEAN','FADE','PASS'];
+const BLURB={PLAY:'highest conviction',LEAN:'qualified, lower weight',
+  FADE:'bet against the model',PASS:'rejected — the control group'};
+document.getElementById('tiers').innerHTML = ORDER.map(k=>{
+  const t=D.buckets[k]; if(!t) return '';
+  const proven=t.n>=20, rate=100*t.rate;
+  const leaves=Math.min(15,Math.max(1,Math.round(t.n/40)));
+  return `<div class="card${k==='PLAY'?' lead':''}">
+    <div class="ctop"><span class="cname">${k}</span>
+      <span class="pill ${proven?'ok':'un'}">${proven?'n = '+t.n:'unproven'}</span></div>
+    <div class="crate" style="color:${rate>=50?'var(--over)':'var(--flat)'}">${rate.toFixed(1)}%</div>
+    <div class="cmeta">${t.w}–${t.l} · CI ${(100*t.ci_low).toFixed(1)}–${(100*t.ci_high).toFixed(1)}
+      · ROI ${t.roi===null?'—':(t.roi>0?'+':'')+t.roi.toFixed(2)+'%'}</div>
+    <div class="leaves">${Array.from({length:15},(_,i)=>
+      `<div class="leaf${i<leaves?' on':''}"></div>`).join('')}</div>
+    <div class="cmeta">${BLURB[k]}</div></div>`;
+}).join('');
+
+// sports
+document.getElementById('sports').innerHTML = Object.entries(D.sports).map(([s,v])=>
+  `<tr><td>${s}</td><td>${v.n}</td>
+   <td class="${v.hit>=50?'pos':'neg'}">${v.hit.toFixed(1)}%</td>
+   <td class="${v.units>=0?'pos':'neg'}">${v.units>0?'+':''}${v.units.toFixed(2)}</td></tr>`
+).join('');
+
+// markets
+document.getElementById('markets').innerHTML = Object.entries(D.markets).map(([m,v])=>{
+  const r=100*v.rate, d=r-50;
+  return `<tr><td>${m.replace(/_/g,' ')}</td><td>${v.n}</td>
+    <td>${r.toFixed(1)}%</td>
+    <td class="${d>=0?'pos':'neg'}">${d>0?'+':''}${d.toFixed(1)}</td></tr>`;
+}).join('');
+
+}
+
+// Same-origin fetch: the JSON is published next to this page by the
+// GitHub Action, so there is no CORS and no API key. The cache-buster
+// matters -- Pages serves with a long max-age and the whole point is
+// seeing last night's grading, not last week's.
+(async () => {
+  const slot = document.getElementById('stamp');
+  try {
+    const r = await fetch('./green15_data.json?v=' + Date.now(), {cache: 'no-store'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    D = await r.json();
+    render();
+    if (slot) slot.textContent = fmtAgo(D.generated_at);
+  } catch (err) {
+    // A failed load must not leave stale or invented numbers on screen.
+    if (slot) slot.textContent = 'data unavailable';
+    const h = document.getElementById('loadfail');
+    if (h) h.hidden = false;
+  }
+})();
+</script>
+
+</body>
+</html>
