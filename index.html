@@ -190,6 +190,20 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .why p{font-size:13.5px;line-height:1.52}
 .why .cav{margin-top:7px;font-family:var(--m);font-size:10.5px;
   color:var(--under)}
+.tsplit{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.trow{border-top:1px solid var(--rule);padding:11px 0;display:grid;
+  grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline}
+.trow .tnm{font-family:var(--d);font-weight:700;font-size:15px}
+.trow .tsub{font-family:var(--m);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-2)}
+.trow .tbig{font-family:var(--m);font-size:19px;font-weight:600;
+  letter-spacing:-.01em;text-align:right}
+.trow .tbig.up{color:var(--over)} .trow .tbig.down{color:var(--under)}
+.tmoves{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.tmv{font-family:var(--m);font-size:10.5px;padding:3px 7px;border-radius:999px;
+  border:1px solid var(--rule);color:var(--ink-2);white-space:nowrap}
+.tmv b{font-weight:600}
+.tmv.up b{color:var(--over)} .tmv.down b{color:var(--under)}
 .detail{padding:4px 0 16px;display:grid;gap:9px}
 .leaf{display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:start}
 .dot{width:9px;height:9px;border-radius:50% 0 50% 50%;transform:rotate(45deg);
@@ -369,17 +383,29 @@ section{padding-block:16px}
 <!-- ──────────────────────── TRENDING ─────────────────────── -->
 <div id="tab-trending" hidden>
   <section>
-    <h2>Playing time on the move</h2>
-    <p class="traynote">Role change is the one thing here that leads the market
-    rather than following it. A box-score average takes weeks to absorb a
-    minutes jump and the line takes days, so this ranks by usage against each
-    player's own baseline — not by recent scoring, which is already priced.</p>
-    <div class="tscroll"><table>
-      <thead><tr><th>Player</th><th>Recent</th><th>Baseline</th><th>Change</th><th>n</th></tr></thead>
-      <tbody id="trendrows"></tbody>
-    </table></div>
-    <div class="empty" id="notrend" hidden>No player has moved more than 6%
-      off their own baseline on this slate.</div>
+    <h2>Roles on the move</h2>
+    <p class="traynote">Every player and team at least <b id="tpct">15</b>%
+    off <em>their own</em> season baseline — minutes, shot attempts, touches,
+    whichever the box score tracks for that sport. Not ranked and not cut to a
+    top N: on a quiet night this is empty, which is the right answer. A move
+    here leads the price, because a box-score average takes weeks to absorb a
+    minutes jump and the line takes days.</p>
+
+    <div class="tsplit">
+      <button class="chip on" data-tdir="all">All <span id="nAll"></span></button>
+      <button class="chip" data-tdir="up">Trending up <span id="nUp"></span></button>
+      <button class="chip" data-tdir="down">Trending down <span id="nDown"></span></button>
+    </div>
+
+    <div id="trendrows"></div>
+    <div class="empty" id="notrend" hidden></div>
+
+    <h2 style="margin-top:22px">Teams</h2>
+    <p class="traynote">Shot volume against the team's own baseline. A team
+    generating 15% more attempts than it has been is a different game
+    environment from the one its season numbers describe.</p>
+    <div id="teamrows"></div>
+    <div class="empty" id="noteam" hidden>No team has moved that far.</div>
   </section>
 </div>
 
@@ -968,16 +994,55 @@ function drawHealth(){
 }
 
 /* ---------- trending ---------- */
+let TDIR = 'all';
 function drawTrending(){
-  const t = D.trending || [];
-  $('cTrend').textContent = t.length;
-  $('notrend').hidden = t.length > 0;
-  $('trendrows').innerHTML = t.map(r => `<tr>
-    <td>${esc(r.player)} <small class="dim">${esc(r.sport)}</small></td>
-    <td>${r.recent}</td><td class="dim">${r.baseline}</td>
-    <td class="${r.up?'pos':'neg'}">${r.delta > 0 ? '+' : ''}${r.delta}%</td>
-    <td class="${r.n >= 8 ? 'dim' : 'neg'}">${r.n}</td></tr>`).join('');
+  const t = D.trending || {};
+  const players = t.players || [], teams = t.teams || [];
+  $('tpct').textContent = t.min_pct ?? 15;
+  const up = players.filter(r => r.up), down = players.filter(r => !r.up);
+  $('nAll').textContent = players.length;
+  $('nUp').textContent = up.length;
+  $('nDown').textContent = down.length;
+  $('cTrend').textContent = players.length + teams.length;
+
+  const list = TDIR === 'up' ? up : TDIR === 'down' ? down : players;
+  $('notrend').hidden = list.length > 0;
+  $('notrend').textContent = players.length
+    ? 'Nothing in that direction tonight.'
+    : `No player is more than ${t.min_pct ?? 15}% off their own baseline on `
+      + 'this slate. That is a normal night, not a missing feed.';
+
+  // A player can be up on one stat and down on another. Both are
+  // shown on his row rather than splitting him across two lists,
+  // because "minutes up, attempts down" is one fact about a changed
+  // role and reads as two different players when separated.
+  $('trendrows').innerHTML = list.map(r => `<div class="trow">
+    <div><span class="tnm">${esc(r.player)}</span>
+      <div class="tsub">${esc(r.sport)}${r.team ? ' · ' + esc(r.team) : ''}${
+        (r.markets||[]).length ? ' · ' + esc(r.markets.join(', ').replace(/_/g,' ')) : ''}</div></div>
+    <div class="tbig ${r.up ? 'up' : 'down'}">${r.top > 0 ? '+' : ''}${r.top}%</div>
+    <div class="tmoves">${(r.moves||[]).map(m => `<span class="tmv ${m.up?'up':'down'}">
+      ${esc(m.stat)} <b>${m.pct > 0 ? '+' : ''}${m.pct}%</b>
+      ${m.recent} vs ${m.baseline} · ${m.n}g</span>`).join('')}</div>
+  </div>`).join('');
+
+  $('noteam').hidden = teams.length > 0;
+  $('teamrows').innerHTML = teams.map(r => `<div class="trow">
+    <div><span class="tnm">${esc(r.team)}</span>
+      <div class="tsub">${esc(r.sport)} · ${esc(r.stat)}</div></div>
+    <div class="tbig ${r.up ? 'up' : 'down'}">${r.pct > 0 ? '+' : ''}${r.pct}%</div>
+    <div class="tmoves"><span class="tmv ${r.up?'up':'down'}">
+      <b>${r.recent}</b> recent vs ${r.baseline} baseline · ${r.n}g</span></div>
+  </div>`).join('');
 }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tdir]');
+  if (!b) return;
+  TDIR = b.dataset.tdir;
+  document.querySelectorAll('[data-tdir]').forEach(x =>
+    x.classList.toggle('on', x === b));
+  drawTrending();
+});
 
 /* ---------- record ---------- */
 const LO = 30, HI = 85, pos = v => ((v-LO)/(HI-LO))*100;
