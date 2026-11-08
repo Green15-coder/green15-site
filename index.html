@@ -556,7 +556,7 @@ const FILTERS = [
   ['Sport','sport',['NBA','NHL','NFL']],
   ['Tier','tier',['Legendary','Elite','Strong','Playable','Fringe','Weak']],
   ['Side','side',['Over','Under']],
-  ['Bar','bar',['8+ games','edge 2%+','no red leaf']],
+  ['Bar','bar',['researched','8+ games','edge 2%+','no red leaf']],
 ];
 function drawFilters(){
   $('filters').innerHTML = FILTERS.map(([label,key,vals]) =>
@@ -579,6 +579,10 @@ function matches(p){
   if (F.tier.size  && !F.tier.has(p.ti))  return false;
   if (F.side.size  && !F.side.has(p.sd))  return false;
   for (const b of F.bar) {
+    // A row whose research never arrived has leaves graded on
+    // whatever scalars survived. This hides those outright rather
+    // than leaving you to spot the dashed panel on each card.
+    if (b === 'researched' && p.nores) return false;
     if (b === '8+ games'  && (p.n || 0) < 8) return false;
     if (b === 'edge 2%+'  && (p.ed || 0) < 0.02) return false;
     if (b === 'no red leaf' && (p.lv || []).some(l => l[1] === 'red')) return false;
