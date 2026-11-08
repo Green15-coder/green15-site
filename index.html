@@ -1200,34 +1200,47 @@ function dates(a, b){
   return a && b ? (a === b ? f(a) : `${f(a)} – ${f(b)}`) : '';
 }
 function moveChip(m){
+  // Same float leak as the tables: these are averages of box-score
+  // minutes, and the thirds of a minute underneath them are not
+  // information.
+  const r = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
   if (m.pct == null) return `<span class="tmv">${esc(m.stat)}
-    <b>n/a</b> ${m.recent} ${esc(m.unit || '')}</span>`;
+    <b>n/a</b> ${r(m.recent)} ${esc(m.unit || '')}</span>`;
   return `<span class="tmv ${m.up ? 'up' : 'down'}">${esc(m.stat)}
     <b>${m.pct > 0 ? '+' : ''}${m.pct}%</b>
-    ${m.recent} vs ${m.baseline} ${esc(m.unit || '')}</span>`;
+    ${r(m.recent)} vs ${r(m.baseline)} ${esc(m.unit || '')}</span>`;
 }
 function detailFor(m){
+  // Minutes come off the box score as raw thirds of a minute, and
+  // "19.733333333333334" is not a number anyone reads -- it is a
+  // float leaking through a UI. One decimal is already past the
+  // precision the stat has.
+  const num = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
+  // When the tracked stat IS playing time, the value column and the
+  // minutes column are the same number printed twice.
+  const dupMin = /on ice|minutes|touches/i.test(m.stat || '');
   return `<div class="meta">
-    <b>${esc(m.stat)}</b> — ${sample(m)} averaging <b>${m.recent}</b>
+    <b>${esc(m.stat)}</b> \u2014 ${sample(m)} averaging <b>${num(m.recent)}</b>
     ${esc(m.unit || '')}${dates(m.recent_from, m.recent_to)
       ? ` (${dates(m.recent_from, m.recent_to)})` : ''},
-    against a ${esc(m.baseline_label)} of <b>${m.baseline}</b> over
+    against a ${esc(m.baseline_label)} of <b>${num(m.baseline)}</b> over
     ${m.baseline_n} game${m.baseline_n === 1 ? '' : 's'}${
       dates(m.baseline_from, m.baseline_to)
         ? ` (${dates(m.baseline_from, m.baseline_to)})` : ''}.
     ${m.baseline_includes_recent
       ? 'The baseline includes these recent games.' : ''}
     ${m.missing_games ? `<span class="unv">${m.missing_games} game${
-      m.missing_games === 1 ? '' : 's'} missing this stat — not counted as
-      zero.</span>` : ''}</div>
+      m.missing_games === 1 ? '' : 's'} missing this stat \u2014 not counted
+      as zero.</span>` : ''}</div>
   ${m.no_pct ? `<div class="nopct">No percentage: ${esc(m.no_pct)}.</div>` : ''}
   <table class="gtab"><thead><tr><th>Date</th><th>Opp</th><th>H/A</th>
-    <th>${esc(m.unit || 'value')}</th><th>Min</th></tr></thead>
+    <th>${esc(m.unit || 'value')}</th>${dupMin ? '' : '<th>Min</th>'}</tr></thead>
     <tbody>${(m.games || []).map(g => `<tr>
-      <td>${esc((g.date || '').slice(5))}</td><td>${esc(g.opp || '—')}</td>
-      <td>${esc(g.ha || '—')}</td><td class="v">${g.v}</td>
-      <td>${g.mins == null ? '—' : g.mins}</td></tr>`).join('')}</tbody></table>`;
+      <td>${esc((g.date || '').slice(5))}</td><td>${esc(g.opp || '\u2014')}</td>
+      <td>${esc(g.ha || '\u2014')}</td><td class="v">${num(g.v)}</td>
+      ${dupMin ? '' : `<td>${num(g.mins)}</td>`}</tr>`).join('')}</tbody></table>`;
 }
+
 
 function trendRow(r, id, name, sub){
   const ms = winRows(r);
