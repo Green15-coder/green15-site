@@ -947,7 +947,14 @@ function detail(p){
 
 function draw(){
   const list = PROPS.filter(matches)
-    .sort((a,b) => (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0));
+    // Researched rows first, THEN score. The board arrives already
+    // ordered that way, and re-sorting on score alone threw it away
+    // -- a prop whose research never arrived still carries a Clover
+    // score, because the leaves fall back to whatever scalars exist,
+    // so bare rows floated straight back to the top of a board whose
+    // whole claim is that the ranking means something.
+    .sort((a,b) => (a.nores?1:0)-(b.nores?1:0)
+                || (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0));
   $('cBoard').textContent = list.length;
   $('qclear').hidden = !$('q').value;
   $('norows').hidden = list.length > 0;
