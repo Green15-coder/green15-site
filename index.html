@@ -695,6 +695,47 @@ function similar(p){
     ${tbl}</div>`;
 }
 
+/* Circumstance, from box scores already in the cache. None of this
+   moves the projection -- it says why the average looks the way it
+   does, and whether tonight resembles the games that produced it. */
+function roleBox(p){
+  const r = p.role || {}, wo = p.wo || [];
+  const rows = [];
+  const d = (a, b) => (a == null || b == null) ? '' :
+    `<span class="${a > b ? 'hit' : a < b ? 'miss' : ''}">${a}</span> vs ${b}`;
+
+  if (r.starting) {
+    const l3 = (r.starting.last3 || []).map(x => x ? 'S' : 'b').join(' ');
+    rows.push(['starting', `${r.starting.starts} of ${r.starting.n} games`
+      + (l3 ? ` · last 3: ${l3}` : '')]);
+  }
+  for (const k of ['start_split', 'blowout_split']) {
+    const x = r[k]; if (!x) continue;
+    rows.push([`${esc(x.a_label)} vs ${esc(x.b_label)}`,
+      `${d(x.a_value, x.b_value)} (${x.a_n}g / ${x.b_n}g)`
+      + (x.a_mins != null ? ` · ${x.a_mins} vs ${x.b_mins} min` : '')]);
+  }
+  if (r.rate) rows.push([`per ${r.rate.base} ${esc(r.rate.unit)}`,
+    `${r.rate.recent} recent vs ${r.rate.season} season (${r.rate.n}g)`]);
+  if (r.fouls) rows.push(['fouls',
+    `${r.fouls.mean} avg · ${r.fouls.five_plus} game${
+      r.fouls.five_plus === 1 ? '' : 's'} at 5+ (${r.fouls.n}g)`]);
+  // The only place an absence is tied to an outcome, because it is
+  // the only one that measured both sides.
+  for (const w of wo) rows.push([`without ${esc(w.mate_name || w.mate)}`,
+    `${d(w.without_mean, w.with_mean)} (${w.without_n}g without / ${w.with_n}g with)`]);
+
+  if (!rows.length) return '';
+  return `<div class="simbox"><h4>circumstance</h4>
+    <table class="gtab"><tbody>${rows.map(([a, b]) =>
+      `<tr><td style="white-space:nowrap">${a}</td>
+       <td class="v" style="text-align:right">${b}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">Splits of an
+      already short season. Each count is shown; a side with fewer than two
+      games is not reported at all.</span></div></div>`;
+}
+
 function card(p){
   const ev = p.ev || {}, rec = (ev.recent || []).slice().reverse();
   const vals = rec.map(r => r.v).filter(v => v != null);
@@ -804,13 +845,13 @@ function card(p){
     <div class="ltags">${['injury','matchup','role_stability','game_script']
       .map(id => ltag(p, id)).join('')}</div></div>` : '';
 
-  const sim = similar(p);
+  const sim = similar(p), role = roleBox(p);
   return `<div class="hero">
       <span class="pk">${esc(p.sd)} ${line ?? ''}
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
-    </div>${tiles}${chart}${strip}${books}${why}${sim}`;
+    </div>${tiles}${chart}${strip}${books}${why}${role}${sim}`;
 }
 
 const BOOK = {draftkings:'DK', fanduel:'FD', betmgm:'MGM', pinnacle:'PIN',
