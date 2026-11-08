@@ -849,7 +849,16 @@ function card(p){
   const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   const l5 = vals.slice(-5);
   const avg5 = l5.length ? l5.reduce((a, b) => a + b, 0) / l5.length : null;
-  const strip = `<div class="tiles">
+  // Empty tiles read as measured zeros. When the research never
+  // reached this row they are not zeros, they are absent, and the
+  // card says so rather than drawing three dashes.
+  const strip = p.nores ? `<div class="why" style="border-style:dashed">
+    <div class="wl" style="color:var(--mark)">research not captured</div>
+    <p style="font-size:12.5px">No game log, matchup or role context was
+    attached to this prop. It was priced by a run that did not reach this
+    event, so the tiles below it would be blank rather than zero. Re-run
+    generate covering this game to fill it in.</p></div>`
+    : `<div class="tiles">
     <div class="tile"><div class="tl">window (${vals.length}g)</div>
       <div class="tv">${avg != null ? avg.toFixed(1) : '—'}</div></div>
     <div class="tile"><div class="tl">last 5 avg</div>
