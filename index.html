@@ -204,6 +204,17 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
   border:1px solid var(--rule);color:var(--ink-2);white-space:nowrap}
 .tmv b{font-weight:600}
 .tmv.up b{color:var(--over)} .tmv.down b{color:var(--under)}
+.tmv.warn{border-color:var(--mark);color:var(--mark)}
+.oppane{margin-top:7px;border-top:1px solid var(--rule);padding-top:6px}
+.oprow{display:flex;align-items:center;gap:6px;margin-top:3px}
+.oprow>b{flex:0 0 34px;font-family:var(--m);font-size:8.5px;font-weight:400;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.opcells{flex:1 1 0;min-width:0;display:flex;gap:4px}
+.opcells span{flex:1 1 0;min-width:0;text-align:center;font-family:var(--m);
+  font-size:9.5px;color:var(--ink);overflow:hidden}
+.opnote{margin-top:6px;font-family:var(--m);font-size:10px;line-height:1.5;
+  color:var(--ink-2)}
+.opnote.warn{color:var(--mark)}
 .unv{color:var(--mark)}
 .tgl{grid-column:1/-1;margin-top:6px;font-family:var(--m);font-size:10px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
@@ -736,6 +747,42 @@ function roleBox(p){
       games is not reported at all.</span></div></div>`;
 }
 
+/* The opportunity behind each bar, aligned to it.
+   A chart of outcomes cannot separate a cold night from a shrinking
+   role, and those point opposite ways for tonight. Attempts and
+   minutes sit under the game they belong to rather than in another
+   average elsewhere on the card. */
+function oppRow(p, rec){
+  const op = p.op || {};
+  if (!op.rows || !op.rows.length) return '';
+  const by = {}; for (const r of op.rows) by[r.date] = r;
+  const cell = (g, pick) => {
+    const r = by[g.d || g.date]; const v = r ? pick(r) : null;
+    return `<span>${v == null ? '·' : v}</span>`;
+  };
+  const line = (label, pick) => `<div class="oprow">
+    <b>${esc(label)}</b><div class="opcells">${
+      rec.map(g => cell(g, pick)).join('')}</div></div>`;
+  const dv = p.dv || {};
+  return `<div class="oppane">
+    ${line(op.label || 'opp', r => r.opportunity)}
+    ${line('min', r => r.mins == null ? null : Math.round(r.mins))}
+    ${line('per', r => r.per_opp)}
+    ${dv.state ? `<div class="opnote ${
+      dv.state.startsWith('together') ? '' : 'warn'}">${esc(dv.state)} —
+      opportunity ${dv.opportunity_pct > 0 ? '+' : ''}${dv.opportunity_pct}%,
+      production ${dv.production_pct > 0 ? '+' : ''}${dv.production_pct}%
+      over ${dv.n} games. ${esc(dv.note)}.</div>` : ''}
+    ${op.targets != null || op.carries != null ? `<div class="opnote">
+      ${op.targets != null ? `targets ${op.targets}/g` : ''}${
+        op.targets != null && op.carries != null ? ' · ' : ''}${
+        op.carries != null ? `carries ${op.carries}/g` : ''} — kept apart,
+      because they are different jobs.</div>` : ''}
+    ${op.es_toi != null ? `<div class="opnote">even strength ${op.es_toi} ·
+      power play ${op.pp_toi} — power-play time moves with coaching
+      decisions faster than any season average.</div>` : ''}</div>`;
+}
+
 function card(p){
   const ev = p.ev || {}, rec = (ev.recent || []).slice().reverse();
   const vals = rec.map(r => r.v).filter(v => v != null);
@@ -772,7 +819,7 @@ function card(p){
       ${ltag(p,'season_baseline')}</div>
     <div class="gbars">${bars}
       ${lineY != null ? `<div class="lref" style="bottom:${lineY}px"></div>` : ''}</div>
-    <div class="xax">${xs}</div></div>` : '';
+    <div class="xax">${xs}</div>${oppRow(p, rec)}</div>` : '';
 
   // --- the three tiles ------------------------------------------------
   // DIFFERENCE is shown in standard deviations as well as in points.
@@ -1172,7 +1219,10 @@ function trendRow(r, id, name, sub){
     <div><span class="tnm">${esc(name)}</span><div class="tsub">${sub}</div></div>
     <div class="tbig ${top.pct == null ? '' : top.pct > 0 ? 'up' : 'down'}">${
       top.pct == null ? 'n/a' : (top.pct > 0 ? '+' : '') + top.pct + '%'}</div>
-    <div class="tmoves">${ms.map(moveChip).join('')}</div>
+    <div class="tmoves">${ms.map(moveChip).join('')}${
+      r.dv && r.dv.state ? `<span class="tmv ${
+        r.dv.state.startsWith('together') ? '' : 'warn'}"
+        title="${esc(r.dv.note || '')}">${esc(r.dv.state)}</span>` : ''}</div>
     <button class="tgl" data-trow="${id}">${open ? 'hide games' : 'show games'}</button>
     ${open ? ms.map(detailFor).join('') : ''}</div>`;
 }
