@@ -227,6 +227,21 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .opnote{margin-top:6px;font-family:var(--m);font-size:10px;line-height:1.5;
   color:var(--ink-2)}
 .opnote.warn{color:var(--mark)}
+.lvv{margin:2px 0;line-height:1.5}
+.mvmblk{margin:0 0 16px}
+.mvmblk h3{font-size:13px;margin:0 0 7px;font-weight:650}
+.mvmblk h3 small{font-weight:400;margin-left:6px}
+.mvmgrid{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+/* The note column was running off the right edge at phone width:
+   the shared table rules size to content and .tscroll then offered a
+   sideways scroll for text that should simply wrap. */
+.mvmblk table{width:100%;table-layout:fixed}
+.mvmblk td,.mvmblk th{white-space:normal;word-break:break-word}
+.mvmblk td:first-child,.mvmblk th:first-child{width:46%}
+.mvmblk td:last-child{font-size:11px;line-height:1.35}
+tr.bestw td{font-weight:700}
+tr.bestw td:first-child::after{content:' \2190';opacity:.5}
+.lvv span{font-weight:650;margin-right:5px}
 .unv{color:var(--mark)}
 .tgl{grid-column:1/-1;margin-top:6px;font-family:var(--m);font-size:10px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
@@ -503,7 +518,7 @@ section{padding-block:16px}
     <p class="traynote">When the engine says 60%, does it come in about six
     times in ten? Every edge, every EV and every stake is computed from
     these numbers, so this is the test that decides whether any of them
-    mean anything. Pushes are excluded \u2014 a refunded bet has no outcome
+    mean anything. Pushes are excluded — a refunded bet has no outcome
     to compare a probability against.</p>
     <div id="calib"></div>
   </section>
@@ -511,13 +526,40 @@ section{padding-block:16px}
     <div class="hrow"><h2>Does the ranking predict?</h2></div>
     <p class="traynote">Win rate by the Clover tier a pick carried
     <em>when it was made</em>. Until the score was written onto the ledger
-    this could not be asked at all \u2014 every graded row was scored after
+    this could not be asked at all — every graded row was scored after
     the fact, with no evidence attached, so the whole history sat in one
     bucket at 49.8%. Rows with no stamped tier are counted separately, not
     folded into Weak: putting them there would fill the bottom bucket with
     coin flips and make the ranking look calibrated because its worst grade
     matched chance.</p>
     <div id="tierout"></div>
+  </section>
+  <section>
+    <div class="hrow"><h2>What is each leaf worth?</h2></div>
+    <p class="traynote">The Clover score gives all fifteen leaves one point
+    each, which assumes they are equally informative. Nothing has ever
+    tested that. <b>Lift</b> is the only number that settles it: how much
+    more often a pick won when the leaf was green than when it was red.
+    A leaf with no lift is spending a point of the scale and giving nothing
+    back; a leaf with <em>negative</em> lift is pushing the ranking the
+    wrong way and is worse than absent. Coverage matters as much — a leaf
+    dark on most of the board cannot move a ranking whatever its lift,
+    and neither can one that is green on almost everything.</p>
+    <div id="leafval"></div>
+  </section>
+  <section>
+    <div class="hrow"><h2>Does the model beat the market?</h2></div>
+    <p class="traynote">The engine shrinks every projection 30% of the way
+    from the de-vigged line toward its own number, then caps it four points
+    out. The obvious complaint is that the cap is what flattens the
+    calibration curve — so this tests it. Brier score for the market alone,
+    the raw projection, and the anchored blend, against the same outcomes.
+    Lower is better. <b>The bar to clear is the market, not the base
+    rate:</b> a projection that beats always-guessing but loses to the
+    posted line has not earned the right to move a price, because quoting
+    the line was free. The weight sweep shows where the optimum actually
+    sits.</p>
+    <div id="mvm"></div>
   </section>
   <section>
     <h2>Where the edge is spent</h2>
@@ -890,10 +932,14 @@ function evBox(p){
       <b class="unv">a push refunds; EV above ignores that and is
       pessimistic</b></div>` : ''}
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">RESEARCH
-      ONLY \u2014 these probabilities have never been calibration-tested,
-      and the anchor caps every edge at 4 points, so EV here moves with the
-      PRICE far more than with the model. The board is not sorted by it.
-      </span></div></div>`;
+      ONLY \u2014 the anchor caps every edge at 4 points, so EV here moves
+      with the PRICE far more than with the model, and the board is not
+      sorted by it. On the only engine with graded history the raw
+      projection scored WORSE than the de-vigged line it was shrunk toward
+      (Brier 0.2498 vs 0.2448, n=1,660), and the direction of its
+      disagreement paid +3.1 \u00b1 4.5 points \u2014 chance. Treat this
+      number as a price check, not an edge. See &ldquo;Does the model beat
+      the market?&rdquo; on the Record tab.</span></div></div>`;
 }
 
 function card(p){
@@ -1631,6 +1677,126 @@ function drawTierOutcomes(){
         carry no tier and are excluded.</span>` : ''}</div>`;
 }
 
+function drawLeafValue(){
+  const lv = D.leaf_value || {}, ls = lv.leaves || [];
+  if (!ls.length) {
+    $('leafval').innerHTML = `<div class="empty">No graded pick carries
+      leaf states yet. Leaf states are stamped onto a pick when it is
+      scored and frozen there, so this table fills from tonight forward
+      — and needs ${lv.min || 40}+ green and ${lv.min || 40}+ red picks
+      per leaf before any lift is reported.</div>`;
+    return;
+  }
+  const cell = (r) => {
+    if (!r.enough) return `<td class="dim" colspan="2">thin</td>`;
+    const sig = r.signal, c = r.lift > 0 ? 'hit' : 'miss';
+    return `<td class="${sig ? c : 'dim'}"><b>${r.lift > 0 ? '+' : ''}${
+      r.lift.toFixed(1)}</b></td>
+      <td class="dim">\u00b1${r.se.toFixed(1)}${sig ? '' : ' ns'}</td>`;
+  };
+  const rows = ls.map(r => `<tr>
+    <td>${esc(r.label)}</td>
+    <td>${r.green_n ? `${r.green_rate.toFixed(1)}% <small class="dim">n=${
+      r.green_n}</small>` : '<span class="dim">\u2014</span>'}</td>
+    <td>${r.red_n ? `${r.red_rate.toFixed(1)}% <small class="dim">n=${
+      r.red_n}</small>` : '<span class="dim">\u2014</span>'}</td>
+    ${cell(r)}
+    <td class="${r.dark_pct >= 80 ? 'unv' : 'dim'}">${
+      r.dark_pct.toFixed(0)}%</td></tr>`).join('');
+
+  const list = (k, lab, cls) => (lv[k] || []).length
+    ? `<div class="lvv"><span class="${cls}">${lab}</span>
+        ${esc((lv[k] || []).join(', '))}</div>` : '';
+  const verdict = [
+    list('carrying', 'Carrying weight', 'hit'),
+    list('backwards', 'Pointing the wrong way', 'miss'),
+    list('unproven', 'No effect detectable yet', 'dim'),
+    list('mostly_dark', 'Dark on 80%+ of the board', 'unv'),
+  ].join('') || `<div class="dim">Nothing has reached ${lv.min || 40}
+     picks on both sides yet.</div>`;
+
+  $('leafval').innerHTML = `<div class="tscroll"><table>
+    <thead><tr><th>Leaf</th><th>Green won</th><th>Red won</th>
+      <th>Lift</th><th>SE</th><th>Dark</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="callout" style="margin-top:9px">${verdict}
+      <div class="dim" style="margin-top:7px">A lift counts as a signal
+      only past ${(lv.sigma || 3)}\u00d7 its own standard error. Fifteen
+      leaves are tested at once, so at the usual two-sigma bar a spurious
+      winner turns up about every third run — and reweighting on noise is
+      worse than leaving the leaves equal, because it looks principled.
+      Rows marked <b>ns</b> have a lift inside that band: not "no effect",
+      but no effect this sample can distinguish from chance.</div></div>`;
+}
+
+function drawMvm(){
+  const mv = D.model_vs_market || {}, E = mv.engines || {};
+  const NAMES = {current: 'Current engine', imported: 'Imported ledger (v16.2)'};
+  const parts = ['current','imported'].map(k => {
+    const g = E[k];
+    if (!g) return `<div class="mvmblk"><h3>${NAMES[k]}</h3>
+      <div class="empty">No graded row from this engine carries both a
+      model probability and a de-vigged market probability, so the anchor
+      cannot be evaluated here at all.</div></div>`;
+    if (!g.enough) return `<div class="mvmblk"><h3>${NAMES[k]}</h3>
+      <div class="empty">${g.n} graded rows; ${mv.min} needed before a
+      Brier comparison means anything.</div></div>`;
+    const b = (lab, v, note) => v == null ? '' :
+      `<tr><td>${lab}</td><td><b>${v.toFixed(5)}</b></td>
+        <td class="dim">${note || ''}</td></tr>`;
+    const best = Math.min(...g.sweep.map(x => x.brier));
+    const sweep = g.sweep.map(x => `<tr class="${
+      x.brier === best ? 'bestw' : ''}"><td>${x.w.toFixed(1)}${
+      x.w === 0 ? ' <small class="dim">market only</small>' :
+      x.w === 1 ? ' <small class="dim">raw model</small>' : ''}</td>
+      <td>${x.brier.toFixed(5)}</td></tr>`).join('');
+    const d = g.direction || {};
+    const dir = d.gap == null
+      ? `<div class="dim">Too few rows on one side to test direction
+         (${d.hi_n || 0} above the line, ${d.lo_n || 0} below).</div>`
+      : `When the model called a prop likelier than the line it hit
+         <b>${d.hi_rate.toFixed(1)}%</b> <span class="dim">(n=${d.hi_n})</span>;
+         when it called one less likely, <b>${d.lo_rate.toFixed(1)}%</b>
+         <span class="dim">(n=${d.lo_n})</span>. Gap
+         <b class="${d.signal ? (d.gap > 0 ? 'hit' : 'miss') : 'dim'}">${
+         d.gap > 0 ? '+' : ''}${d.gap.toFixed(1)} \u00b1 ${
+         d.se.toFixed(1)}</b> \u2014 ${d.signal
+           ? 'the direction of the disagreement pays.'
+           : 'indistinguishable from chance.'}`;
+    const dis = (g.by_disagreement || []).map(x => `<tr><td>${x.lo}\u2013${
+      x.hi} pts</td><td>${x.thin ? `<span class="dim">thin (n=${x.n})</span>`
+        : `${x.rate.toFixed(1)}% <small class="dim">\u00b1${x.se.toFixed(1)}
+           &middot; n=${x.n}</small>`}</td></tr>`).join('');
+    return `<div class="mvmblk"><h3>${NAMES[k]}
+      <small class="dim">n = ${g.n.toLocaleString()}</small></h3>
+      <div class="mvmgrid">
+        <div><div class="tscroll"><table>
+          <thead><tr><th>Scored</th><th>Brier</th><th></th></tr></thead>
+          <tbody>
+            ${b('Always the base rate', g.brier_baseline,
+                `${g.base_rate.toFixed(1)}% hit`)}
+            ${b('Market alone', g.brier_market, 'the bar')}
+            ${b('Raw projection', g.brier_model,
+                g.beats_market ? 'beats the market' : 'loses to the market')}
+            ${b('Anchored blend', g.brier_anchor, 'what ships')}
+          </tbody></table></div></div>
+        <div><div class="tscroll"><table>
+          <thead><tr><th>Shrink weight</th><th>Brier</th></tr></thead>
+          <tbody>${sweep}</tbody></table></div>
+          <div class="dim" style="margin-top:6px">Optimum at
+            <b>w = ${g.best_w.toFixed(1)}</b>.</div></div>
+        <div><div class="tscroll"><table>
+          <thead><tr><th>Disagreement</th><th>Hit rate</th></tr></thead>
+          <tbody>${dis}</tbody></table></div>
+          <div class="dim" style="margin-top:6px">If the projection knows
+            something, straying further from the line should pay more. A
+            flat column is the finding.</div></div>
+      </div>
+      <div class="callout" style="margin-top:9px">${dir}</div></div>`;
+  }).join('');
+  $('mvm').innerHTML = parts;
+}
+
 function drawRecord(){
   const ax = $('axis');
   ax.innerHTML = [35,40,45,50,55,60,65,70,75,80].map(v =>
@@ -1781,7 +1947,7 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
     `${b.slate_size ?? 0} props evaluated · ranked by Clover score · a ranking, not a recommendation list`;
   drawFilters(); draw(); drawGames(); drawStakes();
   drawTrending(); drawRecord(); drawCalibration();
-  drawTierOutcomes(); drawHealth();
+  drawTierOutcomes(); drawLeafValue(); drawMvm(); drawHealth();
 })();
 </script>
 
