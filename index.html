@@ -399,6 +399,7 @@ section{padding-block:16px}
   <div class="tsplit" style="margin:2px 0 10px">
     <button class="chip on" data-view="all">Full board</button>
     <button class="chip" data-view="top15">Top 15</button>
+    <button class="chip" data-view="pending">Pending <span id="npend"></span></button>
   </div>
   <p class="eyebrow" id="topnote" hidden></p>
   <div id="rows"></div>
@@ -865,6 +866,27 @@ function reqBox(p){
       probability here.</span></div></div>`;
 }
 
+/* Expected value at the posted price. DISPLAYED, NOT RANKED ON. */
+function evBox(p){
+  if (p.evu == null) return '';
+  const pc = (100 * p.evu).toFixed(1);
+  return `<div class="reqbox"><h4>estimated value</h4>
+    <div class="evline"><span>EV per unit at ${p.pr > 0 ? '+' : ''}${p.pr}</span>
+      <b class="${p.evu > 0 ? 'hit' : 'miss'}">${p.evu > 0 ? '+' : ''}${pc}%</b></div>
+    <div class="evline"><span>win probability used</span>
+      <b>${p.mp != null ? (100*p.mp).toFixed(1) + '%' : '\u2014'}</b></div>
+    <div class="evline"><span>market implies</span>
+      <b>${p.fp != null ? (100*p.fp).toFixed(1) + '%' : '\u2014'}</b></div>
+    ${p.pushable ? `<div class="evline"><span>whole line</span>
+      <b class="unv">a push refunds; EV above ignores that and is
+      pessimistic</b></div>` : ''}
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">RESEARCH
+      ONLY \u2014 these probabilities have never been calibration-tested,
+      and the anchor caps every edge at 4 points, so EV here moves with the
+      PRICE far more than with the model. The board is not sorted by it.
+      </span></div></div>`;
+}
+
 function card(p){
   const ev = p.ev || {}, rec = (ev.recent || []).slice().reverse();
   const vals = rec.map(r => r.v).filter(v => v != null);
@@ -1049,7 +1071,8 @@ function detail(p){
   const body =
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
     : cur === 'games'  ? `${games(p)}`
-    : cur === 'market' ? `${bookRow(p)}<div class="facts">${facts}</div>`
+    : cur === 'market' ? `${evBox(p)}${bookRow(p)}
+        <div class="facts">${facts}</div>`
     : (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
         <i class="dot ${l[1]}"></i>
         <div><span class="lb">${esc(l[0])}</span>
@@ -1078,21 +1101,40 @@ function draw(){
   // with its own rules. If only four rows are researched, it shows
   // four and says so, rather than padding to fifteen with rows that
   // were never examined.
-  if (BVIEW === 'top15') list = list.filter(p => !p.nores).slice(0, 15);
+  // An eligibility GATE, not another filter. A prop can score well
+  // and still be unusable -- hour-old price, no research, four
+  // games -- and mixing "cannot be acted on" into the same ranking
+  // as "usable but mediocre" is how something you cannot bet ends
+  // up at the top of the board.
+  $('npend').textContent = PROPS.filter(p => p.elig === false).length;
+  if (BVIEW === 'pending') {
+    list = list.filter(p => p.elig === false);
+  } else if (BVIEW === 'top15') {
+    // Up to fifteen QUALIFIED selections, never an obligation to
+    // fill fifteen slots.
+    list = list.filter(p => p.elig !== false).slice(0, 15);
+  }
   // Say what this ordering is and is not. The score counts evidence
   // -- green leaves minus red -- and whether a higher score wins
   // more often is a question the Record tab answers, not an
   // assumption this list is allowed to make.
   const tn = $('topnote');
   if (tn) {
-    tn.hidden = BVIEW !== 'top15';
+    // No early return here: this is the middle of draw(), and
+    // returning from it skipped the render entirely -- the pending
+    // view kept showing whichever list was on screen before.
+    tn.hidden = BVIEW === 'all';
     const to = D.tier_outcomes || {};
-    tn.innerHTML = `the best-EVIDENCED fifteen, by green leaves minus red
-      \u2014 not the fifteen most likely to win. ` + (to.enough
-        ? `tier-vs-outcome is on the Record tab.`
-        : `<span class="unv">whether a higher score wins more often is
-           still unverified (${to.scored || 0} graded picks carry a
-           score).</span>`);
+    tn.innerHTML = BVIEW === 'pending'
+      ? `selections that cannot be acted on yet \u2014 stale price, no
+         research attached, or too few games. Each row says which. They
+         are held out of the ranking rather than scored against it.`
+      : `the best-EVIDENCED fifteen, by green leaves minus red \u2014 not
+         the fifteen most likely to win. ` + (to.enough
+          ? `tier-vs-outcome is on the Record tab.`
+          : `<span class="unv">whether a higher score wins more often is
+             still unverified (${to.scored || 0} graded picks carry a
+             score).</span>`);
   }
   $('cBoard').textContent = list.length;
   $('qclear').hidden = !$('q').value;
@@ -1124,6 +1166,8 @@ function draw(){
           aria-label="${on ? 'remove from parlay' : 'add to parlay'}"
         >${on ? '\u2713' : '+'}</button>
       </div>
+      ${p.elig === false && (p.pend||[]).length
+        ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
       ${open ? detail(p) : ''}</div>`;
   }).join('');
 }
