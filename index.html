@@ -237,6 +237,36 @@ header .live{margin-left:auto}
   line-height:1.2;margin:0 0 9px;letter-spacing:-.02em}
 .askhead .dim{font-family:var(--m);font-size:11px;letter-spacing:0}
 
+/* ---- trend chart ----------------------------------------------------
+   The percentage cannot carry SHAPE. +32% off a steady climb and +32%
+   off one outlier read identically as text and look nothing alike
+   drawn, and the difference is the whole question: a climb is a role
+   change, a spike is a game. Bars are games in order; the ones inside
+   the selected window carry the accent, the earlier ones stay
+   recessive because they are context rather than a second series.
+   Accent validated against both surfaces (OKLab lightness band,
+   chroma floor, CVD separation, contrast). */
+.tchart{--acc:#0E8A57;--qui:#B9C2BC;margin:9px 0 2px}
+:root:not([data-theme="light"]) .tchart{--acc:#13A86B;--qui:#4E5A53}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .tchart{--acc:#0E8A57;--qui:#B9C2BC}}
+:root[data-theme="dark"] .tchart{--acc:#13A86B;--qui:#4E5A53}
+.tchart svg{display:block;width:100%;height:auto;
+  aspect-ratio:326/100;overflow:visible}
+.tchart .tbar{fill:var(--qui)}
+.tchart .tbar.inwin{fill:var(--acc)}
+.tchart .rule{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;
+  opacity:.75}
+.tchart .rule.prior{stroke-dasharray:1 3}
+.tchart .rlab{font-family:var(--m);font-size:8.5px;fill:var(--ink-2)}
+.tchart .vlab{font-family:var(--m);font-size:9px;fill:var(--ink);
+  font-weight:600}
+.tchart .xlab{font-family:var(--m);font-size:8px;fill:var(--ink-2)}
+.tckey{display:flex;gap:11px;font-family:var(--m);font-size:9.5px;
+  color:var(--ink-2);margin-top:3px;flex-wrap:wrap}
+.tckey i{display:inline-block;width:8px;height:8px;border-radius:2px;
+  margin-right:4px;vertical-align:-1px}
+
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--b);
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
@@ -1862,6 +1892,74 @@ function dates(a, b){
   const f = d => (d || '').slice(5);
   return a && b ? (a === b ? f(a) : `${f(a)} – ${f(b)}`) : '';
 }
+/* One stat, drawn. Bars are games oldest to newest; the selected
+   window is the accent, earlier games are recessive context. Two
+   dashed rules: the available-history baseline and, when there is
+   one, the mean of the games BEFORE the window -- the comparison the
+   percentage is actually against. */
+function trendChart(ser, win, row){
+  // `num` is local to detailFor; this runs outside it.
+  const num = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
+  const gs = (ser && ser.games) || [];
+  if (gs.length < 2) return '';
+  const W = 300, H = 72, PAD = 13, n = gs.length;
+  const vals = gs.map(g => g.v);
+  const base = ser.baseline, prior = row && row.prior;
+  const hi = Math.max(...vals, base || 0, prior || 0) * 1.12 || 1;
+  const bw = (W - PAD * 2) / n, gap = Math.min(3, bw * 0.22);
+  const y = v => H - (v / hi) * H;
+  const inWin = i => i >= n - Math.min(win, n);
+
+  const bars = gs.map((g, i) => {
+    const x = PAD + i * bw, h = Math.max(1.5, H - y(g.v));
+    return `<rect class="tbar${inWin(i) ? ' inwin' : ''}"
+      x="${(x + gap / 2).toFixed(1)}" y="${(H - h).toFixed(1)}"
+      width="${Math.max(1, bw - gap).toFixed(1)}" height="${h.toFixed(1)}"
+      rx="2"><title>${esc(g.d || '')}${g.o ? ' vs ' + esc(g.o) : ''}${
+      g.h ? ' (' + (g.h === 'H' ? 'home' : 'away') + ')' : ''}: ${g.v}${
+      ser.unit ? ' ' + esc(ser.unit) : ''}</title></rect>`;
+  }).join('');
+
+  // Two rules sit close together whenever the move is small, and
+  // their labels then print on top of each other. The second one
+  // steps away rather than overlapping.
+  const yb = base == null ? null : y(base);
+  const yp = prior == null ? null : y(prior);
+  const clash = yb != null && yp != null && Math.abs(yb - yp) < 9;
+  const rule = (v, cls, label, dy) => v == null ? '' : `
+    <line class="rule ${cls}" x1="${PAD}" x2="${W - PAD}"
+      y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>
+    <text class="rlab" x="${W - PAD + 2}"
+      y="${(y(v) + 3 + (dy || 0)).toFixed(1)}"
+      text-anchor="start">${label}</text>`;
+
+  // Only the newest value is labelled. A number on every bar is the
+  // table again, and the table is already above this.
+  const lastX = PAD + (n - 1) * bw + (bw - gap) / 2 + gap / 2;
+  const lastY = y(vals[n - 1]);
+  return `<div class="tchart"><svg viewBox="0 -8 ${W + 26} ${H + 28}"
+      role="img" aria-label="${esc(ser.unit || 'stat')} by game, oldest
+      to newest; the last ${Math.min(win, n)} highlighted">
+    ${rule(base, '', num(base), clash && yb > yp ? 5 : 0)}
+    ${prior != null ? rule(prior, 'prior', num(prior),
+                           clash && yp >= yb ? 5 : 0) : ''}
+    ${bars}
+    <text class="vlab" x="${lastX.toFixed(1)}" y="${(lastY - 4).toFixed(1)}"
+      text-anchor="middle">${vals[n - 1]}</text>
+    <text class="xlab" x="${PAD}" y="${H + 15}">${esc(gs[0].d || '')}</text>
+    <text class="xlab" x="${W - PAD}" y="${H + 15}"
+      text-anchor="end">latest</text>
+  </svg>
+  <div class="tckey">
+    <span><i style="background:var(--acc)"></i>last ${
+      Math.min(win, n)}</span>
+    <span><i style="background:var(--qui)"></i>earlier</span>
+    <span>--- baseline ${num(base)}</span>
+    ${prior != null ? `<span>\u00b7\u00b7\u00b7 before ${
+      num(prior)}</span>` : ''}
+  </div></div>`;
+}
+
 function moveChip(m){
   // Same float leak as the tables: these are averages of box-score
   // minutes, and the thirds of a minute underneath them are not
@@ -1958,8 +2056,12 @@ function trendRow(r, id, name, sub, rank){
       r.dv && r.dv.state ? `<span class="tmv ${
         r.dv.state.startsWith('together') ? '' : 'warn'}"
         title="${esc(r.dv.note || '')}">${esc(r.dv.state)}</span>` : ''}</div>
+    ${trendChart((r.windows && r.windows.series || {})[top.stat],
+                 +TWIN || 3, top)}
     <button class="tgl" data-trow="${id}">${open ? 'hide games' : 'show games'}</button>
-    ${open ? ms.map(detailFor).join('') : ''}</div>`;
+    ${open ? ms.map(m => (m.stat === top.stat ? '' : trendChart(
+        (r.windows && r.windows.series || {})[m.stat], +TWIN || 3, m))
+        + detailFor(m)).join('') : ''}</div>`;
 }
 
 function drawTrending(){
