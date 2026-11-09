@@ -133,8 +133,10 @@
    the same thing twice and are gone; the rest is now one docked bar
    you can navigate from anywhere, and the board opens on the thing it
    is for. */
+/* The sticky bar sat under the status bar on a notched phone --
+   the wordmark rendered behind the clock and the battery. */
 .dock{position:sticky;top:0;z-index:40;background:var(--paper);
-  margin:0 -4px;padding:0 4px 4px;
+  margin:0 -4px;padding:env(safe-area-inset-top,0) 4px 4px;
   box-shadow:0 12px 16px -14px rgba(0,0,0,.45)}
 header{display:flex;align-items:baseline;gap:10px;padding:10px 0 7px}
 header h1{margin:0;font-family:var(--d);font-weight:900;letter-spacing:-.03em;
@@ -201,6 +203,39 @@ header .live{margin-left:auto}
 .h2go{margin-left:auto;border:1px solid var(--rule);background:var(--raise);
   color:var(--ink);border-radius:999px;padding:5px 12px;
   font-family:var(--b);font-weight:650;font-size:12px}
+
+/* ---- matchup -------------------------------------------------- */
+.mbox{border:1px solid var(--rule);border-radius:11px;padding:10px 11px;
+  margin:0 0 9px;background:var(--card)}
+.mhead{font-family:var(--m);font-size:10px;color:var(--ink-2);
+  letter-spacing:.05em;margin-bottom:7px}
+.mstat{font-size:12.5px;line-height:1.45}
+.mnote{font-size:11.5px;line-height:1.45;color:var(--ink-2);
+  border-left:2px solid var(--rule);padding-left:8px;margin:7px 0 9px}
+.rankrow{display:grid;grid-template-columns:auto 1fr;gap:9px;
+  align-items:center;margin-bottom:7px}
+.rankno{font-family:var(--d);line-height:1}
+.rankno b{font-size:27px;font-weight:900;letter-spacing:-.03em}
+.rankno span{display:block;font-family:var(--m);font-size:9.5px;
+  color:var(--ink-2);margin-top:2px}
+.rankbar{position:relative;height:7px;border-radius:999px;
+  background:linear-gradient(90deg,var(--up) 0%,var(--hold) 50%,var(--dn) 100%)}
+/* Under: a stingy defence (rank 1) is the good end. Over: reversed. */
+.rankbar.flip{background:linear-gradient(90deg,var(--dn) 0%,
+  var(--hold) 50%,var(--up) 100%)}
+.rankbar i{position:absolute;top:-3px;width:3px;height:13px;border-radius:2px;
+  background:var(--ink);transform:translateX(-1.5px)}
+.rankends{grid-column:2;display:flex;justify-content:space-between;
+  font-family:var(--m);font-size:9px;color:var(--ink-2);margin-top:-4px}
+
+.askbar{margin:0 0 9px}
+.readbar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:2px 0 9px;
+  font-family:var(--m);font-size:10px}
+.rd{background:var(--raise);border:1px solid var(--rule);border-radius:999px;
+  padding:2px 8px;color:var(--ink)}
+.askhead{font-family:var(--d);font-size:clamp(17px,4.4vw,22px);
+  line-height:1.2;margin:0 0 9px;letter-spacing:-.02em}
+.askhead .dim{font-family:var(--m);font-size:11px;letter-spacing:0}
 
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--b);
@@ -559,6 +594,7 @@ section{padding-block:16px}
   <button role="tab" aria-selected="false" data-tab="games">Today<span class="cnt" id="cGames"></span></button>
   <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
   <button role="tab" aria-selected="false" data-tab="record">Record</button>
+  <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
   <button role="tab" aria-selected="false" data-tab="health">Health<span class="cnt" id="cHealth"></span></button>
   </nav>
 </div>
@@ -585,6 +621,7 @@ section{padding-block:16px}
     <div class="tsplit">
       <button class="chip on" data-view="all">Full board</button>
       <button class="chip" data-view="top15">Top 15</button>
+      <button class="chip" data-view="team">Team totals <span id="nteam"></span></button>
       <button class="chip" data-view="pending">Pending <span id="npend"></span></button>
     </div>
     <span class="vcount" id="boardmeta"></span>
@@ -623,6 +660,24 @@ section{padding-block:16px}
 </div>
 
 <!-- ───────────────────────── HEALTH ─────────────────────── -->
+<div id="tab-ask" hidden>
+  <section>
+    <div class="hrow"><h2>Ask</h2></div>
+    <p class="traynote">A question box over this engine's own graded
+    history. It looks up rows, it does not generate answers — every
+    number below came off a real box score, so it can tell you it has
+    nothing rather than produce a figure. It reads a name, a stat and a
+    few filters, and shows what it understood so a misread is visible
+    instead of silent.</p>
+    <div class="search askbar">
+      <input id="askq" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Maxey points last 5 &middot; Barrett vs BOS">
+    </div>
+    <div class="chips" id="askeg"></div>
+    <div id="askout"></div>
+  </section>
+</div>
+
 <div id="tab-health" hidden>
   <section>
     <h2>Data health</h2>
@@ -1359,11 +1414,93 @@ const SEC = {};           // which section each open card is showing
    goes behind four sections, so the card opens at about one screen
    and you choose what to read instead of scrolling past it. */
 const SECTIONS = [
-  ['read',   'Why'],
-  ['games',  'Games'],
-  ['market', 'Market'],
-  ['leaves', 'Leaves'],
+  ['read',    'Why'],
+  ['games',   'Games'],
+  ['matchup', 'Matchup'],
+  ['market',  'Market'],
+  ['leaves',  'Leaves'],
 ];
+
+/* What the opponent gives up, and what this player has done to them.
+
+   Rank 1 CONCEDES LEAST. Printed on the row every time rather than
+   once in a legend: the opposite convention is just as common, and a
+   reader who assumes it backwards reads the softest matchup on the
+   board as the hardest. */
+function matchup(p){
+  const ev = p.ev || {}, out = [];
+  const dr = ev.def_rank_pos || ev.def_rank;
+  if (dr && dr.rank) {
+    const pct = dr.of > 1 ? (dr.rank - 1) / (dr.of - 1) : 0;
+    // The ramp runs toward the end that HELPS THIS BET. A generous
+    // defence is good news under an Over and bad news under an
+    // Under, so a bar that is always green at rank 1 tells half the
+    // board the opposite of the truth.
+    const over = String(p.sd || '').toLowerCase().startsWith('o');
+    out.push(`<div class="mbox">
+      <div class="mhead">${esc(p.mu || 'opponent')}${
+        dr.position ? ` \u00b7 vs ${esc(dr.position)}s` : ''}</div>
+      <div class="rankrow">
+        <div class="rankno"><b>${dr.rank}</b><span>of ${dr.of}</span></div>
+        <div class="rankbar${over ? ' flip' : ''}"><i style="left:${
+          (100*pct).toFixed(1)}%"></i></div>
+        <div class="rankends">
+          <span>1 concedes least${over ? '' : ' \u2713'}</span>
+          <span>${dr.of} most${over ? ' \u2713' : ''}</span></div>
+      </div>
+      <div class="mstat">${dr.allowed_per_game} allowed per game
+        <span class="dim">\u00b7 league ${dr.league_per_game}
+        \u00b7 ${dr.n} games${dr.band ? ' \u00b7 ' + esc(dr.band) : ''}</span></div>
+    </div>`);
+  }
+  // Both cuts when they disagree -- a defence can be middling overall
+  // and the worst in the league against one position, and the prop is
+  // bet on one player.
+  if (ev.def_rank_pos && ev.def_rank && ev.def_rank.rank
+      && ev.def_rank_pos.rank !== ev.def_rank.rank) {
+    out.push(`<div class="mnote">Overall they rank
+      <b>${ev.def_rank.rank} of ${ev.def_rank.of}</b>
+      (${ev.def_rank.allowed_per_game} per game) \u2014 the position
+      split above is the one this prop is exposed to.</div>`);
+  }
+  const h = ev.h2h;
+  if (h && h.n) {
+    const rows = (h.games || []).map(g => `<tr><td>${esc(g.date || '')}</td>
+      <td class="dim">${g.ha === 'H' ? 'home' : g.ha === 'A' ? 'away' : ''}</td>
+      <td><b>${g.v}</b></td></tr>`).join('');
+    out.push(`<div class="mbox">
+      <div class="mhead">Head to head \u00b7 ${h.n} meeting${
+        h.n === 1 ? '' : 's'}</div>
+      <div class="mstat">averaged <b>${h.mean}</b> against them
+        <span class="dim">\u00b7 ${h.baseline} everywhere else${
+        h.diff_pct == null ? '' : ` \u00b7 ${h.diff_pct > 0 ? '+' : ''}${
+        h.diff_pct}%`} \u00b7 ${h.baseline_n} games</span></div>
+      <div class="tscroll"><table><tbody>${rows}</tbody></table></div>
+      ${h.n < 4 ? `<div class="mnote">Too few meetings to weigh. Rosters
+        and roles change between seasons, so this is shown because it is
+        the first thing anyone looks for \u2014 not because the model
+        uses it.</div>` : ''}
+      ${h.baseline_includes_h2h ? `<div class="dim" style="font-size:10px">
+        The baseline includes these meetings; removing them would make
+        the comparison cleaner and the sample smaller.</div>` : ''}
+    </div>`);
+  }
+  // Who actually did the damage, from the opponent's own recent log.
+  const log = ev.opp_log || [];
+  if (log.length) {
+    const rows = log.slice(0, 6).map(g => `<tr>
+      <td>${esc(g.date || '')}</td><td class="dim">${esc(g.vs || '')}</td>
+      <td>${(g.players || []).map(x =>
+        `${esc(x.p)} <b>${x.v}</b>`).join(', ')}</td></tr>`).join('');
+    out.push(`<div class="mbox"><div class="mhead">Who they have been
+      giving it up to</div>
+      <div class="tscroll"><table><tbody>${rows}</tbody></table></div></div>`);
+  }
+  return out.length ? out.join('')
+    : `<div class="empty">No opponent record yet. Defensive ranks need
+       ${4} games against a team before they mean anything, and head to
+       head needs a meeting to have happened.</div>`;
+}
 
 function detail(p){
   const cur = SEC[p.i] || 'read';
@@ -1385,6 +1522,7 @@ function detail(p){
   const body =
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
     : cur === 'games'  ? `${games(p)}`
+    : cur === 'matchup'? `${matchup(p)}`
     : cur === 'market' ? `${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
@@ -1415,6 +1553,7 @@ function draw(){
   // Printed once. The hero IS the first row -- showing it again
   // immediately underneath reads as a rendering bug, not a feature.
   if (HEROID != null) list = list.filter(p => p.i !== HEROID);
+  if (BVIEW !== 'team') list = list.filter(p => p.kd !== 'team');
   // Top 15 is the head of the SAME ranking, not a separate shortlist
   // with its own rules. If only four rows are researched, it shows
   // four and says so, rather than padding to fifteen with rows that
@@ -1425,12 +1564,29 @@ function draw(){
   // as "usable but mediocre" is how something you cannot bet ends
   // up at the top of the board.
   $('npend').textContent = PROPS.filter(p => p.elig === false).length;
-  if (BVIEW === 'pending') {
+  const nteam = PROPS.filter(p => p.kd === 'team').length;
+  $('nteam').textContent = nteam;
+  // Hidden entirely until the engine produces one, rather than
+  // offering an empty screen.
+  const tb = document.querySelector('[data-view="team"]');
+  if (tb) tb.hidden = !nteam;
+  if (BVIEW === 'team') {
+    list = list.filter(p => p.kd === 'team');
+  } else if (BVIEW === 'pending') {
     list = list.filter(p => p.elig === false);
   } else if (BVIEW === 'top15') {
     // Up to fifteen QUALIFIED selections, never an obligation to
     // fill fifteen slots.
-    list = list.filter(p => p.elig !== false).slice(0, 15);
+    //
+    // Player props only. A game total has nine of the fifteen
+    // leaves structurally dark -- usage and role describe a man,
+    // not a game -- so its score tops out at six and it would sink
+    // to the bottom of a shared ranking for a reason that says
+    // nothing about the bet. It also has no graded history at all
+    // yet. Team totals live under their own chip until both are
+    // fixed.
+    list = list.filter(p => p.elig !== false && p.kd !== 'team')
+               .slice(0, 15);
   }
   // Say what this ordering is and is not. The score counts evidence
   // -- green leaves minus red -- and whether a higher score wins
@@ -1713,9 +1869,22 @@ function moveChip(m){
   const r = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
   if (m.pct == null) return `<span class="tmv">${esc(m.stat)}
     <b>n/a</b> ${r(m.recent)} ${esc(m.unit || '')}</span>`;
+  // Against the games BEFORE this window when there are enough of
+  // them. The available-history baseline includes the window, so it
+  // barely moved as you switched Last 1 to Last 10 -- the windows
+  // looked decorative and every move was understated.
+  const vs = m.prior != null
+    ? `${r(m.recent)} vs ${r(m.prior)} before`
+    : `${r(m.recent)} vs ${r(m.baseline)}`;
+  // -100% is a floor. Every player who recorded a zero reads the
+  // same, so the amount actually lost is printed beside it or the
+  // chip claims a collapse it cannot size.
+  const floored = m.floored || Math.abs(m.pct) >= 99.9;
+  const amt = floored && m.delta != null
+    ? ` <span class="dim">(${m.delta > 0 ? '+' : ''}${r(m.delta)})</span>` : '';
   return `<span class="tmv ${m.up ? 'up' : 'down'}">${esc(m.stat)}
-    <b>${m.pct > 0 ? '+' : ''}${m.pct}%</b>
-    ${r(m.recent)} vs ${r(m.baseline)} ${esc(m.unit || '')}</span>`;
+    <b>${m.pct > 0 ? '+' : ''}${m.pct}%</b>${amt}
+    ${vs} ${esc(m.unit || '')}</span>`;
 }
 function detailFor(m){
   // Minutes come off the box score as raw thirds of a minute, and
@@ -1736,6 +1905,21 @@ function detailFor(m){
         ? ` (${dates(m.baseline_from, m.baseline_to)})` : ''}.
     ${m.baseline_includes_recent
       ? 'The baseline includes these recent games.' : ''}
+    ${m.floored ? `<span class="unv">He recorded none at all in this
+      window, so the percentage bottoms out at \u2212100% \u2014 it cannot
+      tell this apart from any other zero. The ${num(Math.abs(m.delta))}
+      ${esc(m.unit || '')} he is down is the size of it.</span>` : ''}
+    ${m.prior != null ? `Against the <b>${m.prior_n}</b> game${
+      m.prior_n === 1 ? '' : 's'} <em>before</em> this window he averaged
+      <b>${num(m.prior)}</b>${dates(m.prior_from, m.prior_to)
+        ? ` (${dates(m.prior_from, m.prior_to)})` : ''} \u2014
+      <b class="${m.pct_prior > 0 ? 'hit' : 'miss'}">${
+        m.pct_prior > 0 ? '+' : ''}${m.pct_prior}%</b>. That comparison
+      has no overlap, which the baseline above does; it is also the
+      smaller sample, which is why the ranking still runs on the
+      baseline figure.` : `<span class="dim">Too few games before this
+      window to compare against \u2014 the baseline above is the only
+      comparison available.</span>`}
     ${m.missing_games ? `<span class="unv">${m.missing_games} game${
       m.missing_games === 1 ? '' : 's'} missing this stat \u2014 not counted
       as zero.</span>` : ''}</div>
@@ -1752,8 +1936,13 @@ function detailFor(m){
 function trendRow(r, id, name, sub, rank){
   const ms = winRows(r);
   if (!ms.length) return '';
-  const top = ms.reduce((a, b) =>
-    Math.abs(b.pct || 0) > Math.abs(a.pct || 0) ? b : a);
+  // Same tiebreak as the server: at -100% the percentage stops
+  // discriminating, so the stat with the larger real change wins.
+  const top = ms.reduce((a, b) => {
+    const pa = Math.abs(a.pct || 0), pb = Math.abs(b.pct || 0);
+    if (pb !== pa) return pb > pa ? b : a;
+    return Math.abs(b.delta || 0) > Math.abs(a.delta || 0) ? b : a;
+  });
   const open = OPENT.has(id);
   // The rank is position in THIS filtered view, not a global score.
   // Numbering a filtered list as though it were absolute is how a
@@ -1834,6 +2023,8 @@ document.addEventListener('click', e => {
     document.querySelectorAll('[data-twin]').forEach(x =>
       x.classList.toggle('on', x === w));
     return drawTrending(); }
+  const ak = e.target.closest('[data-ask]');
+  if (ak) { $('askq').value = ak.dataset.ask; drawAsk(); return; }
   const lvs = e.target.closest('[data-lvsport]');
   if (lvs) { LVSPORT = lvs.dataset.lvsport; drawLeafValue(); return; }
   const bv = e.target.closest('[data-view]');
@@ -2120,6 +2311,253 @@ function drawMvm(){
   $('mvm').innerHTML = parts;
 }
 
+/* ---- Ask --------------------------------------------------------
+   A question box over the engine's own history.
+
+   Deterministic on purpose. Every number it prints is a row that was
+   graded against a real box score, so it can answer "I don't have
+   that" and it cannot invent a figure. The cost is that it
+   understands a grammar rather than language: it looks for a name, a
+   stat, and a few filters, and it SHOWS what it understood so a
+   misread is visible instead of silent. */
+const MKT_WORDS = {
+  'points':'points', 'pts':'points', 'score':'points', 'scored':'points',
+  'rebounds':'rebounds', 'reb':'rebounds', 'rebs':'rebounds', 'boards':'rebounds',
+  'assists':'assists', 'ast':'assists', 'dimes':'assists',
+  'threes':'3-pointers_made', '3s':'3-pointers_made', '3pm':'3-pointers_made',
+  'treys':'3-pointers_made',
+  'blocks':'blocks', 'blk':'blocks', 'steals':'steals', 'stl':'steals',
+  'shots':'shots_on_goal', 'sog':'shots_on_goal',
+  'goals':'goals', 'saves':'saves',
+  'pra':'pra', 'yards':'receiving_yards', 'receptions':'receptions',
+  'catches':'receptions', 'carries':'rush_attempts',
+};
+
+function askNorm(s){
+  return String(s||'').toLowerCase()
+    .normalize('NFKD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+/* Parse, then answer. Returns {read, rows, text} so the UI can show
+   its own interpretation above the result. */
+function askQuery(q){
+  const A = D.ask || {}; const R = A.rows || [];
+  if (!R.length) return {error:'No graded history in this build yet.'};
+  const t = askNorm(q);
+  if (!t) return null;
+  const read = {};
+
+  // last N
+  let m = t.match(/last (\d+)/); if (m) read.last = Math.min(+m[1], 50);
+  // over / under a threshold
+  m = t.match(/\b(over|under|above|below) (\d+(?:\.\d+)?)/);
+  if (m) { read.cmp = (m[1]==='over'||m[1]==='above') ? 'over' : 'under';
+           read.thr = parseFloat(m[2]); }
+  if (/\bhome\b/.test(t)) read.ha = 'home';
+  if (/\baway\b|\bon the road\b|\broad\b/.test(t)) read.ha = 'away';
+
+  // market: longest word match wins so "3 pointers" beats "3"
+  for (const w of Object.keys(MKT_WORDS).sort((a,b)=>b.length-a.length)) {
+    if (new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`).test(t)) {
+      read.market = MKT_WORDS[w]; read.marketWord = w; break;
+    }
+  }
+  // opponent: "vs BOS" / "against boston"
+  m = t.match(/\b(?:vs|versus|against)\s+([a-z ]{2,20})/);
+  if (m) {
+    const want = m[1].trim();
+    read.opp = (A.teams||[]).find(tm => askNorm(tm) === want)
+            || (A.teams||[]).find(tm => askNorm(tm).includes(want))
+            || (A.teams||[]).find(tm => want.includes(askNorm(tm)));
+    read.oppWord = want;
+  }
+  // "without embiid and brown" / "missing embiid, george"
+  m = t.match(/\b(?:without|missing|minus|no)\s+([a-z0-9 ,]+?)(?:\s+(?:last|vs|versus|against|over|under|home|away)\b|$)/);
+  if (m) {
+    const who = m[1].split(/\s*(?:,|\band\b)\s*/).map(x => x.trim())
+                    .filter(Boolean);
+    read.without = who.map(nm => {
+      const hit = (A.roster_players || []).find(p => {
+        const n = askNorm(p);
+        return n === nm || n.split(' ').pop() === nm || n.includes(nm);
+      });
+      return {asked: nm, found: hit || null};
+    });
+  }
+
+  // player: best substring match on the query
+  // WORD BOUNDARIES, not substrings. The player column also holds
+  // team abbreviations for game-level rows, so a bare `includes`
+  // matched "NO" inside "nobody" and answered a question about New
+  // Orleans. Short keys must match a whole word.
+  const word = (needle, hay) =>
+    new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+      .test(hay);
+  let best = null;
+  (A.players||[]).forEach((nm, i) => {
+    const n = askNorm(nm);
+    if (!n || n === 'game') return;
+    if (n.includes(' ') ? t.includes(n) : word(n, t)) {
+      if (!best || n.length > best.len) best = {i, nm, len:n.length};
+      return;
+    }
+    const last = n.split(' ').pop();
+    if (last.length >= 4 && word(last, t)
+        && (!best || last.length > best.len)) best = {i, nm, len:last.length};
+  });
+  if (best) { read.player = best.nm; read.pi = best.i; }
+  if (read.player == null && read.opp == null)
+    return {read, error:'No player or team in that. Try a name, a stat, '
+      + 'and a filter — "Maxey points last 5", "Barrett vs BOS".'};
+
+  const ti = read.opp == null ? -1 : (A.teams||[]).indexOf(read.opp);
+  const mi = read.market == null ? -1 : (A.markets||[]).indexOf(read.market);
+  let rows = R.filter(r => {
+    if (read.pi != null && r[0] !== read.pi) return false;
+    if (mi >= 0 && r[1] !== mi) return false;
+    if (ti >= 0) {
+      // The opponent is whichever side of the matchup is not his.
+      if (read.pi != null) { if (r[5] !== ti && r[6] !== ti) return false; }
+      else if (r[5] !== ti && r[6] !== ti) return false;
+    }
+    return true;
+  });
+  // date desc
+  rows.sort((a,b) => (A.dates[b[2]] || '').localeCompare(A.dates[a[2]] || ''));
+  if (read.ha && read.pi != null) {
+    // Home/away needs to know which team was his, which this index
+    // does not carry. Say so rather than guess at it.
+    read.haUnsupported = true;
+  }
+  // WITHOUT: keep only games where none of the named team-mates
+  // appear on a roster for that date. A name this history has never
+  // seen dress is NOT an absence -- treated as one it is true in
+  // every game, and the answer looks right while being built from
+  // games he was never expected in.
+  if (read.without) {
+    const unknown = read.without.filter(w => !w.found).map(w => w.asked);
+    if (unknown.length) {
+      read.unknown = unknown;
+    } else if (!(A.rosters && Object.keys(A.rosters).length)) {
+      read.noRosters = true;
+    } else {
+      const ids = read.without.map(w => (A.roster_players || []).indexOf(w.found));
+      const dressed = new Set();
+      for (const [k, list] of Object.entries(A.rosters))
+        if (ids.some(i => list.includes(i))) dressed.add(k.split('|')[0]);
+      const before = rows.length;
+      rows = rows.filter(r => !dressed.has(A.dates[r[2]]));
+      read.withoutFrom = before;
+    }
+  }
+  if (read.last) rows = rows.slice(0, read.last);
+  return {read, rows, index:A};
+}
+
+const ASK_EGS = ['points last 5', 'rebounds vs BOS', 'shots over 2.5',
+                 'assists last 10'];
+
+function drawAsk(){
+  const A = D.ask || {};
+  const eg = $('askeg');
+  if (eg && !eg.dataset.on) {
+    eg.dataset.on = '1';
+    // Seeded with a player who is actually IN the index, so the
+    // examples cannot demonstrate a question the data cannot answer.
+    const who = (A.players || []).find(n => n && !/^[A-Z]{2,4}$/.test(n)
+                                            && n !== 'GAME') || '';
+    const last = who.split(' ').pop();
+    eg.innerHTML = ASK_EGS.map(x =>
+      `<button class="chip" data-ask="${esc(last + ' ' + x)}">${
+        esc(last + ' ' + x)}</button>`).join('');
+  }
+  const q = ($('askq') && $('askq').value) || '';
+  const out = $('askout');
+  if (!q.trim()) {
+    out.innerHTML = `<div class="empty">${
+      A.n ? `${A.n.toLocaleString()} graded games on record,
+      ${A.from} to ${A.to}, across ${(A.players||[]).length} players.`
+      : 'No graded history yet.'}</div>`;
+    return;
+  }
+  const res = askQuery(q);
+  if (!res) { out.innerHTML = ''; return; }
+  const r = res.read || {};
+  const chips = [
+    r.player && `<span class="rd">${esc(r.player)}</span>`,
+    r.market && `<span class="rd">${esc(r.market.replace(/_/g,' '))}</span>`,
+    r.opp && `<span class="rd">vs ${esc(r.opp)}</span>`,
+    r.last && `<span class="rd">last ${r.last}</span>`,
+    r.cmp && `<span class="rd">${r.cmp} ${r.thr}</span>`,
+    r.without && `<span class="rd">without ${esc(r.without.map(
+      w => w.found || w.asked).join(', '))}</span>`,
+  ].filter(Boolean).join('');
+  const readBar = chips
+    ? `<div class="readbar"><span class="dim">read as</span>${chips}</div>` : '';
+
+  if (res.error) {
+    out.innerHTML = `${readBar}<div class="empty">${esc(res.error)}</div>`;
+    return;
+  }
+  if (r.unknown) {
+    out.innerHTML = `${readBar}<div class="empty">No game on record where
+      ${esc(r.unknown.join(' or '))} dressed, so "without" cannot be
+      answered \u2014 a name this history has not seen is missing from
+      every game by default, which would look like an answer and be
+      one.</div>`;
+    return;
+  }
+  if (r.noRosters) {
+    out.innerHTML = `${readBar}<div class="empty">Rosters are not in this
+      build yet. They start accumulating on the next slate, from box
+      scores already being fetched \u2014 so "without" questions become
+      answerable as the history fills.</div>`;
+    return;
+  }
+  const rows = res.rows || [], A2 = res.index;
+  if (!rows.length) {
+    out.innerHTML = `${readBar}<div class="empty">Nothing on record for
+      that. This covers ${A2.covers} \u2014 ${A2.from} to ${A2.to} \u2014 so a
+      game the slate skipped is not in here.</div>`;
+    return;
+  }
+  const vals = rows.map(x => x[3]);
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  let head = `<b>${mean.toFixed(1)}</b> average
+    <span class="dim">over ${rows.length} game${rows.length === 1 ? '' : 's'}</span>`;
+  if (r.cmp && r.thr != null) {
+    const n = vals.filter(v => r.cmp === 'over' ? v > r.thr : v < r.thr).length;
+    head = `<b>${n} of ${rows.length}</b> ${r.cmp} ${r.thr}
+      <span class="dim">\u00b7 ${(100 * n / rows.length).toFixed(0)}% \u00b7
+      ${mean.toFixed(1)} average</span>`;
+  }
+  const body = rows.slice(0, 25).map(x => {
+    const d = A2.dates[x[2]], away = A2.teams[x[5]], home = A2.teams[x[6]];
+    const opp = r.player && home && away
+      ? `${esc(away)} @ ${esc(home)}` : `${esc(away||'')} @ ${esc(home||'')}`;
+    const line = x[4];
+    const cleared = line == null ? null : x[3] > line;
+    return `<tr><td>${esc(d)}</td><td class="dim">${opp}</td>
+      <td><b>${x[3]}</b></td>
+      <td class="${cleared == null ? 'dim' : cleared ? 'hit' : 'miss'}">${
+        line == null ? '' : (cleared ? 'over ' : 'under ') + line}</td></tr>`;
+  }).join('');
+
+  out.innerHTML = `${readBar}
+    <div class="askhead">${head}</div>
+    ${r.haUnsupported ? `<div class="mnote">Home and away are not in this
+      index \u2014 it records the matchup, not which side he was on \u2014 so
+      that part of the question was ignored.</div>` : ''}
+    <div class="tscroll"><table>
+      <thead><tr><th>Date</th><th>Game</th><th>Stat</th><th>vs line</th></tr>
+      </thead><tbody>${body}</tbody></table></div>
+    ${rows.length > 25 ? `<div class="dim">Showing 25 of ${rows.length}.</div>`
+      : ''}
+    <div class="dim" style="margin-top:7px">Covers ${A2.covers}. A night
+      the slate skipped is not on this list.</div>`;
+}
+
 function drawRecord(){
   const ax = $('axis');
   ax.innerHTML = [35,40,45,50,55,60,65,70,75,80].map(v =>
@@ -2170,12 +2608,20 @@ function drawRecord(){
 }
 
 /* ---------- wiring ---------- */
+function showTab(name){
+  for (const t of document.querySelectorAll('nav.tabs button[data-tab]')) {
+    t.setAttribute('aria-selected', String(t.dataset.tab === name));
+    const el = $('tab-' + t.dataset.tab);
+    if (el) el.hidden = t.dataset.tab !== name;
+  }
+}
 document.querySelector('nav.tabs').onclick = e => {
   const b = e.target.closest('button[data-tab]'); if (!b) return;
-  for (const t of document.querySelectorAll('nav.tabs button'))
-    t.setAttribute('aria-selected', String(t === b));
-  for (const id of ['board','games','stake','record','health','trending'])
-    $('tab-'+id).hidden = id !== b.dataset.tab;
+  // Derived from the buttons, in ONE place. The hardcoded list was
+  // its own failure mode twice over: adding a tab wired up the
+  // button, the panel and the renderer and then did nothing,
+  // because neither copy of the list had been edited.
+  showTab(b.dataset.tab);
 };
 document.addEventListener('click', e => {
   // A section tag jumps to the leaf that graded that section. The
@@ -2215,6 +2661,7 @@ document.addEventListener('click', e => {
   }
 });
 $('q').addEventListener('input', draw);
+$('askq').addEventListener('input', drawAsk);
 $('bank').addEventListener('input', drawStakes);
 // Tapping a game filters the board to it.
 document.addEventListener('click', e => {
@@ -2223,8 +2670,11 @@ document.addEventListener('click', e => {
   $('q').value = g.dataset.game;
   for (const t of document.querySelectorAll('nav.tabs button'))
     t.setAttribute('aria-selected', String(t.dataset.tab === 'board'));
-  for (const id of ['board','games','stake','record','health','trending'])
-    $('tab-'+id).hidden = id !== 'board';
+  // Same derivation as the tab handler. This second copy of the
+  // hardcoded list is why one was never enough: jumping to a game
+  // from Trending left the new tab's panel visible underneath the
+  // board.
+  showTab('board');
   draw();
   window.scrollTo(0,0);
 });
@@ -2279,7 +2729,8 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
     `${b.slate_size ?? 0} evaluated`;
   drawFilters(); draw(); drawGames(); drawStakes();
   drawTrending(); drawRecord(); drawCalibration();
-  drawTierOutcomes(); drawLeafValue(); drawMvm(); drawHealth();
+  drawTierOutcomes(); drawLeafValue(); drawMvm(); drawAsk();
+  drawHealth();
 })();
 </script>
 
