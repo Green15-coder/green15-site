@@ -141,6 +141,7 @@
 header{display:flex;align-items:baseline;gap:10px;padding:10px 0 7px}
 header h1{margin:0;font-family:var(--d);font-weight:900;letter-spacing:-.03em;
   font-size:clamp(20px,5.6vw,27px);line-height:1}
+#stamp.stale{color:var(--hold)}
 .live{display:flex;align-items:center;gap:5px;font-family:var(--m);
   font-size:10px;color:var(--ink-2);white-space:nowrap;
   margin-left:2px;overflow:hidden;text-overflow:ellipsis}
@@ -656,6 +657,7 @@ section{padding-block:16px}
     </div>
     <span class="vcount" id="boardmeta"></span>
   </div>
+  <div id="boardwhy"></div>
   <p class="eyebrow" id="topnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
@@ -879,6 +881,16 @@ const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
 const am  = d => d >= 2 ? `+${Math.round((d-1)*100)}` : `${Math.round(-100/(d-1))}`;
+// How long ago, as a bare phrase. `ago()` bakes the word "updated"
+// into its output, which reads as "prices updated 7h ago" and
+// "fetched updated 7h ago" wherever the caller supplies its own verb.
+const since = iso => {
+  if (!iso) return '';
+  const m = (Date.now() - new Date(iso).getTime()) / 6e4;
+  return m < 1 ? 'seconds ago' : m < 90 ? `${Math.round(m)} min ago`
+       : m < 2880 ? `${Math.round(m / 60)}h ago`
+       : `${Math.round(m / 1440)}d ago`;
+};
 const ago = iso => {
   if (!iso) return '';
   const h = (Date.now() - new Date(iso).getTime())/36e5;
@@ -926,6 +938,52 @@ const FILTERS = [
    the future that nothing in this app can support, and dressing a
    ranking up as a tip is the one thing the rest of the page spends
    its time refusing to do. */
+/* Why the board is unusable, when it is.
+
+   A screen reading "Full board 1806 / Pending 1806" states the
+   symptom and hides the cause: every row held back for the same
+   reason, and the reader left to open one and read its pending list
+   to find out which. The dominant reason belongs at the top. */
+function boardWhy(){
+  const el = $('boardwhy');
+  if (!el) return;
+  const all = PROPS.filter(p => p.kd !== 'team');
+  const blocked = all.filter(p => p.elig === false);
+  if (!all.length || blocked.length < all.length) { el.innerHTML = ''; return; }
+  const tally = {};
+  blocked.forEach(p => (p.pend || []).forEach(r => {
+    // "price 447m old" and "price 12m old" are one reason.
+    const k = String(r).replace(/\d+/g, 'N');
+    tally[k] = (tally[k] || 0) + 1;
+  }));
+  const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0];
+  if (!top) { el.innerHTML = ''; return; }
+  const [key, n] = top;
+  const everyone = n === blocked.length;
+  // `key` has its digits replaced so "price 447m old" and
+  // "price 456m old" count as one reason -- but printing the key
+  // puts a literal "price Nm old" on screen. Show the real range.
+  const sample = [];
+  blocked.forEach(p => (p.pend || []).forEach(r => {
+    if (String(r).replace(/\d+/g, 'N') === key) sample.push(String(r));
+  }));
+  const nums = sample.map(x => parseInt((x.match(/\d+/) || [])[0], 10))
+                     .filter(Number.isFinite).sort((a, b) => a - b);
+  const reason = !nums.length ? key
+    : nums[0] === nums[nums.length - 1]
+      ? sample[0]
+      : key.replace('N', `${nums[0]}\u2013${nums[nums.length - 1]}`);
+  el.innerHTML = `<div class="callout warn" style="margin:0 0 10px">
+    <b>Nothing on this board can be acted on.</b>
+    All ${blocked.length.toLocaleString()} selections are held back, and
+    ${everyone ? 'every one of them' : `${n.toLocaleString()} of them`}
+    for the same reason: <b>${esc(reason)}</b>.
+    ${/price/i.test(reason) ? `The prices on this board were fetched
+      ${D.data_at ? since(D.data_at) : 'some time ago'}; the page itself was
+      rebuilt more recently, which does not refresh them. Re-run the
+      slate to price it again.` : ''}</div>`;
+}
+
 let HEROID = null;
 function drawHero(){
   const el = $('hero');
@@ -1571,6 +1629,7 @@ function detail(p){
 
 function draw(){
   drawHero();
+  boardWhy();
   let list = PROPS.filter(matches)
     // Researched rows first, THEN score. The board arrives already
     // ordered that way, and re-sorting on score alone threw it away
@@ -2795,7 +2854,21 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
   }
   const b = D.board || {};
   PROPS = b.props || [];
-  $('stamp').textContent = ago(D.generated_at);
+  // The DATA's age, not the page's. A rebuild without a fresh
+  // slate moves generated_at and leaves every price where it was,
+  // and "updated just now" above a seven-hour-old board is the
+  // app's freshness claim being the least reliable thing on it.
+  const dAge = D.data_at ? Math.round(
+    (Date.now() - new Date(D.data_at).getTime()) / 60000) : null;
+  $('stamp').textContent = D.data_at
+    ? `prices ${since(D.data_at)}`
+    : (D.priced_rows === 0 ? 'no priced rows' : 'price age unknown');
+  // Amber past the point the eligibility gate starts rejecting on
+  // staleness, so the header and the gate agree.
+  $('stamp').className = dAge != null && dAge > 90 ? 'stale' : '';
+  const dot = document.querySelector('.dot');
+  if (dot) dot.style.background = dAge != null && dAge > 90
+    ? 'var(--hold)' : 'var(--up)';
   // The header used to carry the playable count, the hit rate and
   // the sample. All three sit in the stat strip one band below, at
   // four times the size, so the header was a third copy that also
