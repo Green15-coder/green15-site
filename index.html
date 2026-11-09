@@ -18,7 +18,7 @@
   --paper:#F4F3EE; --ink:#14180F; --ink-2:#4A5043; --rule:#D6D6CC;
   --card:#FBFAF6; --raise:#EDEBE3; --clover:#1F6F43; --clover-soft:#DCEBE1;
   --over:#1F6F43; --under:#A33A2A; --flat:#8A8A7C; --mark:#C7B079;
-  --on-clover:#F4FBF5;
+  --on-clover:#F4FBF5; --bar:#7FB79A;
   --d:'Archivo',system-ui,sans-serif; --b:'IBM Plex Sans',system-ui,sans-serif;
   --m:'IBM Plex Mono',ui-monospace,monospace;
 }
@@ -26,13 +26,13 @@
   --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
   --card:#171B10; --raise:#1E2318; --clover:#5FBF86; --clover-soft:#1C2A1F;
   --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
-  --on-clover:#0A120B;
+  --on-clover:#0A120B; --bar:#3E8C62;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#101309; --ink:#EDEEE4; --ink-2:#9BA391; --rule:#2A2F22;
   --card:#171B10; --raise:#1E2318; --clover:#5FBF86; --clover-soft:#1C2A1F;
   --over:#5FBF86; --under:#E0745F; --flat:#7C8273; --mark:#D8BE84;
-  --on-clover:#0A120B;
+  --on-clover:#0A120B; --bar:#3E8C62;
   color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -156,7 +156,7 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
   line-height:14px;color:var(--ink-2)}
 .gbar .gbf{width:100%;flex:0 0 auto;border-radius:4px 4px 2px 2px;
   background:var(--flat);min-height:3px}
-.gbar.hit .gbf{background:var(--clover)}
+.gbar.hit .gbf{background:var(--bar)}
 .gbar.hit .gbv{color:var(--over)}
 .xax{display:flex;gap:4px;margin-top:5px}
 .xax span{flex:1 1 0;min-width:0;text-align:center;font-family:var(--m);
@@ -191,6 +191,18 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .why .cav{margin-top:7px;font-family:var(--m);font-size:10.5px;
   color:var(--under)}
 .tsplit{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+/* Card treatment: a bordered block per row instead of a hairline,
+   so a long list reads as separate things rather than one wall. */
+.trow.card{border:1px solid var(--rule);border-top:1px solid var(--rule);
+  border-radius:13px;padding:12px 13px;margin-bottom:9px;background:var(--card)}
+.tname{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.rank{flex:0 0 22px;height:22px;border-radius:7px;display:grid;
+  place-items:center;font-family:var(--m);font-size:11px;font-weight:600;
+  color:var(--ink-2);background:var(--raise);margin-top:1px}
+.rank.top{color:var(--on-clover);background:var(--clover)}
+.chip span{opacity:.6;margin-left:3px}
+.chip.on{border-color:var(--clover);background:var(--clover-soft);
+  color:var(--ink);font-weight:600}
 .trow{border-top:1px solid var(--rule);padding:11px 0;display:grid;
   grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline}
 .trow .tnm{font-family:var(--d);font-weight:700;font-size:15px}
@@ -238,7 +250,22 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
   margin:2px 0 8px;line-height:1.6}
 .simcrit li{margin-left:14px}
 .hit{color:var(--over)} .miss{color:var(--under)} .push{color:var(--ink-2)}
-.detail{padding:4px 0 16px;display:grid;gap:9px}
+/* The expanded card is nested content, and it never looked it. */
+.detail{padding:4px 0 10px;display:grid;gap:10px;
+  border-left:2px solid var(--clover-soft);padding-left:10px;margin-left:-2px}
+.secnav{display:flex;gap:4px;position:sticky;top:var(--stick,0);z-index:3;
+  background:var(--bg);padding:7px 0 6px;margin:0 -2px}
+.secbtn{flex:1 1 0;font-family:var(--m);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 4px;border-radius:9px;
+  border:1px solid var(--rule);background:none;color:var(--ink-2);
+  cursor:pointer}
+.secbtn.on{border-color:var(--clover);background:var(--clover-soft);
+  color:var(--ink);font-weight:600}
+.secbody{display:grid;gap:10px;min-height:120px}
+.closecard{width:100%;padding:11px;border-radius:10px;border:1px solid var(--rule);
+  background:none;color:var(--ink-2);font-family:var(--m);font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-top:2px}
+.closecard:hover{border-color:var(--ink-2);color:var(--ink)}
 .leaf{display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:start}
 .dot{width:9px;height:9px;border-radius:50% 0 50% 50%;transform:rotate(45deg);
   margin-top:5px;background:var(--rule)}
@@ -367,7 +394,13 @@ section{padding-block:16px}
     </div>
     <div class="chips" id="filters"></div>
   </div>
+  <div class="strip" id="strip"></div>
   <p class="eyebrow" id="boardmeta"></p>
+  <div class="tsplit" style="margin:2px 0 10px">
+    <button class="chip on" data-view="all">Full board</button>
+    <button class="chip" data-view="top15">Top 15</button>
+  </div>
+  <p class="eyebrow" id="topnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
 </div>
@@ -426,6 +459,10 @@ section{padding-block:16px}
     minutes jump and the line takes days.</p>
 
     <div class="tsplit" style="margin-bottom:6px">
+      <span class="eyebrow" style="align-self:center;margin-right:2px">sport</span>
+      <span id="tsports"></span>
+    </div>
+    <div class="tsplit" style="margin-bottom:6px">
       <span class="eyebrow" style="align-self:center;margin-right:2px">window</span>
       <button class="chip" data-twin="1">Last 1</button>
       <button class="chip on" data-twin="3">Last 3</button>
@@ -459,6 +496,18 @@ section{padding-block:16px}
     confidence intervals; the mark is the observed rate.</p>
     <div class="scale"><div class="axis" id="axis"></div><div id="ivbars"></div></div>
     <div class="callout" id="disc"></div>
+  </section>
+  <section>
+    <div class="hrow"><h2>Does the ranking predict?</h2></div>
+    <p class="traynote">Win rate by the Clover tier a pick carried
+    <em>when it was made</em>. Until the score was written onto the ledger
+    this could not be asked at all \u2014 every graded row was scored after
+    the fact, with no evidence attached, so the whole history sat in one
+    bucket at 49.8%. Rows with no stamped tier are counted separately, not
+    folded into Weak: putting them there would fill the bottom bucket with
+    coin flips and make the ranking look calibrated because its worst grade
+    matched chance.</p>
+    <div id="tierout"></div>
   </section>
   <section>
     <h2>Where the edge is spent</h2>
@@ -730,8 +779,10 @@ function roleBox(p){
       `${d(x.a_value, x.b_value)} (${x.a_n}g / ${x.b_n}g)`
       + (x.a_mins != null ? ` · ${x.a_mins} vs ${x.b_mins} min` : '')]);
   }
+  const r1 = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
   if (r.rate) rows.push([`per ${r.rate.base} ${esc(r.rate.unit)}`,
-    `${r.rate.recent} recent vs ${r.rate.season} season (${r.rate.n}g)`]);
+    `${r1(r.rate.recent)} recent vs ${r1(r.rate.season)} season `
+    + `(${r.rate.n}g)`]);
   if (r.fouls) rows.push(['fouls',
     `${r.fouls.mean} avg · ${r.fouls.five_plus} game${
       r.fouls.five_plus === 1 ? '' : 's'} at 5+ (${r.fouls.n}g)`]);
@@ -787,6 +838,33 @@ function oppRow(p, rec){
       decisions faster than any season average.</div>` : ''}</div>`;
 }
 
+/* What the line asks for, in the market's own units. "Over in six
+   of eight" says how often a number has been beaten; it says nothing
+   about how hard the number is. */
+function reqBox(p){
+  const r = p.req;
+  if (!r || !r.need) return '';
+  const pct = v => v == null ? '\u2014' : v.toFixed(2);
+  const easier = r.required_at_recent != null
+    && r.required_at_recent < r.actual_rate;
+  return `<div class="reqbox"><h4>what this line requires</h4>
+    <div class="reqline"><span>${esc(p.sd)} ${p.ln} needs</span>
+      <b>${r.need}${r.whole_line ? ' (exactly ' + p.ln + ' pushes)' : ''}</b></div>
+    <div class="reqline"><span>his ${esc(r.unit)}, last ${r.n}</span>
+      <b>${r.chances}</b></div>
+    <div class="reqline"><span>rate that demands</span>
+      <b>${pct(r.required_rate)} per ${esc(r.unit)}</b></div>
+    <div class="reqline"><span>rate he has managed</span>
+      <b class="${r.actual_rate >= r.required_rate ? 'hit' : 'miss'}">${
+        pct(r.actual_rate)}</b></div>
+    <div class="reqline"><span>at his recent ${r.chances_recent} ${esc(r.unit)}</span>
+      <b class="${easier ? 'hit' : 'miss'}">${pct(r.required_at_recent)} needed</b></div>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">The
+      ${esc(r.unit)} figure is an ASSUMPTION — tonight's is not known in
+      advance. Arithmetic on measured games only: no projection and no
+      probability here.</span></div></div>`;
+}
+
 function card(p){
   const ev = p.ev || {}, rec = (ev.recent || []).slice().reverse();
   const vals = rec.map(r => r.v).filter(v => v != null);
@@ -834,7 +912,7 @@ function card(p){
   const diff = (p.pj != null && line != null) ? p.pj - line : null;
   const dirOK = diff != null && ((p.sd === 'Over' && diff > 0) || (p.sd === 'Under' && diff < 0));
   const tiles = `<div class="tiles">
-    <div class="tile"><div class="tl">our projection</div>
+    <div class="tile"><div class="tl">projection</div>
       <div class="tv">${p.pj != null ? p.pj.toFixed(1) : '—'}</div>
       <div class="tn">${p.sv != null ? '±' + p.sv.toFixed(1) + ' sd' : '&nbsp;'}</div></div>
     <div class="tile"><div class="tl">line</div>
@@ -873,16 +951,6 @@ function card(p){
         : '—'}</div></div>
   </div>`;
 
-  // --- every book's own number ----------------------------------------
-  const bl = (p.bl || []).slice(0, 8);
-  const books = bl.length ? `<div class="ltags" style="margin-top:0">
-    ${ltag(p,'market_value')}${ltag(p,'clv')}</div>
-    <div class="books">${bl.map(b => {
-    const best = b.b === p.bb && b.l === line;
-    return `<span class="bchip ${best ? 'best' : ''}">${esc(BOOK[b.b] || b.b)}
-      <b>${b.l}</b> ${b.p > 0 ? '+' : ''}${b.p}</span>`;
-  }).join('')}</div>` : '';
-
   // --- why -------------------------------------------------------------
   // The caveat is not decoration. A projection the engine itself
   // distrusts still renders a confident-looking card, and the only
@@ -899,32 +967,75 @@ function card(p){
   // composed from these leaves' own inputs, so a red leaf under a
   // sentence that reads well means the sentence is the thing to
   // distrust.
-  const why = p.wy ? `<div class="why"><div class="wl">why</div>
+  const whyBox = p.wy ? `<div class="why"><div class="wl">why</div>
     <p>${esc(p.wy)}</p>
     ${cav.map(c => `<div class="cav">${c}</div>`).join('')}
     <div class="ltags">${['injury','matchup','role_stability','game_script']
       .map(id => ltag(p, id)).join('')}</div></div>` : '';
+  WHY_CACHE[p.i] = whyBox;
 
-  const sim = similar(p), role = roleBox(p);
   return `<div class="hero">
       <span class="pk">${esc(p.sd)} ${line ?? ''}
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
-    </div>${tiles}${chart}${strip}${books}${why}${role}${sim}`;
+    </div>${tiles}${chart}${strip}`;
 }
 
+const WHY_CACHE = {};
 const BOOK = {draftkings:'DK', fanduel:'FD', betmgm:'MGM', pinnacle:'PIN',
   williamhill_us:'CZR', caesars:'CZR', betrivers:'BR', espnbet:'ESPN',
   fanatics:'FAN', bovada:'BOV', betonlineag:'BOL', lowvig:'LV',
   prizepicks:'PP', underdog:'UD', mybookieag:'MB', ballybet:'BALLY'};
 
+/* Every book's own posted number, for the Market section. */
+function bookRow(p){
+  const bl = (p.bl || []).slice(0, 10);
+  if (!bl.length) return '<div class="empty">no book board captured</div>';
+  return `<div class="ltags" style="margin-top:0">
+      ${ltag(p,'market_value')}${ltag(p,'clv')}</div>
+    <div class="books">${bl.map(b => {
+      const best = b.b === p.bb && b.l === p.ln;
+      return `<span class="bchip ${best ? 'best' : ''}">${esc(BOOK[b.b] || b.b)}
+        <b>${b.l}</b> ${b.p > 0 ? '+' : ''}${b.p}</span>`;
+    }).join('')}</div>`;
+}
+
+/* Sport marks. Simple glyphs rather than logos: a league wordmark
+   is someone else's trademark and has no business in a private
+   research tool. */
+const SPORT_ICON = {NBA:'\u25CF', NHL:'\u25C6', NFL:'\u25B2',
+                    MLB:'\u25CB', NCAAF:'\u25B3'};
+function sico(sp){
+  const g = SPORT_ICON[(sp || '').toUpperCase()];
+  return g ? `<i class="sico">${g}</i>` : '';
+}
+
+const SEC = {};           // which section each open card is showing
+
+/* An expanded prop ran to 3,004px -- three and a half screens -- in
+   one unbroken column inside a list. Scrolling through it you lose
+   track of which prop you are in, overshoot the end, and land in the
+   next one without noticing. The content is all worth having; the
+   single column was the mistake.
+
+   Hero, tiles and chart stay pinned as the answer. Everything else
+   goes behind four sections, so the card opens at about one screen
+   and you choose what to read instead of scrolling past it. */
+const SECTIONS = [
+  ['read',   'Why'],
+  ['games',  'Games'],
+  ['market', 'Market'],
+  ['leaves', 'Leaves'],
+];
+
 function detail(p){
+  const cur = SEC[p.i] || 'read';
+  const nav = `<div class="secnav">${SECTIONS.map(([k, label]) =>
+    `<button class="secbtn ${k === cur ? 'on' : ''}"
+      data-sec="${p.i}:${k}">${label}</button>`).join('')}</div>`;
+
   const facts = [
-    // signals.clears counts games ABOVE the line, which is the win
-    // count for an Over and the loss count for an Under. Printing it
-    // raw put "cleared 3/8" next to a chart reading "5/8 under" on
-    // the same card.
     p.cl != null && p.dc
       ? `<span>won <b>${p.sd === 'Under' ? p.dc - p.cl : p.cl}/${p.dc}</b></span>`
       : '',
@@ -934,19 +1045,27 @@ function detail(p){
     p.at ? `<span class="${ageClass(p.at)}">priced <b>${ageText(p.at)}</b></span>` : '',
     p.bk ? `<span><b>${p.bk}</b> books</span>` : '',
   ].join('');
+
+  const body =
+      cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
+    : cur === 'games'  ? `${games(p)}`
+    : cur === 'market' ? `${bookRow(p)}<div class="facts">${facts}</div>`
+    : (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
+        <i class="dot ${l[1]}"></i>
+        <div><span class="lb">${esc(l[0])}</span>
+          <div class="rs">${esc(l[2])}</div></div></div>`).join('');
+
   return `<div class="detail">
     ${card(p)}
-    <div class="facts">${facts}</div>
-    ${games(p)}
-    ${(p.lv||[]).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
-      <i class="dot ${l[1]}"></i>
-      <div><span class="lb">${esc(l[0])}</span>
-        <div class="rs">${esc(l[2])}</div></div></div>`).join('')}
+    ${nav}
+    <div class="secbody">${body}</div>
+    <button class="closecard" data-open="${p.i}">close ${esc(p.pl)}</button>
   </div>`;
 }
 
+
 function draw(){
-  const list = PROPS.filter(matches)
+  let list = PROPS.filter(matches)
     // Researched rows first, THEN score. The board arrives already
     // ordered that way, and re-sorting on score alone threw it away
     // -- a prop whose research never arrived still carries a Clover
@@ -955,6 +1074,26 @@ function draw(){
     // whole claim is that the ranking means something.
     .sort((a,b) => (a.nores?1:0)-(b.nores?1:0)
                 || (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0));
+  // Top 15 is the head of the SAME ranking, not a separate shortlist
+  // with its own rules. If only four rows are researched, it shows
+  // four and says so, rather than padding to fifteen with rows that
+  // were never examined.
+  if (BVIEW === 'top15') list = list.filter(p => !p.nores).slice(0, 15);
+  // Say what this ordering is and is not. The score counts evidence
+  // -- green leaves minus red -- and whether a higher score wins
+  // more often is a question the Record tab answers, not an
+  // assumption this list is allowed to make.
+  const tn = $('topnote');
+  if (tn) {
+    tn.hidden = BVIEW !== 'top15';
+    const to = D.tier_outcomes || {};
+    tn.innerHTML = `the best-EVIDENCED fifteen, by green leaves minus red
+      \u2014 not the fifteen most likely to win. ` + (to.enough
+        ? `tier-vs-outcome is on the Record tab.`
+        : `<span class="unv">whether a higher score wins more often is
+           still unverified (${to.scored || 0} graded picks carry a
+           score).</span>`);
+  }
   $('cBoard').textContent = list.length;
   $('qclear').hidden = !$('q').value;
   $('norows').hidden = list.length > 0;
@@ -971,13 +1110,15 @@ function draw(){
       <div class="rowhead">
         <button class="pick" data-open="${p.i}" aria-expanded="${open}">
           <span class="nm">${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>
-          <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${esc(p.sp)}
+          <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
             · <span class="${thin?'thin':''}">${p.n ?? '?'} games</span></span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
         </button>
-        <span class="sc"><b>${p.sc ?? '-'}</b>${esc(p.ti||'')}${pips(p.lv)}</span>
+        <span class="sc">${p.gr
+          ? `<b class="grade g-${esc(p.gr)}">${esc(p.gr)}</b>`
+          : `<b>${p.sc ?? '-'}</b>`}${esc(p.ti||'')}${pips(p.lv)}</span>
         <button class="add" data-sel="${p.i}" aria-pressed="${on}"
           title="${on ? 'remove from parlay' : 'add to parlay'}"
           aria-label="${on ? 'remove from parlay' : 'add to parlay'}"
@@ -1179,7 +1320,7 @@ function drawHealth(){
 }
 
 /* ---------- trending ---------- */
-let TDIR = 'all', TWIN = '3';
+let TDIR = 'all', TWIN = '3', TSPORT = 'all', BVIEW = 'all';
 const OPENT = new Set();
 
 // A window is not a streak. "Last 3" is an average over three games
@@ -1242,14 +1383,20 @@ function detailFor(m){
 }
 
 
-function trendRow(r, id, name, sub){
+function trendRow(r, id, name, sub, rank){
   const ms = winRows(r);
   if (!ms.length) return '';
   const top = ms.reduce((a, b) =>
     Math.abs(b.pct || 0) > Math.abs(a.pct || 0) ? b : a);
   const open = OPENT.has(id);
-  return `<div class="trow">
-    <div><span class="tnm">${esc(name)}</span><div class="tsub">${sub}</div></div>
+  // The rank is position in THIS filtered view, not a global score.
+  // Numbering a filtered list as though it were absolute is how a
+  // ranking starts meaning something it does not.
+  const badge = rank == null ? ''
+    : `<span class="rank ${rank <= 3 ? 'top' : ''}">${rank}</span>`;
+  return `<div class="trow card">
+    <div class="tname">${badge}<div><span class="tnm">${esc(name)}</span>
+      <div class="tsub">${sub}</div></div></div>
     <div class="tbig ${top.pct == null ? '' : top.pct > 0 ? 'up' : 'down'}">${
       top.pct == null ? 'n/a' : (top.pct > 0 ? '+' : '') + top.pct + '%'}</div>
     <div class="tmoves">${ms.map(moveChip).join('')}${
@@ -1266,7 +1413,23 @@ function drawTrending(){
   $('tpct').textContent = t.min_pct ?? 15;
   const qual = r => winRows(r).some(m => m.pct != null
     && Math.abs(m.pct) >= (t.min_pct ?? 15));
-  const shown = players.filter(qual);
+  // Sport chips are built from what is actually on the board, not
+  // from a hardcoded list: an NFL chip on a Tuesday in November
+  // promises a league that is not playing.
+  const bySport = {};
+  for (const r of players.filter(qual)) {
+    bySport[r.sport || '?'] = (bySport[r.sport || '?'] || 0) + 1;
+  }
+  const order = Object.keys(bySport).sort();
+  $('tsports').innerHTML =
+    `<button class="chip ${TSPORT === 'all' ? 'on' : ''}" data-tsport="all">All
+      <span>${players.filter(qual).length}</span></button>`
+    + order.map(sp => `<button class="chip ${TSPORT === sp ? 'on' : ''}"
+        data-tsport="${esc(sp)}">${sico(sp)}${esc(sp)}
+        <span>${bySport[sp]}</span></button>`).join('');
+
+  const shown = players.filter(qual)
+    .filter(r => TSPORT === 'all' || (r.sport || '?') === TSPORT);
   const up = shown.filter(r => (winRows(r).reduce((a, b) =>
     Math.abs(b.pct || 0) > Math.abs(a.pct || 0) ? b : a).pct || 0) > 0);
   const down = shown.filter(r => !up.includes(r));
@@ -1288,13 +1451,16 @@ function drawTrending(){
     `${esc(r.sport)} · ${r.team ? esc(r.team)
       : '<span class="unv">team unverified</span>'}${
       (r.markets || []).length
-        ? ' · ' + esc(r.markets.join(', ').replace(/_/g, ' ')) : ''}`
+        ? ' · ' + esc(r.markets.join(', ').replace(/_/g, ' ')) : ''}`,
+    i + 1
   )).join('');
 
-  const tl = teams.map(r => ({...r, moves: [r]})).filter(r => winRows(r).length);
+  const tl = teams
+    .filter(r => TSPORT === 'all' || (r.sport || '?') === TSPORT)
+    .map(r => ({...r, moves: [r]})).filter(r => winRows(r).length);
   $('noteam').hidden = tl.length > 0;
   $('teamrows').innerHTML = tl.map((r, i) => trendRow(
-    r, 't' + i, r.team, `${esc(r.sport)} · ${esc(r.stat)}`)).join('');
+    r, 't' + i, r.team, `${esc(r.sport)} · ${esc(r.stat)}`, i + 1)).join('');
 }
 document.addEventListener('click', e => {
   const w = e.target.closest('[data-twin]');
@@ -1302,11 +1468,27 @@ document.addEventListener('click', e => {
     document.querySelectorAll('[data-twin]').forEach(x =>
       x.classList.toggle('on', x === w));
     return drawTrending(); }
+  const bv = e.target.closest('[data-view]');
+  if (bv) {
+    BVIEW = bv.dataset.view;
+    document.querySelectorAll('[data-view]').forEach(x =>
+      x.classList.toggle('on', x === bv));
+    return draw();
+  }
+  const sp = e.target.closest('[data-tsport]');
+  if (sp) { TSPORT = sp.dataset.tsport; return drawTrending(); }
   const b = e.target.closest('[data-tdir]');
   if (b) { TDIR = b.dataset.tdir;
     document.querySelectorAll('[data-tdir]').forEach(x =>
       x.classList.toggle('on', x === b));
     return drawTrending(); }
+  const sc = e.target.closest('[data-sec]');
+  if (sc) {
+    const [i, k] = sc.dataset.sec.split(':');
+    SEC[i] = k;
+    draw();
+    return;
+  }
   const g = e.target.closest('[data-trow]');
   if (g) { const k = g.dataset.trow;
     OPENT.has(k) ? OPENT.delete(k) : OPENT.add(k);
@@ -1315,6 +1497,40 @@ document.addEventListener('click', e => {
 
 /* ---------- record ---------- */
 const LO = 30, HI = 85, pos = v => ((v-LO)/(HI-LO))*100;
+function drawTierOutcomes(){
+  const to = D.tier_outcomes || {}, t = to.tiers || {};
+  const order = ['Legendary','Elite','Strong','Playable','Fringe','Weak']
+    .filter(k => t[k]);
+  if (!order.length) {
+    $('tierout').innerHTML = `<div class="empty">No graded pick carries a
+      Clover tier yet. ${to.unscored || 0} graded rows predate the score
+      being written to the ledger; tonight's picks are the first that can
+      answer this.</div>`;
+    return;
+  }
+  const rows = order.map(k => {
+    const v = t[k];
+    return `<tr><td><b>${k}</b></td><td>${v.n}</td>
+      <td class="${v.rate >= 0.524 ? 'hit' : 'miss'}">${
+        (100*v.rate).toFixed(1)}%</td>
+      <td class="dim">${(100*v.ci_low).toFixed(0)}\u2013${
+        (100*v.ci_high).toFixed(0)}%</td></tr>`;
+  }).join('');
+  const verdict = to.enough
+    ? (to.monotonic
+        ? 'Higher tiers have won more often, in order, at 30+ picks each.'
+        : 'The ordering does NOT hold: a lower tier is outperforming a higher one.')
+    : `Not enough yet to say. ${to.scored || 0} scored picks across
+       ${order.length} tiers; a tier needs 30+ before its rate means much,
+       and the ordering needs to hold across at least three of them.`;
+  $('tierout').innerHTML = `<div class="tscroll"><table>
+    <thead><tr><th>Tier</th><th>n</th><th>Hit</th><th>95% CI</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="callout" style="margin-top:9px">${esc(verdict)}
+      ${to.unscored ? `<br><span class="unv">${to.unscored} graded rows
+        carry no tier and are excluded.</span>` : ''}</div>`;
+}
+
 function drawRecord(){
   const ax = $('axis');
   ax.innerHTML = [35,40,45,50,55,60,65,70,75,80].map(v =>
@@ -1439,10 +1655,32 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
     `<b>${b.playable_count ?? 0}</b> of <b>${b.slate_size ?? 0}</b> playable
      &nbsp;·&nbsp; record <b>${D.buckets_bet ? (100*D.buckets_bet.rate).toFixed(1)+'%' : '—'}</b>
      on ${D.buckets_bet ? D.buckets_bet.n : 0}`;
+  // Measured only. A weekly-ROI headline on a record that is still
+  // estimated would make the real numbers underneath look weaker
+  // than they are -- the hit rate and the sample size are things the
+  // ledger actually knows.
+  const bb = D.buckets_bet || {};
+  const bp = (D.buckets || {}).PASS || {};
+  // The gap is computed upstream and carries its z-score; recomputing
+  // it here would be a second answer to a question already settled.
+  const dz = D.discrimination || {};
+  $('strip').innerHTML = [
+    ['hit rate', bb.rate != null ? (100*bb.rate).toFixed(1) + '%' : '\u2014',
+     bb.n ? `${bb.n} bets` : 'no sample'],
+    ['passed', bp.rate != null ? (100*bp.rate).toFixed(1) + '%' : '\u2014',
+     bp.n ? `${bp.n} control` : ''],
+    ['bet vs pass', dz.gap_points != null
+       ? (dz.gap_points > 0 ? '+' : '') + dz.gap_points.toFixed(1) : '\u2014',
+     dz.z != null ? `z ${dz.z > 0 ? '+' : ''}${dz.z.toFixed(2)}` : ''],
+    ['on the board', String(b.slate_size ?? 0),
+     `${b.playable_count ?? 0} playable`],
+  ].map(([l, v, x]) => `<div class="sv"><div class="sl">${l}</div>
+      <div class="sn">${v}</div><div class="sx">${x}</div></div>`).join('');
+
   $('boardmeta').textContent =
     `${b.slate_size ?? 0} props evaluated · ranked by Clover score · a ranking, not a recommendation list`;
   drawFilters(); draw(); drawGames(); drawStakes();
-  drawTrending(); drawRecord(); drawHealth();
+  drawTrending(); drawRecord(); drawTierOutcomes(); drawHealth();
 })();
 </script>
 
