@@ -1951,6 +1951,33 @@ function dates(a, b){
   const f = d => (d || '').slice(5);
   return a && b ? (a === b ? f(a) : `${f(a)} – ${f(b)}`) : '';
 }
+/* The games to draw, with a fallback.
+
+   `series` is written by the slate build, so a board rendered from
+   an older run has none and the chart rendered nothing at all --
+   silently, which is the failure mode this app keeps being caught
+   by. The window rows DO carry their own games, so the widest
+   available window is assembled into a series client-side. It is
+   shorter than the real thing (ten games rather than fifteen) and
+   that is worth saying, but it is a chart today instead of a chart
+   after the next run. */
+function seriesFor(r, stat){
+  const W = (r && r.windows) || {};
+  const ready = (W.series || {})[stat];
+  if (ready && (ready.games || []).length >= 2) return ready;
+  let best = null;
+  for (const k of ['10', '5', '3', '1']) {
+    const row = (W[k] || []).find(x => x.stat === stat);
+    if (row && (row.games || []).length >= 2) { best = row; break; }
+  }
+  if (!best) return null;
+  const games = [...best.games]
+    .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
+    .map(g => ({d: g.date, v: g.v, o: g.opp, h: g.ha}));
+  return {unit: best.unit, games, baseline: best.baseline,
+          baseline_n: best.baseline_n, partial: true};
+}
+
 /* One stat, drawn. Bars are games oldest to newest; the selected
    window is the accent, earlier games are recessive context. Two
    dashed rules: the available-history baseline and, when there is
@@ -1960,7 +1987,11 @@ function trendChart(ser, win, row){
   // `num` is local to detailFor; this runs outside it.
   const num = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
   const gs = (ser && ser.games) || [];
-  if (gs.length < 2) return '';
+  if (gs.length < 2) {
+    // Silence here is what hid a missing chart for a whole run.
+    return `<div class="tchart"><div class="dim" style="font-size:10.5px">
+      Not enough recorded games to draw a shape yet.</div></div>`;
+  }
   const W = 300, H = 72, PAD = 13, n = gs.length;
   const vals = gs.map(g => g.v);
   const base = ser.baseline, prior = row && row.prior;
@@ -2016,6 +2047,8 @@ function trendChart(ser, win, row){
     <span>--- baseline ${num(base)}</span>
     ${prior != null ? `<span>\u00b7\u00b7\u00b7 before ${
       num(prior)}</span>` : ''}
+    ${ser.partial ? `<span class="dim">${gs.length} games \u2014 the full
+      run appears after the next slate build</span>` : ''}
   </div></div>`;
 }
 
@@ -2115,11 +2148,10 @@ function trendRow(r, id, name, sub, rank){
       r.dv && r.dv.state ? `<span class="tmv ${
         r.dv.state.startsWith('together') ? '' : 'warn'}"
         title="${esc(r.dv.note || '')}">${esc(r.dv.state)}</span>` : ''}</div>
-    ${trendChart((r.windows && r.windows.series || {})[top.stat],
-                 +TWIN || 3, top)}
+    ${trendChart(seriesFor(r, top.stat), +TWIN || 3, top)}
     <button class="tgl" data-trow="${id}">${open ? 'hide games' : 'show games'}</button>
     ${open ? ms.map(m => (m.stat === top.stat ? '' : trendChart(
-        (r.windows && r.windows.series || {})[m.stat], +TWIN || 3, m))
+        seriesFor(r, m.stat), +TWIN || 3, m))
         + detailFor(m)).join('') : ''}</div>`;
 }
 
