@@ -499,6 +499,15 @@ section{padding-block:16px}
     <div class="callout" id="disc"></div>
   </section>
   <section>
+    <div class="hrow"><h2>Are the probabilities honest?</h2></div>
+    <p class="traynote">When the engine says 60%, does it come in about six
+    times in ten? Every edge, every EV and every stake is computed from
+    these numbers, so this is the test that decides whether any of them
+    mean anything. Pushes are excluded \u2014 a refunded bet has no outcome
+    to compare a probability against.</p>
+    <div id="calib"></div>
+  </section>
+  <section>
     <div class="hrow"><h2>Does the ranking predict?</h2></div>
     <p class="traynote">Win rate by the Clover tier a pick carried
     <em>when it was made</em>. Until the score was written onto the ledger
@@ -1541,6 +1550,53 @@ document.addEventListener('click', e => {
 
 /* ---------- record ---------- */
 const LO = 30, HI = 85, pos = v => ((v-LO)/(HI-LO))*100;
+function drawCalibration(){
+  const c = D.calibration || {}, bs = c.buckets || [];
+  const el = $('calib');
+  if (!c.n) {
+    el.innerHTML = `<div class="empty">No graded pick carries a stated
+      probability yet. ${c.unscored || 0} graded rows predate the engine
+      writing one to the ledger.</div>`;
+    return;
+  }
+  const rows = bs.map(b => {
+    const off = b.happened - b.said;
+    return `<tr><td>${b.lo}\u2013${b.hi}%</td>
+      <td>${b.n}${b.thin ? '<span class="unv"> thin</span>' : ''}</td>
+      <td>${b.said}%</td>
+      <td class="${b.ok ? '' : 'miss'}">${b.happened}%</td>
+      <td class="dim">${b.ci_low}\u2013${b.ci_high}%</td>
+      <td class="${Math.abs(off) < 3 ? '' : off > 0 ? 'hit' : 'miss'}">${
+        off > 0 ? '+' : ''}${off.toFixed(1)}</td></tr>`;
+  }).join('');
+  // The spread is the finding, not a footnote. The anchor shrinks
+  // every projection toward the market and caps it four points
+  // away, so if every pick lands in one bucket there is no range to
+  // test across -- and a flat curve would show only that the model
+  // agrees with the market, not that it is calibrated.
+  const narrow = c.spread != null && c.spread < 10;
+  const verdict = !c.testable
+    ? `Not testable yet. ${c.n} graded picks spanning just
+       <b>${c.spread}</b> points of probability across ${c.filled}
+       bucket${c.filled === 1 ? '' : 's'}${narrow
+         ? ` \u2014 the anchor caps every edge at 4 points, so these
+            probabilities are nearly identical by construction. There is
+            no range here to test calibration across.` : '.'}`
+    : (c.beats_baseline
+        ? `Brier ${c.brier} against ${c.brier_baseline} for always saying
+           the base rate \u2014 the probabilities are adding information.`
+        : `Brier ${c.brier} is WORSE than ${c.brier_baseline}, which is what
+           always saying the base rate would score. The probabilities are
+           not adding information.`);
+  el.innerHTML = `<div class="tscroll"><table>
+      <thead><tr><th>Said</th><th>n</th><th>Mean</th><th>Happened</th>
+        <th>95% CI</th><th>Off by</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="callout" style="margin-top:9px">${verdict}
+      ${c.unscored ? `<br><span class="unv">${c.unscored} graded rows carry
+        no probability and are excluded.</span>` : ''}</div>`;
+}
+
 function drawTierOutcomes(){
   const to = D.tier_outcomes || {}, t = to.tiers || {};
   const order = ['Legendary','Elite','Strong','Playable','Fringe','Weak']
@@ -1724,7 +1780,8 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
   $('boardmeta').textContent =
     `${b.slate_size ?? 0} props evaluated · ranked by Clover score · a ranking, not a recommendation list`;
   drawFilters(); draw(); drawGames(); drawStakes();
-  drawTrending(); drawRecord(); drawTierOutcomes(); drawHealth();
+  drawTrending(); drawRecord(); drawCalibration();
+  drawTierOutcomes(); drawHealth();
 })();
 </script>
 
