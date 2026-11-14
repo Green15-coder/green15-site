@@ -2925,12 +2925,34 @@ function drawRecord(){
                         + (pas ? row('PASS', pas, 'var(--flat)') : '');
 
   const dc = D.discrimination;
-  $('disc').innerHTML = dc
-    ? `<b>${dc.gap_points > 0 ? '+' : ''}${dc.gap_points} points, z = ${dc.z}.</b>
-       Passes land near a coin flip; selections do not. It does <em>not</em> say
-       the book made money — at these prices it returned
-       <b>${bet && bet.roi != null ? (bet.roi>0?'+':'')+bet.roi+'%' : 'n/a'}</b>.`
-    : 'Not enough graded rows yet to compare bets against passes.';
+  // The interval, not just the point estimate. The gap used to be
+  // quoted with a z built from 1,890 independent rows; a night's
+  // picks share a slate, and counting them as independent nights
+  // overstated the evidence. What the reader needs is the range the
+  // data actually supports and how many independent nights are
+  // behind it.
+  $('disc').innerHTML = !dc
+    ? 'Not enough graded rows yet to compare bets against passes.'
+    : `<b>${dc.gap_points > 0 ? '+' : ''}${dc.gap_points} points${
+        dc.z != null ? `, z = ${dc.z}` : ''}.</b>
+       ${Math.abs(dc.gap_points) < 1.5
+         ? 'Selections and passes are landing at the same rate \u2014 on '
+           + 'this sample the filter is not separating them.'
+         : dc.gap_points > 0
+           ? 'Passes land near a coin flip; selections do not.'
+           : 'Passes are OUTPERFORMING selections \u2014 the filter is '
+             + 'sorting the wrong way on this sample.'}
+       ${dc.clustered ? `The 95% range is
+         <b>${dc.ci_low > 0 ? '+' : ''}${dc.ci_low} to ${
+         dc.ci_high > 0 ? '+' : ''}${dc.ci_high} points</b>, clustered by
+         slate — ${dc.n_bet} bets and ${dc.n_control} passes, but only
+         <b>${dc.n_slates} independent nights</b>, which is the number that
+         sets the width. Counting every row as its own trial would read
+         z = ${dc.z_independent}.`
+       : `<span class="unv">${esc(dc.note || '')}</span>`}
+       It does <em>not</em> say the book made money — at these prices it
+       returned <b>${bet && bet.roi != null ? (bet.roi>0?'+':'')+bet.roi+'%'
+                     : 'n/a'}</b>.`;
 
   $('bands').innerHTML = (D.bands||[]).map(b => {
     const neg = b.roi < 0;
@@ -3076,7 +3098,8 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
      bp.n ? `${bp.n} control` : ''],
     ['bet vs pass', dz.gap_points != null
        ? (dz.gap_points > 0 ? '+' : '') + dz.gap_points.toFixed(1) : '\u2014',
-     dz.z != null ? `z ${dz.z > 0 ? '+' : ''}${dz.z.toFixed(2)}` : '',
+     dz.z != null ? `z ${dz.z > 0 ? '+' : ''}${dz.z.toFixed(2)}${
+       dz.n_slates ? ' \u00b7 ' + dz.n_slates + ' nights' : ''}` : '',
      dz.gap_points == null ? '' : dz.gap_points > 0 ? 'good' : 'bad'],
     ['on the board', String(b.slate_size ?? 0),
      `${b.playable_count ?? 0} playable`],
