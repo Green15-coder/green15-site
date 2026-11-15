@@ -2952,7 +2952,11 @@ function drawRecord(){
        : `<span class="unv">${esc(dc.note || '')}</span>`}
        It does <em>not</em> say the book made money — at these prices it
        returned <b>${bet && bet.roi != null ? (bet.roi>0?'+':'')+bet.roi+'%'
-                     : 'n/a'}</b>.`;
+                     : 'n/a'}</b>.
+       ${D.pair_note ? `<div class="mnote">Counted one row per prop:
+         ${esc(D.pair_note)} Both sides of a prop cannot both win, so
+         counting both pins every rate on this tab to 50% whatever the
+         engine does.</div>` : ''}`;
 
   $('bands').innerHTML = (D.bands||[]).map(b => {
     const neg = b.roi < 0;
