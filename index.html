@@ -607,6 +607,43 @@ section{padding-block:16px}
 .bar{position:absolute;top:6px;height:8px;border-radius:4px;opacity:.3}
 .pt{position:absolute;top:2px;width:3px;height:16px;border-radius:2px}
 .ivval{font-family:var(--m);font-size:13px;font-weight:600;text-align:right}
+
+/* ---- tracker ----
+   `.track` is ALREADY the confidence-interval bar in Record, so every
+   class here is trk-prefixed. Reusing it would have restyled the
+   intervals the first time this file grew a tracker, which is the kind
+   of break that shows up on a tab nobody was looking at.
+
+   `.reqbox` and `.evline` are used in the card and styled nowhere;
+   this follows `.simbox` + h4 + `.simcrit` instead, which is the
+   convention that actually renders. */
+.trknote{font-family:var(--m);font-size:11px;color:var(--ink-2);
+  margin:9px 0 0;line-height:1.55}
+.trkrow{display:grid;grid-template-columns:1fr auto;gap:9px;
+  align-items:start;padding:11px 0;border-top:1px solid var(--rule)}
+.trkpk{min-width:0;font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.trksub{font-family:var(--m);font-size:11px;color:var(--ink-2);
+  margin-top:2px;line-height:1.55}
+.trkst{display:flex;gap:3px;flex-wrap:wrap;margin-top:7px}
+.trkin{grid-column:1/-1;display:flex;gap:11px;flex-wrap:wrap;
+  align-items:center;margin-top:8px}
+.trkin label{font-family:var(--m);font-size:11px;color:var(--ink-2);
+  display:flex;gap:5px;align-items:center}
+.trkin input{width:76px;background:none;border:1px solid var(--rule);
+  border-radius:3px;padding:5px 6px;color:inherit;font:inherit;
+  font-family:var(--m);font-size:12px;outline:none}
+.trkin input:focus{border-color:var(--ink)}
+.trkv{font-family:var(--m);font-size:13px;font-weight:600;
+  font-variant-numeric:tabular-nums}
+.trkv.up{color:var(--clover)} .trkv.dn{color:var(--under)}
+.trkmark{font-family:var(--m);font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:1px 4px;border-radius:2px;
+  border:1px solid var(--rule);color:var(--ink-2);white-space:nowrap}
+.trkmark.done{border-color:var(--clover);color:var(--clover)}
+.trkmark.intend{border-color:var(--mark);color:var(--mark)}
+.trkbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:15px}
+.trkbad{color:var(--under)}
+
 @media (prefers-reduced-motion:no-preference){
   .add,.chip,.detail{transition:background .15s ease,color .15s ease}}
 </style>
@@ -627,6 +664,7 @@ section{padding-block:16px}
   <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
   <button role="tab" aria-selected="false" data-tab="record">Record</button>
   <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
+  <button role="tab" aria-selected="false" data-tab="track">Tracked<span class="cnt" id="cTrack"></span></button>
   <button role="tab" aria-selected="false" data-tab="health">Health<span class="cnt" id="cHealth"></span></button>
   </nav>
 </div>
@@ -859,6 +897,35 @@ section{padding-block:16px}
 </div>
 </div>
 
+
+<!-- ──────────────────────── TRACKED ───────────────────────── -->
+<div id="tab-track" hidden>
+  <section>
+    <div class="hrow"><h2>What you actually did</h2></div>
+    <p class="traynote">Three things kept apart on purpose: props you are
+    <b>watching</b>, wagers you <b>intend</b> to place, and bets you have
+    <b>placed</b> — with the price you were actually filled at. The first
+    two are notes to yourself. Only the third is evidence, and only once a
+    fill price is on it. Collapsing them into one &ldquo;saved&rdquo; list
+    is what makes a record dishonest later: a prop you glanced at and a
+    bet you paid for stop being distinguishable.</p>
+    <p class="traynote">What the board said <em>when you tracked a pick</em>
+    is frozen onto the entry — price, grade, tier, model number. The board
+    rebuilds every slate and prices move, and reading today's number back
+    onto last night's decision would make every past call look as if it
+    had been made with information it did not have.</p>
+    <div class="chips" id="trkviews"></div>
+    <div id="trkrows"></div>
+    <div class="empty" id="trknone" hidden></div>
+    <div class="callout" id="trksum"></div>
+    <div class="trkbar">
+      <button class="add" id="trkexp">download JSON</button>
+      <button class="add" id="trkcopy">copy</button>
+    </div>
+    <p class="trknote" id="trkwhere"></p>
+  </section>
+</div>
+
 <!-- ──────────────────── PARLAY TRAY ──────────────────── -->
 <div class="tray" id="tray" hidden>
   <div class="inner">
@@ -877,7 +944,8 @@ section{padding-block:16px}
 </div>
 <script>
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
-const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set()};
+const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
+           trk:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -929,6 +997,10 @@ const FILTERS = [
   ['Tier','tier',['Legendary','Elite','Strong','Playable','Fringe','Weak']],
   ['Side','side',['Over','Under']],
   ['Bar','bar',['researched','8+ games','edge 2%+','no red leaf']],
+  /* Reads the tracker, which is per-browser and not in the data file.
+     It lives in the same registry as the rest so there is one place a
+     filter is declared and one place it is matched. */
+  ['Tracked','trk',['Watching','Intend','Placed']],
 ];
 /* The top of the ranking, at the size it deserves.
 
@@ -994,6 +1066,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
+    && !F.trk.size
     && BVIEW !== 'pending';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false)
@@ -1046,6 +1119,12 @@ function matches(p){
   if (F.sport.size && !F.sport.has(p.sp)) return false;
   if (F.tier.size  && !F.tier.has(p.ti))  return false;
   if (F.side.size  && !F.side.has(p.sd))  return false;
+  if (F.trk.size) {
+    const st = trkState(p);
+    let hit = false;
+    for (const v of F.trk) if (st && st === TRK_FILTER[v]) hit = true;
+    if (!hit) return false;
+  }
   for (const b of F.bar) {
     // A row whose research never arrived has leaves graded on
     // whatever scalars survived. This hides those outright rather
@@ -1508,7 +1587,7 @@ function card(p){
         + (team ? 'of room' : 'from line') : '&nbsp;'}</div></div>
   </div>
   <div class="ltags" style="margin-top:-2px">${ltag(p,'projection_edge')}
-    ${ltag(p,'consistency')}${ltag(p,'true_edge')}</div>`;
+    ${ltag(p,'consistency')}</div>`;
 
   // --- season / recent / minutes --------------------------------------
   const mins = rec.map(r => r.m).filter(Boolean);
@@ -1613,6 +1692,7 @@ const SECTIONS = [
   ['matchup', 'Matchup'],
   ['market',  'Market'],
   ['leaves',  'Leaves'],
+  ['track',   'Tracked'],
 ];
 
 /* What the opponent gives up, and what this player has done to them.
@@ -1766,6 +1846,7 @@ function detail(p){
     : cur === 'matchup'? `${matchup(p)}`
     : cur === 'market' ? `${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
+    : cur === 'track'  ? trkBox(p)
     : (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
         <i class="dot ${l[1]}"></i>
         <div><span class="lb">${esc(l[0])}</span>
@@ -1873,7 +1954,7 @@ function draw(){
           <span class="nm">${headline(p)}</span>
           <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
             ${vs(p)}
-            · <span class="${thin?'thin':''}">${gamesText(p)}</span></span>
+            · <span class="${thin?'thin':''}">${gamesText(p)}</span>${trkPip(p)}</span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
@@ -1891,6 +1972,301 @@ function draw(){
         ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
       ${open ? detail(p) : ''}</div>`;
   }).join('');
+}
+
+
+/* ---------- tracker ----------
+
+   Records the decision and the fill. It does not score anything: no
+   CLV, no ROI, no return. Both of those need a number this app has
+   never had -- a closing price, and a settled outcome -- and the one
+   missing input they share is what you were actually filled at. That
+   is the whole job here.
+*/
+const TRK_KEY = 'green15.track.v1';
+const TRK = new Map();
+let TRKVIEW = 'all', TRKOK = true;
+
+const TRK_STATES = [['watch','Watching'],['intend','Intend'],['done','Placed']];
+const TRK_FILTER = {Watching:'watch', Intend:'intend', Placed:'done'};
+const trkLabel = st => (TRK_STATES.find(s => s[0] === st) || ['','—'])[1];
+
+/* `p.i` is an enumerate index over TONIGHT's slate. It is not stable:
+   tomorrow's build renumbers everything, so an entry keyed on it would
+   silently re-point at a different prop. The key is the bet itself
+   plus the night it was for -- which also means the same prop on two
+   nights is two entries, because it is two bets. */
+function trkKey(p){
+  return [D.slate_day || 'undated', (p.sp || '').toUpperCase(),
+          (p.pl || '').trim().toLowerCase(),
+          (p.mk || '').trim().toLowerCase(),
+          (p.sd || '').trim().toLowerCase(),
+          p.ln ?? ''].join('␟');
+}
+
+/* Every read and write guarded. In a private window, with site data
+   blocked, or inside a preview frame the accessor THROWS rather than
+   returning empty, and a tracker that takes the page down with it is
+   worse than one that forgets. */
+function trkLoad(){
+  let raw = null;
+  try { raw = localStorage.getItem(TRK_KEY); }
+  catch (e) { return false; }
+  if (!raw) return true;
+  try {
+    const rows = JSON.parse(raw);
+    if (!Array.isArray(rows)) return true;
+    TRK.clear();
+    for (const r of rows) if (r && typeof r.k === 'string') TRK.set(r.k, r);
+  } catch (e) { /* unreadable store: start empty rather than throw */ }
+  return true;
+}
+function trkSave(){
+  try { localStorage.setItem(TRK_KEY, JSON.stringify([...TRK.values()]));
+        return true; }
+  catch (e) { return false; }
+}
+
+/* One place that redraws, so the board marker, the tab count and the
+   list can never disagree about what is tracked.
+
+   `defer` exists for edits that arrive from a change event on an input
+   INSIDE the list. A fill can promote its entry to placed, which moves
+   the state chips, the view counts, and whether the row belongs in the
+   current view at all -- so the whole list genuinely has to redraw.
+   Doing it synchronously replaced #trkrows while the browser was still
+   dispatching the event from an input inside it, and the removal threw
+   "the node to be removed is no longer a child of this node" on every
+   single edit. The board redraws immediately either way: it is a
+   different container and holds nothing the event came from. */
+function trkCommit(defer){
+  TRKOK = trkSave();
+  draw();
+  if (defer) setTimeout(drawTrack, 0); else drawTrack();
+}
+
+/* Tracking records the DECISION, so the model's view is copied onto
+   the entry now and never refreshed. */
+function trkMark(p, st){
+  const k = trkKey(p), cur = TRK.get(k);
+  if (cur) {
+    // Tapping the state a pick is already in untracks it. Anything
+    // else needs a separate remove control on the board card.
+    if (cur.st === st) TRK.delete(k); else cur.st = st;
+  } else {
+    TRK.set(k, {
+      k, st, day: D.slate_day || null, at: new Date().toISOString(),
+      sp: p.sp || '', pl: p.pl || '', mk: p.mk || '',
+      sd: p.sd || '', ln: p.ln ?? null, mu: p.mu || '',
+      bpr: p.pr ?? null, bmp: p.mp ?? null, bfp: p.fp ?? null,
+      bgr: p.gr ?? null, bti: p.ti ?? null, bsc: p.sc ?? null,
+      fpr: null, fat: null, stk: null,
+    });
+  }
+  trkCommit();
+}
+function trkSet(k, st){
+  const e = TRK.get(k);
+  if (!e || e.st === st) return;
+  e.st = st; trkCommit();
+}
+function trkState(p){ const e = TRK.get(trkKey(p)); return e ? e.st : null; }
+
+/* Rejected, never coerced. Number('') is 0 and Number('abc') is NaN,
+   and writing either onto a fill price turns a typo into a measured
+   number -- the exact failure this whole audit has been about. */
+function trkEdit(k, field, raw){
+  const e = TRK.get(k); if (!e) return;
+  const s = String(raw).trim();
+  if (!s) {
+    e[field] = null;
+    if (field === 'fpr') e.fat = null;
+  } else {
+    const v = Number(s.replace(/[+,$\s]/g, ''));
+    // A rejection still redraws: the input is holding text that was
+    // not accepted, and leaving it on screen would show a fill the
+    // entry does not have.
+    if (!Number.isFinite(v)) { setTimeout(drawTrack, 0); return; }
+    if (field === 'fpr') {
+      // American odds. Nothing strictly between -100 and +100 exists,
+      // so a "50" is a decimal price or a typo, not a fill.
+      if (Math.abs(v) < 100) { setTimeout(drawTrack, 0); return; }
+      e.fpr = Math.round(v);
+      e.fat = new Date().toISOString();
+      // A fill IS the placing of the bet. Leaving it at "intend" would
+      // empty the one state that counts as evidence of exactly the
+      // rows that carry evidence.
+      e.st = 'done';
+    } else {
+      if (v < 0) { setTimeout(drawTrack, 0); return; }
+      e.stk = v;
+    }
+  }
+  trkCommit(true);
+}
+
+/* Your fill against the board price AT THE TIME YOU TRACKED IT, in
+   break-even points. Positive means the price you got needs a lower
+   win rate than the one on screen did.
+
+   This is NOT closing-line value, and it is not labelled as such
+   anywhere. CLV compares a fill to the price the market SETTLED at,
+   and this app has never stored a closing price -- the same missing
+   field that keeps leaf 11 dark at decision time. Calling this CLV
+   would make it the one number on the page borrowed from a
+   measurement nobody took.
+
+   American odds are not linear across the +/-100 boundary, so the
+   comparison runs through the implied probability and not the cents. */
+function trkBeat(e){
+  if (e.fpr == null || e.bpr == null) return null;
+  return (1 / dec(e.bpr) - 1 / dec(e.fpr)) * 100;
+}
+
+function trkExport(){
+  return JSON.stringify({
+    app: 'green15', kind: 'tracker', schema: 1,
+    exported_at: new Date().toISOString(),
+    slate_day: D.slate_day || null,
+    entries: [...TRK.values()],
+  }, null, 2);
+}
+
+/* The tracked state, on the board row. Without it the tracker is a
+   place you have to remember to go and look at. */
+function trkPip(p){
+  const st = trkState(p);
+  if (!st) return '';
+  const cls = st === 'done' ? ' done' : st === 'intend' ? ' intend' : '';
+  return ` <span class="trkmark${cls}">${esc(trkLabel(st))}</span>`;
+}
+
+/* The card's Tracked section. */
+function trkBox(p){
+  const k = trkKey(p), e = TRK.get(k), st = e ? e.st : null;
+  const beat = e ? trkBeat(e) : null;
+  const buttons = TRK_STATES.map(([sk, l]) =>
+    `<button class="chip${st === sk ? ' on' : ''}"
+      data-trkmark="${p.i}" data-trkto="${sk}">${l}</button>`).join('');
+  if (!e) return `<div class="simbox"><h4>tracked</h4>
+    <div class="trkst">${buttons}</div>
+    <p class="trknote">Nothing recorded for this pick. Tapping a state
+    freezes tonight's board price, grade, tier and model number onto the
+    entry — those are what the decision was made on, and the board will
+    not be showing them tomorrow.</p></div>`;
+  return `<div class="simbox"><h4>tracked</h4>
+    <div class="trkst">${buttons}</div>
+    <div class="trkin">
+      <label>fill <input type="text" inputmode="numeric"
+        data-trkf="1" data-trkk="${esc(k)}" placeholder="e.g. -115"
+        value="${e.fpr != null ? (e.fpr > 0 ? '+' : '') + e.fpr : ''}"></label>
+      <label>stake <input type="text" inputmode="decimal"
+        data-trks="1" data-trkk="${esc(k)}" placeholder="units"
+        value="${e.stk != null ? e.stk : ''}"></label>
+    </div>
+    <p class="trknote">Recorded ${esc((e.at || '').slice(0, 16).replace('T', ' '))}
+      at board ${e.bpr != null ? (e.bpr > 0 ? '+' : '') + e.bpr : '—'}.
+      ${beat != null
+        ? `Your fill breaks even <b>${Math.abs(beat).toFixed(1)} points
+           ${beat > 0 ? 'lower' : 'higher'}</b> than that price did.`
+        : `No fill price yet — until there is one this is a note, not a
+           record, and nothing downstream can measure it.`}</p></div>`;
+}
+
+function drawTrack(){
+  const all = [...TRK.values()].sort((a, b) =>
+    String(b.day || '').localeCompare(String(a.day || ''))
+    || String(b.at || '').localeCompare(String(a.at || '')));
+  const cnt = {watch: 0, intend: 0, done: 0};
+  all.forEach(e => { if (cnt[e.st] != null) cnt[e.st]++; });
+  // Blank, not "0". The other tab counts are slate sizes; a literal
+  // zero beside an empty tracker reads as a failed load.
+  $('cTrack').textContent = all.length || '';
+
+  $('trkviews').innerHTML = [['all', 'All', all.length]]
+    .concat(TRK_STATES.map(([k, l]) => [k, l, cnt[k]]))
+    .map(([k, l, n]) => `<button class="chip${k === TRKVIEW ? ' on' : ''}"
+      data-trkview="${k}">${l} <span>${n}</span></button>`).join('');
+
+  const list = TRKVIEW === 'all' ? all : all.filter(e => e.st === TRKVIEW);
+  $('trknone').hidden = list.length > 0;
+  if (!list.length) {
+    $('trknone').textContent = all.length
+      ? 'Nothing tracked in that state.'
+      : 'Nothing tracked yet. Open a prop on the board and use its Tracked section.';
+    $('trkrows').innerHTML = '';
+  } else {
+    $('trkrows').innerHTML = list.map(e => {
+      const beat = trkBeat(e);
+      return `<div class="trkrow">
+        <div>
+          <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}</div>
+          <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}
+            · ${sico(e.sp)}${esc(e.sp)}${e.mu ? ' · ' + esc(e.mu) : ''}
+            · ${esc(e.day || 'undated')}<br>
+            board ${e.bpr != null ? (e.bpr > 0 ? '+' : '') + e.bpr : '—'}${
+            e.bgr ? ' · ' + esc(e.bgr) : ''}${
+            e.bti ? ' · ' + esc(e.bti) : ''}${
+            e.bmp != null ? ' · model ' + (100 * e.bmp).toFixed(1) + '%' : ''}
+          </div>
+          <div class="trkst">${TRK_STATES.map(([k, l]) =>
+            `<button class="chip${e.st === k ? ' on' : ''}"
+              data-trkst="${k}" data-trkk="${esc(e.k)}">${l}</button>`).join('')}
+            <button class="chip" data-trkdel="1"
+              data-trkk="${esc(e.k)}">remove</button></div>
+        </div>
+        <div style="text-align:right">${beat == null
+          ? '<span class="trksub">no fill</span>'
+          : `<span class="trkv ${beat > 0 ? 'up' : beat < 0 ? 'dn' : ''}">${
+              beat > 0 ? '+' : ''}${beat.toFixed(1)}</span>
+             <div class="trksub">pts vs board</div>`}</div>
+        <div class="trkin">
+          <label>fill <input type="text" inputmode="numeric"
+            data-trkf="1" data-trkk="${esc(e.k)}" placeholder="e.g. -115"
+            value="${e.fpr != null ? (e.fpr > 0 ? '+' : '') + e.fpr : ''}"></label>
+          <label>stake <input type="text" inputmode="decimal"
+            data-trks="1" data-trkk="${esc(e.k)}" placeholder="units"
+            value="${e.stk != null ? e.stk : ''}"></label>
+          ${e.fat ? `<span class="trksub">filled ${
+            esc(e.fat.slice(0, 16).replace('T', ' '))}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const filled = all.filter(e => e.fpr != null);
+  const staked = all.reduce((a, e) => a + (e.stk || 0), 0);
+  const beats = filled.map(trkBeat).filter(v => v != null);
+  // Mean over the rows that HAVE a fill, never over all of them: a
+  // missing fill is missing, and averaging it in as zero would read as
+  // "you got the board price" on a bet you never placed.
+  const avg = beats.length
+    ? beats.reduce((a, b) => a + b, 0) / beats.length : null;
+  $('trksum').innerHTML = `<b>${all.length}</b> tracked —
+    ${cnt.watch} watching, ${cnt.intend} intended, ${cnt.done} placed.
+    <b>${filled.length}</b> carr${filled.length === 1 ? 'ies' : 'y'} a fill
+    price${staked ? `, <b>${staked.toLocaleString()}</b> units staked` : ''}.
+    ${avg != null ? `Across those ${beats.length}, the average fill breaks
+      even <b>${Math.abs(avg).toFixed(2)} points
+      ${avg > 0 ? 'lower' : 'higher'}</b> than the board price at the
+      time.` : ''}
+    <br><br><b>No CLV and no ROI on this tab, and that is not an
+    oversight.</b> CLV needs the price the market closed at, which this
+    app has never stored — the same missing field that keeps leaf 11
+    dark. ROI needs the outcome, which the grader owns and this list
+    does not. What the tracker does is capture the one input neither can
+    be computed without: the price you were actually filled at, and
+    when. The export below is that record in a form the ledger could
+    take; reading it in is a separate job and has not been built.`;
+
+  $('trkwhere').innerHTML = TRKOK
+    ? `Stored in this browser only — one device, one browser profile,
+       cleared when you clear site data, never sent anywhere. The export
+       is the only way out.`
+    : `<b class="trkbad">Not saved.</b> This browser refused to store it:
+       private window, or site data blocked. Everything above is in
+       memory and goes when you close the tab. Export it now if you need
+       it.`;
 }
 
 /* ---------- parlay ---------- */
@@ -3033,6 +3409,48 @@ document.addEventListener('click', e => {
     parlay();
   }
 });
+
+/* Tracker controls. Delegated like every other control on the page, and
+   the key travels in data-trkk rather than being packed into the
+   action attribute -- the key contains the player name and the market,
+   so a composite attribute would need a separator that cannot appear
+   in either. */
+document.addEventListener('click', e => {
+  const v = e.target.closest('[data-trkview]');
+  if (v) { TRKVIEW = v.dataset.trkview; drawTrack(); return; }
+  const m = e.target.closest('[data-trkmark]');
+  if (m) { const p = PROPS.find(x => x.i === +m.dataset.trkmark);
+           if (p) trkMark(p, m.dataset.trkto); return; }
+  const s = e.target.closest('[data-trkst]');
+  if (s) { trkSet(s.dataset.trkk, s.dataset.trkst); return; }
+  const d = e.target.closest('[data-trkdel]');
+  if (d) { TRK.delete(d.dataset.trkk); trkCommit(); return; }
+});
+document.addEventListener('change', e => {
+  const f = e.target.closest('[data-trkf]');
+  if (f) { trkEdit(f.dataset.trkk, 'fpr', f.value); return; }
+  const s = e.target.closest('[data-trks]');
+  if (s) { trkEdit(s.dataset.trkk, 'stk', s.value); }
+});
+$('trkexp').onclick = () => {
+  const url = URL.createObjectURL(
+    new Blob([trkExport()], {type: 'application/json'}));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `green15-tracked-${D.slate_day || 'export'}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+$('trkcopy').onclick = async () => {
+  const b = $('trkcopy');
+  // The clipboard rejects outright over http and in some embeds. Say
+  // so on the button rather than appearing to have copied.
+  try { await navigator.clipboard.writeText(trkExport());
+        b.textContent = 'copied'; }
+  catch (err) { b.textContent = 'copy blocked'; }
+  setTimeout(() => { b.textContent = 'copy'; }, 1600);
+};
+
 $('q').addEventListener('input', draw);
 $('askq').addEventListener('input', drawAsk);
 $('bank').addEventListener('input', drawStakes);
@@ -3115,7 +3533,8 @@ $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
   // repeat what the chips beneath it already said.
   $('boardmeta').innerHTML =
     `${b.slate_size ?? 0} evaluated`;
-  drawFilters(); draw(); drawGames(); drawStakes();
+  TRKOK = trkLoad();
+  drawFilters(); draw(); drawGames(); drawStakes(); drawTrack();
   drawTrending(); drawRecord(); drawCalibration();
   drawTierOutcomes(); drawLeafValue(); drawMvm(); drawAsk();
   drawHealth();
