@@ -1254,17 +1254,44 @@ function gamesText(p){
   return `${p.n ?? '?'} ${p.n === 1 ? 'game' : 'games'}`;
 }
 
+function teamNorm(value){
+  return String(value || '').normalize('NFKD').toLowerCase()
+    .replace(/[^a-z0-9]/g,'');
+}
+function matchupIdentity(p){
+  const parts = String(p.mu || '').split(' @ ').map(x=>x.trim());
+  const ev = p.ev || {}, mine = teamNorm(ev.player_team);
+  if (parts.length !== 2 || parts.some(x=>!x) || !mine
+      || ev.player_team_conflict) return null;
+  const names = ev.matchup_teams
+    || (D.team_names || {})[String(p.sp || '').toUpperCase()] || {};
+  const aliases = side => {
+    const key = teamNorm(side), out = new Set([key]);
+    Object.entries(names).forEach(([ab,nm])=>{
+      if ([teamNorm(ab),teamNorm(nm)].includes(key)) {
+        out.add(teamNorm(ab)); out.add(teamNorm(nm));
+      }
+    });
+    return out;
+  };
+  const [away,home] = parts, a = aliases(away), h = aliases(home);
+  if ([...a].some(x=>h.has(x)) || a.has(mine) === h.has(mine)) return null;
+  const isHome = h.has(mine);
+  return {team:isHome ? home : away, opponent:isHome ? away : home,
+          venue:isHome ? 'home' : 'away'};
+}
+function opponentLabel(p){
+  return matchupIdentity(p)?.opponent || 'opponent (team unverified)';
+}
 function vs(p){
   const mu = p.mu || '';
   if (!mu.includes(' @ ')) return '';
   const [away, home] = mu.split(' @ ');
-  const mine = (p.ev && p.ev.player_team) || null;
   // Team props are the fixture, so they show it whole.
   if (p.kd === 'team') return `· ${esc(away)} @ ${esc(home)}`;
-  if (!mine) return `· ${esc(away)} @ ${esc(home)}`;
-  const opp = mine === home ? away : home;
-  const at = mine === home ? 'vs' : '@';
-  return `· ${at} ${esc(opp)}`;
+  const id = matchupIdentity(p);
+  if (!id) return `· ${esc(away)} @ ${esc(home)} · team unverified`;
+  return `· ${id.venue === 'home' ? 'vs' : '@'} ${esc(id.opponent)}`;
 }
 
 function pips(lv){
@@ -1310,7 +1337,7 @@ function games(p){
         <small>total ${ev.game_total}${ev.spread != null ? ` · spread ${ev.spread}` : ''}${
           ev.team_total_fav ? ` · implied team totals ${ev.team_total_dog}/${ev.team_total_fav}` : ''}</small></div>` : ''}
     ${(ev.opp_log || []).length ? `<div class="glab">
-        ${esc(p.mu ? p.mu.split(' @ ').slice(-1)[0] : 'opponent')}'s last
+        ${esc(opponentLabel(p))}'s last
         ${ev.opp_log.length}${ev.pos_vs_opp && ev.pos_vs_opp.position
           ? ` vs ${esc(ev.pos_vs_opp.position)}s` : ''}
         <small>who did the damage</small></div>
@@ -1759,7 +1786,7 @@ function matchup(p){
     // board the opposite of the truth.
     const over = String(p.sd || '').toLowerCase().startsWith('o');
     out.push(`<div class="mbox">
-      <div class="mhead">${esc(p.mu || 'opponent')}${
+      <div class="mhead">${esc(opponentLabel(p))}${
         dr.position ? ` \u00b7 vs ${esc(dr.position)}s` : ''}</div>
       <div class="rankrow">
         <div class="rankno"><b>${dr.rank}</b><span>of ${dr.of}</span></div>
@@ -3087,12 +3114,26 @@ function askQuery(q){
     }
   }
   // opponent: "vs BOS" / "against boston"
-  m = t.match(/\b(?:vs|versus|against)\s+([a-z ]{2,20})/);
+  m = t.match(/\b(?:vs|versus|against)\s+([a-z0-9 ]+?)(?=\s+(?:last|over|under|home|away|without)\b|$)/);
   if (m) {
     const want = m[1].trim();
-    read.opp = (A.teams||[]).find(tm => askNorm(tm) === want)
-            || (A.teams||[]).find(tm => askNorm(tm).includes(want))
-            || (A.teams||[]).find(tm => want.includes(askNorm(tm)));
+    const aliases = new Set([teamNorm(want)]);
+    Object.values(D.team_names || {}).forEach(names=>{
+      Object.entries(names).forEach(([ab,nm])=>{
+        if ([teamNorm(ab),teamNorm(nm)].includes(teamNorm(want))) {
+          aliases.add(teamNorm(ab)); aliases.add(teamNorm(nm));
+        }
+      });
+    });
+    const literal = (A.teams||[]).filter(tm=>teamNorm(tm) === teamNorm(want));
+    const exact = literal.length ? literal
+      : (A.teams||[]).filter(tm=>aliases.has(teamNorm(tm)));
+    const matches = exact.length ? exact
+      : (A.teams||[]).filter(tm=>askNorm(tm).includes(want));
+    if (matches.length !== 1)
+      return {read, error: matches.length ? 'That team is ambiguous. Use its full name.'
+        : 'That opponent is not identifiable in this history. No filter was silently dropped.'};
+    read.opp = matches[0];
     read.oppWord = want;
   }
   // "without embiid and brown" / "missing embiid, george"
@@ -3140,8 +3181,15 @@ function askQuery(q){
     if (read.pi != null && r[0] !== read.pi) return false;
     if (mi >= 0 && r[1] !== mi) return false;
     if (ti >= 0) {
-      // The opponent is whichever side of the matchup is not his.
-      if (read.pi != null) { if (r[5] !== ti && r[6] !== ti) return false; }
+      if (read.pi != null) {
+        // Column 10 is verified at the historical game, not today's membership.
+        if (r[10] == null) {
+          if (r[5] === ti || r[6] === ti)
+            read.oppUnverified = (read.oppUnverified || 0) + 1;
+          return false;
+        }
+        if (r[10] !== ti) return false;
+      }
       else if (r[5] !== ti && r[6] !== ti) return false;
     }
     return true;
@@ -3216,8 +3264,10 @@ function drawAsk(){
     r.without && `<span class="rd">without ${esc(r.without.map(
       w => w.found || w.asked).join(', '))}</span>`,
   ].filter(Boolean).join('');
-  const readBar = chips
-    ? `<div class="readbar"><span class="dim">read as</span>${chips}</div>` : '';
+  const readBar = (chips
+    ? `<div class="readbar"><span class="dim">read as</span>${chips}</div>` : ''
+  ) + (r.oppUnverified ? `<div class="callout">${r.oppUnverified} matching
+      history rows excluded: the player's team for that game is unverified.</div>` : '');
 
   if (res.error) {
     out.innerHTML = `${readBar}<div class="empty">${esc(res.error)}</div>`;
