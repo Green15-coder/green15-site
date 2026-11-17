@@ -1067,9 +1067,9 @@ function drawHero(){
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
     && !F.trk.size
-    && BVIEW !== 'pending';
+    && BVIEW !== 'pending' && BVIEW !== 'team';
   if (!plain) { el.innerHTML = ''; return; }
-  const top = PROPS.filter(p => p.elig !== false)
+  const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
                    .sort((a, b) => (a.nores ? 1 : 0) - (b.nores ? 1 : 0)
                                 || (b.sc || 0) - (a.sc || 0))[0];
   // Once its case is open the hero stands down: the full card lives
@@ -1195,6 +1195,7 @@ function gcls(g){ return 'g-' + String(g || '').replace('+', 'p'); }
    asked. These are the same three slots filled with what a team
    market is actually built from. */
 function teamStrip(p){
+  if (p.data_error) return `<div class="empty">${esc(p.data_error)}</div>`;
   const ev = p.ev || {}, mg = ev.margin || {}, tt = ev.team_total || {};
   const src = mg.mean != null ? mg : tt;
   const h = (src.home || {}).n_team, a = (src.away || {}).n_team;
@@ -1210,8 +1211,8 @@ function teamStrip(p){
   </div>`;
   const per = (x, k) => (x || {})[k];
   return `<div class="tiles">
-    ${one('scored', per(tt.home, 'scored_per_game'), 'home per game')}
-    ${one('allowed', per(tt.away, 'allowed_per_game'), 'away per game')}
+    ${one('home scoring', per(tt.home, 'team_per_game'), 'own per game')}
+    ${one('away scoring', per(tt.away, 'team_per_game'), 'own per game')}
     ${one('sample', n, n == null ? 'not captured' : 'games a side')}
   </div>`;
 }
@@ -1295,10 +1296,22 @@ function vs(p){
 }
 
 function pips(lv){
-  return `<div class="pips">${(lv||[]).map(l =>
+  return `<div class="pips">${(lv||[]).filter(l => l[4] !== false).map(l =>
     `<i class="pip ${l[1]}"></i>`).join('')}</div>`;
 }
 function games(p){
+  if (p.kd === 'team') {
+    if (p.data_error) return teamBox(p);
+    const src = (p.ev || {}).margin || (p.ev || {}).team_total || {};
+    return ['home', 'away'].map(side => {
+      const rows = (src[side] || {}).recent_scoring || [];
+      return `<div class="mbox"><div class="mhead">${esc(src[side + '_team'] || side)}
+        recent scoring</div>${rows.length ? `<table class="gtab"><tbody>` +
+        rows.map(r => `<tr><td>${esc(r.date || '')}</td><td>${esc(r.vs || '')}</td>
+          <td class="v">${esc(r.v)}</td></tr>`).join('') + `</tbody></table>`
+        : `<div class="mnote">Dated scoring history was not captured for this saved row.</div>`}</div>`;
+    }).join('') + `<div class="mnote">Each team's own scoring, not outcomes against this game's betting line.</div>`;
+  }
   const ev = p.ev || {};
   const rec = ev.recent || [];
   if (!rec.length) return '';
@@ -1522,12 +1535,13 @@ function reqBox(p){
 /* Expected value at the posted price. DISPLAYED, NOT RANKED ON. */
 function evBox(p){
   if (p.evu == null) return '';
+  const used = p.ap ?? p.mp;
   const pc = (100 * p.evu).toFixed(1);
   return `<div class="reqbox"><h4>estimated value</h4>
     <div class="evline"><span>EV per unit at ${p.pr > 0 ? '+' : ''}${p.pr}</span>
       <b class="${p.evu > 0 ? 'hit' : 'miss'}">${p.evu > 0 ? '+' : ''}${pc}%</b></div>
     <div class="evline"><span>win probability used</span>
-      <b>${p.mp != null ? (100*p.mp).toFixed(1) + '%' : '\u2014'}</b></div>
+      <b>${used != null ? (100*used).toFixed(1) + '%' : '\u2014'}</b></div>
     <div class="evline"><span>market implies</span>
       <b>${p.fp != null ? (100*p.fp).toFixed(1) + '%' : '\u2014'}</b></div>
     ${p.pushable ? `<div class="evline"><span>whole line</span>
@@ -1536,12 +1550,13 @@ function evBox(p){
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">RESEARCH
       ONLY \u2014 the anchor caps every edge at 4 points, so EV here moves
       with the PRICE far more than with the model, and the board is not
-      sorted by it. On the only engine with graded history the raw
+      sorted by it. ${p.kd === 'team' ? 'Team-model calibration is not yet validated. '
+        + 'Player-prop performance is not evidence for this team market.' : `On the only engine with graded history the raw
       projection scored WORSE than the de-vigged line it was shrunk toward
       (Brier 0.2498 vs 0.2448, n=1,660), and the direction of its
       disagreement paid +3.1 \u00b1 4.5 points \u2014 chance. Treat this
       number as a price check, not an edge. See &ldquo;Does the model beat
-      the market?&rdquo; on the Record tab.</span></div></div>`;
+      the market?&rdquo; on the Record tab.`}</span></div></div>`;
 }
 
 function card(p){
@@ -1601,7 +1616,7 @@ function card(p){
     : team ? diff > 0
     : ((p.sd === 'Over' && diff > 0) || (p.sd === 'Under' && diff < 0));
   const tiles = `<div class="tiles">
-    <div class="tile"><div class="tl">projection</div>
+    <div class="tile"><div class="tl">${team && ['spread','moneyline'].includes(p.mkk) ? 'home margin' : 'projection'}</div>
       <div class="tv">${p.pj != null ? p.pj.toFixed(1) : '—'}</div>
       <div class="tn">${p.sv != null ? '±' + p.sv.toFixed(1) + ' sd' : '&nbsp;'}</div></div>
     <div class="tile"><div class="tl">line</div>
@@ -1734,6 +1749,7 @@ const SECTIONS = [
    never asked -- the kind of filler that makes the rest of the
    card look made up too. */
 function teamBox(p){
+  if (p.data_error) return `<div class="empty">${esc(p.data_error)}. Invalid projection withheld.</div>`;
   const ev = p.ev || {}, out = [];
   const mg = ev.margin, tt = ev.team_total;
   const n1 = v => v == null ? '\u2014' : v;
@@ -1747,8 +1763,8 @@ function teamBox(p){
       <div class="mnote">${[
         mg.home_field_modelled === false ? 'No home-field term is modelled.' : '',
         mg.sd_assumes_independence ? 'The spread treats the two scores as '
-          + 'independent, which widens the margin and pulls every '
-          + 'probability here toward 50%.' : '',
+          + 'independent. Their covariance is not measured, so this '
+          + 'probability remains approximate.' : '',
         p.mkk === 'moneyline' && p.ties === false ? 'Ties are not modelled, '
           + 'which overstates both sides in a league that has them.' : '',
         p.push ? 'This is a whole number \u2014 the margin can land on it '
@@ -1758,8 +1774,8 @@ function teamBox(p){
   }
   if (tt && (tt.home || tt.away)) {
     const r = (lab, x) => !x ? '' : `<tr><td>${esc(lab)}</td>
-      <td class="v">${n1(x.scored_per_game)} scored</td>
-      <td class="v">${n1(x.allowed_per_game)} allowed</td>
+      <td class="v">${n1(x.team_per_game)} scored</td>
+      <td class="v">${n1(x.opp_allowed_per_game)} opponent allowed</td>
       <td class="dim">${n1(x.n_team)}g</td></tr>`;
     out.push(`<div class="mbox"><div class="mhead">The two sides</div>
       <table class="gtab"><tbody>${r(tt.home_team || 'home', tt.home)}
@@ -1874,9 +1890,13 @@ function detail(p){
     : cur === 'market' ? `${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
-    : (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
+    : `${p.kd === 'team' ? `<div class="mnote">Team scale: ${p.mx ?? 5} applicable leaves.
+        Player-only leaves and inputs already used in the projection are not scored.
+        Missing evidence never earns a green leaf.</div>` : ''}` +
+      (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
         <i class="dot ${l[1]}"></i>
-        <div><span class="lb">${esc(l[0])}</span>
+        <div><span class="lb">${esc(l[0])}${l[4] === false ? ' · not applicable'
+          : l[1] === 'dark' ? ' · missing evidence' : ''}</span>
           <div class="rs">${esc(l[2])}</div></div></div>`).join('');
 
   return `<div class="detail">
@@ -1953,6 +1973,11 @@ function draw(){
       ? `selections that cannot be acted on yet \u2014 stale price, no
          research attached, or too few games. Each row says which. They
          are held out of the ranking rather than scored against it.`
+      : BVIEW === 'team'
+      ? `team markets use five applicable leaves, separate from player props.
+         Not applicable is not missing. Unverified prices, thin samples and invalid
+         inputs remain blocked; closing-line and independent game-script evidence
+         are not assumed. Scores are evidence counts, not validated win forecasts.`
       : `the best-EVIDENCED fifteen, by green leaves minus red \u2014 not
          the fifteen most likely to win. ` + (to.enough
           ? `tier-vs-outcome is on the Record tab.`
@@ -2024,6 +2049,14 @@ const trkLabel = st => (TRK_STATES.find(s => s[0] === st) || ['','—'])[1];
    plus the night it was for -- which also means the same prop on two
    nights is two entries, because it is two bets. */
 function trkKey(p){
+  if (p.kd === 'team') {
+    // Leave old saved records untouched; new team entries identify the fixture.
+    // Never attach a legacy ambiguous entry to a different game automatically.
+    return ['team-v2', p.gd || D.slate_day || 'undated',
+            (p.sp || '').toUpperCase(), (p.mu || '').trim().toLowerCase(),
+            (p.pl || '').trim().toLowerCase(), (p.mk || '').toLowerCase(),
+            (p.sd || '').toLowerCase(), p.ln ?? ''].join('␟');
+  }
   return [D.slate_day || 'undated', (p.sp || '').toUpperCase(),
           (p.pl || '').trim().toLowerCase(),
           (p.mk || '').trim().toLowerCase(),
@@ -2082,7 +2115,8 @@ function trkMark(p, st){
     if (cur.st === st) TRK.delete(k); else cur.st = st;
   } else {
     TRK.set(k, {
-      k, st, day: D.slate_day || null, at: new Date().toISOString(),
+      k, st, day: p.kd === 'team' ? (p.gd || D.slate_day || null) : D.slate_day || null,
+      at: new Date().toISOString(),
       sp: p.sp || '', pl: p.pl || '', mk: p.mk || '',
       sd: p.sd || '', ln: p.ln ?? null, mu: p.mu || '',
       bpr: p.pr ?? null, bmp: p.mp ?? null, bfp: p.fp ?? null,
@@ -2301,6 +2335,17 @@ function parlay(){
   const legs = [...SEL.values()];
   $('tray').hidden = legs.length === 0;
   if (!legs.length) return;
+  if (legs.some(p => p.kd === 'team' &&
+      (p.elig === false || p.data_error || p.mp == null || p.fp == null))) {
+    $('pOdds').textContent = 'not verified';
+    $('pProb').textContent = 'not estimated';
+    $('pOdds').style.fontSize = $('pProb').style.fontSize = '14px';
+    $('pBE').textContent = '—';
+    $('pLegs').innerHTML = legs.map(p => `<span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>`).join('');
+    $('pNote').className = 'traynote warn';
+    $('pNote').textContent = 'A team leg has blocked or missing inputs. No ticket probability, combined price or hold estimate is supplied. Review each leg’s evidence and current line.';
+    return;
+  }
 
   const games = new Set(legs.map(p => p.mu).filter(Boolean));
   const sameGame = games.size < legs.length;
