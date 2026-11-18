@@ -3567,11 +3567,62 @@ document.addEventListener('click', e => {
 $('qclear').onclick = () => { $('q').value = ''; draw(); $('q').focus(); };
 $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
 
+// The board is published gzipped: plain, a full slate is over the
+// 100 MB GitHub refuses, and a refused push left the app showing an
+// old board while the run reported success. A host that adds its own
+// Content-Encoding hands fetch() bytes that are already plain, so the
+// gzip magic number decides, not the file name. Browsers without
+// DecompressionStream fall back to the plain file, published whenever
+// it fits.
+async function loadData() {
+  const bust = '?v=' + Date.now();
+  if ('DecompressionStream' in window) {
+    try {
+      const r = await fetch('./green15_data.json.gz' + bust, {cache:'no-store'});
+      if (r.ok) {
+        const buf = new Uint8Array(await r.arrayBuffer());
+        let text;
+        if (buf[0] === 0x1f && buf[1] === 0x8b) {
+          const s = new Blob([buf]).stream()
+            .pipeThrough(new DecompressionStream('gzip'));
+          text = await new Response(s).text();
+        } else {
+          text = new TextDecoder().decode(buf);
+        }
+        return expandShared(JSON.parse(text));
+      }
+    } catch (e) { /* fall through to the plain file */ }
+  }
+  const r = await fetch('./green15_data.json' + bust, {cache:'no-store'});
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return expandShared(await r.json());
+}
+// Evidence that is identical across props -- a team's trend windows,
+// the opponent's recent log -- is stored once in board.ev_shared and
+// referenced as {"$s": key}. Put it back before anything reads a card.
+function expandShared(data) {
+  const b = (data && data.board) || {};
+  const sh = b.ev_shared;
+  if (sh) {
+    for (const p of (b.props || [])) {
+      const ev = p.ev;
+      if (!ev) continue;
+      for (const k in ev) {
+        const v = ev[k];
+        if (v && typeof v === 'object' && !Array.isArray(v)
+            && typeof v.$s === 'string' && Object.keys(v).length === 1) {
+          ev[k] = sh[v.$s] !== undefined ? sh[v.$s] : null;
+        }
+      }
+    }
+    delete b.ev_shared;
+  }
+  return data;
+}
+
 (async () => {
   try {
-    const r = await fetch('./green15_data.json?v=' + Date.now(), {cache:'no-store'});
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    D = await r.json();
+    D = await loadData();
   } catch (err) {
     $('stamp').textContent = 'data unavailable';
     $('loadfail').hidden = false;
