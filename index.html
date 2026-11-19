@@ -82,6 +82,37 @@
 /* Direction, at the size it deserves. An arrow with no number is a
    mood; a number with no arrow has to be parsed. Both, always. */
 .ml{font-family:var(--m);font-size:11px;color:var(--ink-2);font-weight:600;letter-spacing:.02em}
+.rstrip{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:5px 0 0;
+  font-family:var(--m);font-size:11px}
+.rstrip .rsa i{font-style:normal;color:var(--ink-2);font-size:10px}
+.rstrip .rsg{display:inline-flex;gap:3px;margin-left:auto}
+.rstrip .rsg b{min-width:22px;text-align:center;padding:1px 3px;border:1px solid var(--rule);
+  border-radius:4px;font-weight:600}
+#filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative;overflow:visible}
+#filters .fsort{display:inline-flex;align-items:center;gap:5px;font-family:var(--m);font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+#filters .fsort select{font:inherit;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink);
+  background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:5px 8px;max-width:170px}
+details.fdd{position:static}
+details.fdd>summary{list-style:none;cursor:pointer}
+details.fdd>summary::-webkit-details-marker{display:none}
+details.fdd>summary::after{content:' \25BE';opacity:.6}
+details.fdd[open]>summary{border-color:var(--ink)}
+details.fdd .fcnt{display:inline-block;min-width:16px;padding:0 4px;border-radius:999px;
+  background:var(--clover);color:var(--on-clover);font-size:10px;text-align:center}
+details.fdd .fmenu{position:absolute;left:0;right:0;z-index:30;margin-top:6px;display:flex;flex-wrap:wrap;
+  gap:6px;padding:10px;background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:50vh;overflow:auto}
+details.fdd .fclr{border-style:dashed}
+.shotc{display:block;width:100%;max-width:340px;margin:4px auto 6px;background:var(--raise);border-radius:8px}
+.shotc .ct{fill:none;stroke:var(--rule);stroke-width:.25}
+.shotc .shm{fill:var(--over);opacity:.85}
+.shotc .shx{stroke:var(--under);stroke-width:.3;fill:none;opacity:.8}
+.shleg{display:flex;flex-wrap:wrap;gap:10px;font-family:var(--m);font-size:10.5px;color:var(--ink-2);margin-bottom:6px}
+.shleg i{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle}
+.shleg i.shm{background:var(--over)} .shleg i.shx{border:1.5px solid var(--under);border-radius:2px}
+.reslinks{display:flex;flex-wrap:wrap;gap:6px}
+.reslinks a{text-decoration:none}
 .srail{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 0}
 .sig{display:inline-flex;align-items:center;gap:3px;padding:2px 6px 2px 5px;
   border-radius:999px;font-family:var(--m);font-size:10.5px;line-height:1.5;
@@ -439,6 +470,15 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
   color:var(--ink);font-weight:600}
 .trow{border-top:1px solid var(--rule);padding:11px 0;display:grid;
   grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline}
+.injr{border-top:1px solid var(--rule);padding:8px 0}
+.injh{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font-size:13.5px}
+.injh .injs{margin-left:auto;font-family:var(--m);font-size:11px;font-weight:600}
+.injm{font-family:var(--m);font-size:10.5px;color:var(--ink-2);margin-top:2px}
+.injm span{white-space:nowrap}
+.injn{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.4}
+details.tgame{border:1px solid var(--rule);border-radius:10px;margin:8px 0;padding:0 10px}
+details.tgame>summary{cursor:pointer;padding:10px 0;font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+details.tgame .tgn{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--ink-2)}
 .trow .tnm{font-family:var(--d);font-weight:700;font-size:15px}
 .trow .tsub{font-family:var(--m);font-size:10px;letter-spacing:.08em;
   text-transform:uppercase;color:var(--ink-2)}
@@ -776,6 +816,15 @@ section{padding-block:16px}
         <th>Priced</th><th>No log</th><th>Out</th></tr></thead>
       <tbody id="healthdetail"></tbody>
     </table></div>
+
+    <h2 style="margin-top:22px">Injured players</h2>
+    <p class="traynote" id="injnote"></p>
+    <div class="tsplit" style="margin-bottom:6px" id="injsports"></div>
+    <div class="tsplit" style="margin-bottom:6px">
+      <input id="injq" type="search" placeholder="Filter by player or team"
+        style="flex:1;min-width:0;font:inherit;padding:7px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)">
+    </div>
+    <div id="injrows"></div>
   </section>
 </div>
 
@@ -800,6 +849,11 @@ section{padding-block:16px}
       <button class="chip on" data-twin="3">Last 3</button>
       <button class="chip" data-twin="5">Last 5</button>
       <button class="chip" data-twin="10">Last 10</button>
+    </div>
+    <div class="tsplit" style="margin-bottom:6px">
+      <span class="eyebrow" style="align-self:center;margin-right:2px">view</span>
+      <button class="chip on" data-tmode="movers">Movers</button>
+      <button class="chip" data-tmode="games">By game · every player</button>
     </div>
     <div class="tsplit">
       <button class="chip on" data-tdir="all">All <span id="nAll"></span></button>
@@ -1127,7 +1181,7 @@ function drawHero(){
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
     && !F.trk.size && !F.mk.size && !F.odds.size
-    && BVIEW !== 'pending' && BVIEW !== 'team';
+    && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
                    .sort((a, b) => (a.nores ? 1 : 0) - (b.nores ? 1 : 0)
@@ -1159,31 +1213,91 @@ function drawHero(){
   </div>`;
 }
 
-// Groups with many chips get a one-tap reset.
-const CLEAR_LABEL = {mk: 'all props', odds: 'any price'};
+// Every group is a drop-down with its own reset, so the filter bar is
+// one row of buttons instead of five rows of chips to scroll past.
+const CLEAR_LABEL = {sport: 'all sports', tier: 'all tiers', side: 'both sides',
+  bar: 'no minimum', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
 
+/* Board order. The evidence score is the default because it is what
+   the tiers are built on; model probability, edge and price are a
+   re-sort of the same filtered rows, never a different selection. */
+let SORT = 'score';
+const SORTS = [
+  ['score', 'Evidence score'],
+  ['mp', 'Model probability'],
+  ['ed', 'Edge'],
+  ['l3', 'Last 3 vs line'],
+  ['pr', 'Price (plus money first)'],
+];
+function l3Room(p){
+  const a = recentAvg(p, 3);
+  if (a == null || p.ln == null) return -Infinity;
+  return p.sd === 'Under' ? p.ln - a : a - p.ln;
+}
+function sortRows(a, b){
+  const nr = (a.nores?1:0)-(b.nores?1:0);
+  if (nr) return nr;
+  const by = SORT === 'mp' ? (b.mp ?? -1) - (a.mp ?? -1)
+    : SORT === 'ed' ? (b.ed ?? -9) - (a.ed ?? -9)
+    : SORT === 'pr' ? (b.pr ?? -1e9) - (a.pr ?? -1e9)
+    : SORT === 'l3' ? (l3Room(b) - l3Room(a)) || 0
+    : 0;
+  return by || (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0);
+}
+
+function fddSummary(label, key){
+  const n = F[key].size;
+  return `${label}${n ? ` <span class="fcnt">${n}</span>` : ''}`;
+}
 function drawFilters(){
-  $('filters').innerHTML = FILTERS.map(([label,key,vals]) => {
+  const open = new Set([...document.querySelectorAll('#filters details[open]')]
+    .map(d => d.dataset.g));
+  $('filters').innerHTML = `<label class="fsort">Sort
+      <select id="bsort">${SORTS.map(([k, l]) => `<option value="${k}" ${
+        SORT === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`
+    + FILTERS.map(([label,key,vals]) => {
     const list = typeof vals === 'function' ? vals() : vals;
     if (!list.length) return '';
-    return `<span class="chip grp">${label}</span>` + list.map(v =>
+    return `<details class="fdd" data-g="${key}" ${open.has(key) ? 'open' : ''}>
+      <summary class="chip fsum" data-sum="${key}">${fddSummary(label, key)}</summary>
+      <div class="fmenu">` + list.map(v =>
       `<button class="chip" data-k="${key}" data-v="${esc(v)}"
         aria-pressed="${F[key].has(v)}">${esc(key === 'mk' ? mkLabel(v) : v)}</button>`).join('')
-      + (CLEAR_LABEL[key] ? `<button class="chip" data-clear="${key}"
-        ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key]}</button>` : '');
+      + `<button class="chip fclr" data-clear="${key}"
+        ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key] || 'clear'}</button></div></details>`;
   }).join('');
+  $('bsort').onchange = e => { SORT = e.target.value; draw(); };
+  // One menu open at a time; a tap on the menu's own heading closes it.
+  $('filters').querySelectorAll('details.fdd').forEach(d => d.addEventListener('toggle', () => {
+    if (d.open) $('filters').querySelectorAll('details.fdd[open]').forEach(o => {
+      if (o !== d) o.open = false; });
+  }));
+  const relabel = key => {
+    const sm = $('filters').querySelector(`[data-sum="${key}"]`);
+    const g = FILTERS.find(f => f[1] === key);
+    if (sm && g) sm.innerHTML = fddSummary(g[0], key);
+    const clr = $('filters').querySelector(`[data-clear="${key}"]`);
+    if (clr) clr.hidden = !F[key].size;
+  };
   $('filters').onclick = e => {
     const c = e.target.closest('.chip[data-clear]');
-    if (c) { F[c.dataset.clear].clear(); drawFilters(); draw(); return; }
+    if (c) { F[c.dataset.clear].clear();
+      $('filters').querySelectorAll(`.chip[data-k="${c.dataset.clear}"]`)
+        .forEach(x => x.setAttribute('aria-pressed', 'false'));
+      relabel(c.dataset.clear); draw(); return; }
     const b = e.target.closest('.chip[data-k]'); if (!b) return;
     const on = b.getAttribute('aria-pressed') === 'true';
     b.setAttribute('aria-pressed', String(!on));
     F[b.dataset.k][on ? 'delete' : 'add'](b.dataset.v);
-    const clr = $('filters').querySelector(`[data-clear="${b.dataset.k}"]`);
-    if (clr) clr.hidden = !F[b.dataset.k].size;
+    relabel(b.dataset.k);
     draw();
   };
 }
+document.addEventListener('click', e => {
+  // A tap outside the filter bar folds any open menu away.
+  if (e.target.closest && e.target.closest('#filters')) return;
+  document.querySelectorAll('#filters details.fdd[open]').forEach(d => d.open = false);
+});
 
 function matches(p){
   const q = ($('q').value || '').trim().toLowerCase();
@@ -1318,6 +1432,33 @@ function headline(p){
    built from. A spread is built from two TEAM logs, so reporting a
    player's game count there -- or "? games" because there is no
    player -- describes a sample that was never used. */
+/* The last two, three and five games against tonight's line, on the
+   row itself. The longer window stays on the card; on the board the
+   question is which way the player is trending right now. */
+function recentVals(p){
+  return ((p.ev || {}).recent || []).map(r => r.v).filter(v => v != null);
+}
+function recentAvg(p, k){
+  const v = recentVals(p).slice(0, k);   // ev.recent is newest first
+  return v.length >= Math.min(k, 2) ? v.reduce((a, b) => a + b, 0) / v.length : null;
+}
+function recentStrip(p){
+  if (p.kd === 'team' || p.nores) return '';
+  const v = recentVals(p);
+  if (v.length < 2) return '';
+  const ln = p.ln, under = p.sd === 'Under';
+  const cls = x => ln == null ? '' : (x === ln ? 'push'
+    : (under ? x < ln : x > ln) ? 'hit' : 'miss');
+  const f = k => {
+    const a = recentAvg(p, k);
+    if (a == null || v.length < k) return '';
+    return `<span class="rsa"><i>L${k}</i> <b class="${cls(Math.round(a * 10) / 10)}">${a.toFixed(1)}</b></span>`;
+  };
+  const last = v.slice(0, 5).reverse();
+  return `<div class="rstrip" title="Newest game on the right. Green clears tonight's line for this side.">
+    ${f(2)}${f(3)}${f(5)}
+    <span class="rsg">${last.map(x => `<b class="${cls(x)}">${x}</b>`).join('')}</span></div>`;
+}
 function gamesText(p){
   if (p.kd === 'team') {
     const ev = p.ev || {}, src = ev.margin || ev.team_total || {};
@@ -1443,7 +1584,10 @@ function boxTable(sp, name, mk, games, limit){
     <div class="tscroll"><table class="boxt"><thead><tr><th>Date</th><th>Opp</th>
       ${head}</tr></thead><tbody>${body}</tbody></table></div>
     <div class="mnote">From the saved ESPN box scores. Highlighted: the
-      stat this prop is on. A blank is a stat the box score did not record.</div>
+      stat this prop is on. A blank is a stat the box score did not record.${
+      (keys || []).includes('_cl') ? ' CLUTCH is minutes on the floor in the last five minutes'
+        + ' of the fourth or overtime with the score within five, from the play-by-play;'
+        + ' a blank there means the game never got that close or was not read.' : ''}</div>
   </details>`;
 }
 /* A team's recent finals, and -- labelled as exactly that -- how each
@@ -1650,14 +1794,26 @@ function roleBox(p){
     const l3 = (r.starting.last3 || []).map(x => x ? 'S' : 'b').join(' ');
     rows.push(['starting', `${r.starting.starts} of ${r.starting.n} games`
       + (l3 ? ` · last 3: ${l3}` : '')]);
+    // The position the box score listed him at in the games he started.
+    const ps = Object.entries(r.starting.positions || {});
+    if (ps.length) rows.push(['started at', ps.map(([k, v]) =>
+      `${esc(k)} <span class="dim">(${v}g)</span>`).join(' · ')]);
   }
-  for (const k of ['start_split', 'blowout_split']) {
+  for (const k of ['start_split', 'close_split', 'blowout_split']) {
     const x = r[k]; if (!x) continue;
     rows.push([`${esc(x.a_label)} vs ${esc(x.b_label)}`,
       `${d(x.a_value, x.b_value)} (${x.a_n}g / ${x.b_n}g)`
       + (x.a_mins != null ? ` · ${x.a_mins} vs ${x.b_mins} min` : '')]);
   }
   const r1 = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
+  // Clutch time: last five minutes of the 4th or overtime, score
+  // within five, read from the play-by-play substitutions.
+  if (r.clutch) rows.push(['clutch minutes',
+    `${r.clutch.mean} min a game · on the floor in ${r.clutch.played_in} of `
+    + `${r.clutch.n} games with clutch time`
+    + (r.clutch.last3 && r.clutch.last3.length
+      ? ` · last ${r.clutch.last3.length}: ${r.clutch.last3.join(', ')}` : '')
+    + (r.clutch.none ? ` <span class="dim">(${r.clutch.none} never got close)</span>` : '')]);
   if (r.rate) rows.push([`per ${r.rate.base} ${esc(r.rate.unit)}`,
     `${r1(r.rate.recent)} recent vs ${r1(r.rate.season)} season `
     + `(${r.rate.n}g)`]);
@@ -1677,7 +1833,9 @@ function roleBox(p){
     </tbody></table>
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">Splits of an
       already short season. Each count is shown; a side with fewer than two
-      games is not reported at all.</span></div></div>`;
+      games is not reported at all.${r.clutch ? ' Clutch time is the last five '
+      + 'minutes of the fourth quarter or overtime with the score within five.'
+      : ''}</span></div></div>`;
 }
 
 /* The opportunity behind each bar, aligned to it.
@@ -1858,8 +2016,9 @@ function card(p){
     generate covering this game to fill it in.</p></div>`
     : p.kd === 'team' ? teamStrip(p)
     : `<div class="tiles">
-    <div class="tile"><div class="tl">window (${vals.length}g)</div>
-      <div class="tv">${avg != null ? avg.toFixed(1) : '—'}</div></div>
+    <div class="tile"><div class="tl">last 3 avg</div>
+      <div class="tv">${recentAvg(p, 3) != null && vals.length >= 3 ? recentAvg(p, 3).toFixed(1) : '—'}</div>
+      <div class="tn">${avg != null ? `window ${avg.toFixed(1)} (${vals.length}g)` : '&nbsp;'}</div></div>
     <div class="tile"><div class="tl">last 5 avg</div>
       <div class="tv">${avg5 != null ? avg5.toFixed(1) : '—'}</div></div>
     <div class="tile"><div class="tl">min / last 5</div>
@@ -2084,6 +2243,81 @@ function matchup(p){
        head needs a meeting to have happened.</div>`;
 }
 
+/* ---------- shot chart (NBA) ----------
+   Field-goal attempts from ESPN play-by-play for the last games that
+   had it, drawn on a half court. ESPN's coordinates are feet: x across
+   the floor with the rim at 25, y out from the rim. Zones match
+   context.shot_zone exactly. Free throws are not field goals and are
+   not drawn. */
+const SHOT_ZONES = ['rim', 'paint', 'mid-range', 'corner 3', 'above-break 3'];
+function shotZone(x, y, pts){
+  if (!(x >= -5 && x <= 55 && y >= -5 && y <= 60)) return null;
+  if (pts === 3) return y <= 8 ? 'corner 3' : 'above-break 3';
+  const d = Math.hypot(x - 25, y);
+  return d <= 4 ? 'rim' : d <= 14 ? 'paint' : 'mid-range';
+}
+function shotChart(p){
+  if ((p.sp || '').toUpperCase() !== 'NBA' || p.kd === 'team') return '';
+  const games = ((D.shots || {})[boxKey('NBA', p.pl)] || []);
+  if (!games.length) return `<div class="simbox"><h4>shot chart</h4>
+    <div class="simcrit"><span class="unv">No play-by-play saved for his recent
+    games yet. It fills in as box scores are re-read.</span></div></div>`;
+  const B = 5.25, Y = v => (v + B).toFixed(2);
+  const shots = [], zone = {};
+  for (const [, , sh] of games) for (const [x, y, m, pts] of sh) {
+    const z = shotZone(x, y, pts);
+    if (!z) continue;
+    shots.push([x, y, m]);
+    const t = zone[z] ||= [0, 0]; t[1]++; if (m) t[0]++;
+  }
+  const fga = shots.length, fgm = shots.filter(s => s[2]).length;
+  const dots = shots.map(([x, y, m]) => m
+    ? `<circle cx="${x.toFixed(2)}" cy="${Y(Math.min(y, 41))}" r=".75" class="shm"/>`
+    : `<path d="M${(x-.6).toFixed(2)} ${(+Y(Math.min(y,41))-.6).toFixed(2)}l1.2 1.2m0 -1.2l-1.2 1.2" class="shx"/>`).join('');
+  const court = `<rect x="0" y="0" width="50" height="47" class="ct"/>
+    <rect x="17" y="0" width="16" height="19" class="ct"/>
+    <circle cx="25" cy="19" r="6" class="ct"/>
+    <circle cx="25" cy="${B}" r=".75" class="ct"/>
+    <line x1="22" y1="4" x2="28" y2="4" class="ct"/>
+    <path d="M3 0L3 ${Y(8.95)}A23.75 23.75 0 0 0 47 ${Y(8.95)}L47 0" class="ct"/>
+    <path d="M21 ${B}A4 4 0 0 0 29 ${B}" class="ct"/>`;
+  const pct = t => t && t[1] ? Math.round(100 * t[0] / t[1]) + '%' : '\u2014';
+  return `<div class="simbox"><h4>shot chart · last ${games.length} game${games.length === 1 ? '' : 's'}</h4>
+    <svg class="shotc" viewBox="0 0 50 42" role="img"
+      aria-label="${fga} field-goal attempts, ${fgm} made">${court}${dots}</svg>
+    <div class="shleg"><span><i class="shm"></i> made</span><span><i class="shx"></i> missed</span>
+      <span>${fgm}/${fga} FG · ${pct([fgm, fga])}</span></div>
+    <table class="gtab"><tbody>${SHOT_ZONES.map(z => {
+      const t = zone[z];
+      return `<tr><td>${z}</td><td class="v" style="text-align:right">${
+        t ? `${t[0]}/${t[1]} · ${pct(t)}` : '\u2014'}</td>
+        <td class="v dim" style="text-align:right">${t ? Math.round(100 * t[1] / fga) + '% of shots' : ''}</td></tr>`;
+    }).join('')}</tbody></table>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">From ESPN
+      play-by-play. Rim is within 4 ft, paint within 14 ft, and a corner 3 is
+      any three taken less than 8 ft up the floor from the rim.</span></div></div>`;
+}
+
+/* Where to read further. Search pages, not deep links: these sites
+   key players by their own ids, and a guessed id is a wrong page. */
+const RESEARCH = [
+  ['NBA.com Stats', n => `https://www.nba.com/search?q=${n}`],
+  ['Basketball-Reference', n => `https://www.basketball-reference.com/search/search.fcgi?search=${n}`],
+  ['databallr', () => 'https://databallr.com/'],
+  ['Dunks & Threes', () => 'https://dunksandthrees.com/'],
+  ['BankrollSZN', () => 'https://bankrollszn.com/'],
+  ['Statz NBA', () => 'https://statz.ai/'],
+];
+function researchLinks(p){
+  if ((p.sp || '').toUpperCase() !== 'NBA' || p.kd === 'team' || !p.pl) return '';
+  const n = encodeURIComponent(p.pl);
+  return `<div class="simbox"><h4>read further on ${esc(p.pl)}</h4>
+    <div class="reslinks">${RESEARCH.map(([l, f]) =>
+      `<a class="chip" href="${f(n)}" target="_blank" rel="noopener">${esc(l)}</a>`).join('')}</div>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">Outside sites,
+      opened in a new tab. Their numbers are not pulled into this page.</span></div></div>`;
+}
+
 function detail(p){
   const cur = SEC[p.i] || 'read';
   const nav = `<div class="secnav">${SECTIONS.map(([k, label]) =>
@@ -2103,8 +2337,8 @@ function detail(p){
 
   const body =
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
-    : cur === 'games'  ? `${games(p)}`
-    : cur === 'matchup'? `${matchup(p)}`
+    : cur === 'games'  ? `${games(p)}${shotChart(p)}`
+    : cur === 'matchup'? `${matchup(p)}${researchLinks(p)}`
     : cur === 'market' ? `${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
@@ -2136,8 +2370,7 @@ function draw(){
     // score, because the leaves fall back to whatever scalars exist,
     // so bare rows floated straight back to the top of a board whose
     // whole claim is that the ranking means something.
-    .sort((a,b) => (a.nores?1:0)-(b.nores?1:0)
-                || (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0));
+    .sort(sortRows);
   // Printed once. The hero IS the first row -- showing it again
   // immediately underneath reads as a rendering bug, not a feature.
   if (HEROID != null) list = list.filter(p => p.i !== HEROID);
@@ -2236,7 +2469,7 @@ function draw(){
           <span class="nm">${headline(p)}</span>
           <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
             ${vs(p)}
-            · <span class="${thin?'thin':''}">${gamesText(p)}</span>${trkPip(p)}</span>
+            · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}</span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
@@ -2249,6 +2482,7 @@ function draw(){
           aria-label="${on ? 'remove from parlay' : 'add to parlay'}"
         >${on ? '\u2713' : '+'}</button>
       </div>
+      ${recentStrip(p)}
       ${srail(p)}
       ${p.elig === false && (p.pend||[]).length
         ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
@@ -2760,10 +2994,66 @@ function drawHealth(){
     <td>${l.outcomes}</td>
     <td class="${l.no_logs ? 'neg' : 'dim'}">${l.no_logs}</td>
     <td class="dim">${l.skipped_out}</td></tr>`).join('');
+  drawInjuries();
 }
 
+/* ---------- injured players ----------
+   The whole ESPN injury report per league, team by team, exactly as
+   posted. Players with a prop on today's board are flagged so the
+   report can be read against the slate. */
+let INJSPORT = null;
+const INJORDER = {'Out': 0, 'Doubtful': 1, 'Questionable': 2, 'Day-To-Day': 3, 'Probable': 4};
+function drawInjuries(){
+  const I = D.injuries || {};
+  const sports = Object.keys(I).filter(k => (I[k].rows || []).length).sort();
+  if (!sports.length) {
+    $('injsports').innerHTML = '';
+    $('injnote').textContent = 'No injury report has been saved yet. It is written on the next engine run.';
+    $('injrows').innerHTML = '';
+    return;
+  }
+  if (!INJSPORT || !sports.includes(INJSPORT)) INJSPORT = sports[0];
+  $('injsports').innerHTML = sports.map(sp => `<button class="chip ${
+    sp === INJSPORT ? 'on' : ''}" data-injsport="${esc(sp)}">${sico(sp)}${esc(sp)}
+    <span>${I[sp].rows.length}</span></button>`).join('');
+  const blk = I[INJSPORT];
+  const onBoard = new Set(((D.board || {}).props || [])
+    .filter(p => (p.sp || '').toUpperCase() === INJSPORT && p.kd !== 'team')
+    .map(p => (p.pl || '').toLowerCase()));
+  const q = ($('injq').value || '').trim().toLowerCase();
+  const rows = blk.rows.filter(r => !q || r.name.toLowerCase().includes(q)
+    || (r.team || '').toLowerCase().includes(q));
+  $('injnote').innerHTML = `${blk.rows.length} ${esc(INJSPORT)} players on the ESPN
+    injury report${blk.at ? `, saved ${ageText(blk.at)}` : ''}. Status, injury and
+    return date are the feed's own words; nothing is inferred.
+    <b>On board</b> marks a player with a prop posted today.`;
+  const teams = {};
+  for (const r of rows) (teams[r.team || 'Team not listed'] ||= []).push(r);
+  $('injrows').innerHTML = Object.keys(teams).sort().map(tm => {
+    const rs = teams[tm].sort((a, b) => ((INJORDER[a.status] ?? 9)
+      - (INJORDER[b.status] ?? 9)) || a.name.localeCompare(b.name));
+    return `<details class="tgame" open><summary><b>${esc(tm)}</b>
+      <span class="tgn">${rs.length} listed</span></summary>
+      ${rs.map(r => `<div class="injr">
+        <div class="injh"><b>${esc(r.name)}</b>${r.pos ? ` <span class="dim">${esc(r.pos)}</span>` : ''}${
+          onBoard.has(r.name.toLowerCase()) ? ' <span class="tmv warn">on board</span>' : ''}
+          <span class="injs ${r.status === 'Out' ? 'neg' : ''}">${esc(r.status || '')}</span></div>
+        <div class="injm"><span>${esc(r.injury || 'injury not stated')}</span>${
+          r.ret ? ` · <span>back ${esc(r.ret.slice(5))}</span>` : ''}${
+          r.date ? ` · <span>posted ${esc(r.date.slice(5))}</span>` : ''}</div>
+        ${r.note ? `<div class="injn">${esc(r.note)}</div>` : ''}</div>`).join('')}</details>`;
+  }).join('') || '<div class="empty">No player matches that filter.</div>';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-injsport]');
+  if (b) { INJSPORT = b.dataset.injsport; drawInjuries(); }
+});
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'injq') drawInjuries();
+});
+
 /* ---------- trending ---------- */
-let TDIR = 'all', TWIN = '3', TSPORT = 'all', BVIEW = 'all';
+let TDIR = 'all', TWIN = '3', TSPORT = 'all', BVIEW = 'all', TMODE = 'movers';
 const OPENT = new Set();
 
 // A window is not a streak. "Last 3" is an average over three games
@@ -3041,8 +3331,71 @@ function drawTrending(){
   $('noteam').hidden = tl.length > 0;
   $('teamrows').innerHTML = tl.map((r, i) => trendRow(
     r, 't' + i, r.team, `${esc(r.sport)} · ${esc(r.stat)}`, i + 1)).join('');
+  if (TMODE === 'games') drawTrendGames(t, qual);
 }
+// Every player with a priced record, grouped by the game it was priced
+// for. The movers list answers "who changed"; this answers "who is in
+// tonight's game and how is each of them trending", which needs the
+// players who did NOT clear the threshold too.
+function topMove(r){
+  const ms = winRows(r);
+  if (!ms.length) return null;
+  return ms.reduce((a, b) => Math.abs(b.pct || 0) > Math.abs(a.pct || 0) ? b : a);
+}
+function drawTrendGames(t, qual){
+  const all = [...(t.players || []), ...(t.quiet || [])]
+    .filter(r => TSPORT === 'all' || (r.sport || '?') === TSPORT)
+    .filter(r => {
+      if (TDIR === 'all') return true;
+      const m = topMove(r);
+      const v = m && m.pct != null ? m.pct : 0;
+      return TDIR === 'up' ? v > 0 : v < 0;
+    });
+  const slate = (D.games || []).map(g => g.matchup);
+  const groups = {};
+  for (const r of all) (groups[r.mu || 'Game not recorded'] ||= []).push(r);
+  const keys = Object.keys(groups).sort((a, b) => {
+    const ia = slate.indexOf(a), ib = slate.indexOf(b);
+    return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib) || a.localeCompare(b);
+  });
+  $('notrend').hidden = keys.length > 0;
+  $('notrend').textContent = 'No player has a priced record in this sport yet.';
+  const min = t.min_pct ?? 15;
+  $('trendrows').innerHTML = keys.map((k, gi) => {
+    const rs = groups[k].sort((a, b) => {
+      const ma = topMove(a), mb = topMove(b);
+      return Math.abs((mb && mb.pct) || 0) - Math.abs((ma && ma.pct) || 0);
+    });
+    const nq = rs.filter(qual).length;
+    const sp = rs[0].sport || '';
+    const today = slate.includes(k) ? '' : ' <span class="unv">not on today\'s board</span>';
+    const body = rs.map((r, i) => {
+      const sub = `${r.team ? esc(r.team) : '<span class="unv">team unverified</span>'}${
+        qual(r) ? ` · <b>${min}%+ move</b>` : ''}${
+        (r.markets || []).length ? ' · ' + esc(r.markets.join(', ').replace(/_/g, ' ')) : ''}`;
+      const row = trendRow(r, `g${gi}_${i}`, r.player, sub, null);
+      return row || `<div class="trow card"><div class="tname"><div>
+        <span class="tnm">${esc(r.player)}</span><div class="tsub">${sub} ·
+        no box-score history in this window</div></div></div></div>`;
+    }).join('');
+    return `<details class="tgame" ${OPENT.has('G' + k) ? 'open' : ''} data-tgame="${esc(k)}">
+      <summary>${sico(sp)}<b>${esc(k)}</b>${today}
+        <span class="tgn">${rs.length} player${rs.length === 1 ? '' : 's'}${
+          nq ? ` · ${nq} moving` : ''}</span></summary>${body}</details>`;
+  }).join('');
+}
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (!d.matches || !d.matches('details[data-tgame]')) return;
+  const k = 'G' + d.dataset.tgame;
+  d.open ? OPENT.add(k) : OPENT.delete(k);
+}, true);
 document.addEventListener('click', e => {
+  const tm = e.target.closest('[data-tmode]');
+  if (tm) { TMODE = tm.dataset.tmode;
+    document.querySelectorAll('[data-tmode]').forEach(x =>
+      x.classList.toggle('on', x === tm));
+    return drawTrending(); }
   const w = e.target.closest('[data-twin]');
   if (w) { TWIN = w.dataset.twin;
     document.querySelectorAll('[data-twin]').forEach(x =>
