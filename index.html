@@ -548,8 +548,49 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 /* The expanded card is nested content, and it never looked it. */
 .detail{padding:4px 0 10px;display:grid;gap:10px;
   border-left:2px solid var(--clover-soft);padding-left:10px;margin-left:-2px}
-.secnav{display:flex;gap:4px;position:sticky;top:var(--stick,0);z-index:3;
+.secnav{display:block;position:sticky;top:var(--stick,0);z-index:3;
   background:var(--bg);padding:7px 0 6px;margin:0 -2px}
+.secrow{display:flex;gap:4px}
+.detail>*,.secnav{min-width:0}
+.secnav{max-width:100%}
+.pswitch{max-width:100%}
+.gtab.dz{font-size:11px}
+.gtab.dz th,.gtab.dz td{padding-left:3px;padding-right:3px}
+.pswitch{display:flex;gap:5px;overflow-x:auto;white-space:nowrap;padding:0 0 6px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pswitch::-webkit-scrollbar{display:none}
+.pchip{flex:0 0 auto;font-family:var(--m);font-size:11px;padding:6px 9px;border-radius:999px;
+  border:1px solid var(--rule);background:var(--raise);color:var(--ink-2);cursor:pointer}
+.pchip small{margin-left:5px;font-size:9.5px;opacity:.75}
+.pchip.on{border-color:var(--clover);background:var(--clover);color:#fff;font-weight:600}
+.archs{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.arch{font-family:var(--m);font-size:10px;letter-spacing:.04em;padding:2px 7px;border-radius:999px;
+  border:1px solid var(--clover);color:var(--ink);background:var(--clover-soft)}
+.shotc .fade{opacity:.22}
+.shotc .shs{fill:none;stroke:var(--over);stroke-width:.35}
+.shleg i.shs{border:1.5px solid var(--over);background:none}
+.shotc .ctb{fill:var(--raise);stroke:var(--rule);stroke-width:.25}
+.shotc .ctz{fill:none;stroke:var(--rule);stroke-width:.2;stroke-dasharray:1 1}
+.shotc .zcell{fill:var(--clover-soft);stroke:var(--rule);stroke-width:.2}
+.shotc .zbar{fill:var(--clover);opacity:.8}
+.shotc .ztx{font-size:3px;text-anchor:middle;fill:var(--ink);font-family:var(--m)}
+.tshots{margin-top:6px}
+.injside{margin:4px 0 8px}
+.injr{padding:4px 0;border-bottom:1px solid var(--rule);font-size:13px}
+.injr.me{background:var(--clover-soft);border-radius:6px;padding:4px 6px}
+.dz tr.most td{background:color-mix(in srgb,var(--over) 14%,transparent)}
+.dz tr.least td{background:color-mix(in srgb,var(--under) 14%,transparent)}
+tr.sub td{font-size:11.5px;color:var(--ink-2)}
+.adjl{font-size:11px;margin-top:2px}
+.fanbox{border:1px solid var(--rule);border-radius:10px;padding:8px;margin:8px 0;display:grid;gap:5px}
+.fanhd{display:flex;justify-content:space-between;align-items:baseline}
+.fanleg{display:flex;align-items:center;gap:7px;padding:8px;border-radius:8px;
+  background:var(--raise);color:var(--ink);text-decoration:none;font-size:13px}
+.fanleg .n{font-family:var(--m);font-size:10px;width:16px;height:16px;border-radius:50%;
+  display:inline-grid;place-items:center;border:1px solid var(--rule)}
+.fanleg .go{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--clover)}
+.fanleg.off{opacity:.7;flex-wrap:wrap}
+.fannote{font-size:11.5px;line-height:1.45}
 .secbtn{flex:1 1 0;font-family:var(--m);font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;padding:7px 4px;border-radius:9px;
   border:1px solid var(--rule);background:none;color:var(--ink-2);
@@ -735,7 +776,6 @@ section{padding-block:16px}
 <!-- ───────────────────────── BOARD ───────────────────────── -->
 <div id="tab-board">
   <div id="hero"></div>
-  <div class="strip" id="strip"></div>
   <div class="controls">
     <div class="search">
       <input id="q" type="search" placeholder="Search player or market…"
@@ -875,6 +915,7 @@ section{padding-block:16px}
 
 <!-- ───────────────────────── RECORD ──────────────────────── -->
 <div id="tab-record" hidden>
+  <div class="strip" id="strip"></div>
   <section>
     <div class="hrow"><h2>Does the filter discriminate?</h2></div>
     <p class="traynote">Every candidate the engine rejected was graded too, so
@@ -1010,6 +1051,7 @@ section{padding-block:16px}
       <button class="add" id="pClear">clear</button>
     </div>
     <div class="legs" id="pLegs"></div>
+    <div id="pFan"></div>
     <p class="traynote" id="pNote"></p>
   </div>
 </div>
@@ -1825,6 +1867,8 @@ function roleBox(p){
   for (const w of wo) rows.push([`without ${esc(w.mate_name || w.mate)}`,
     `${d(w.without_mean, w.with_mean)} (${w.without_n}g without / ${w.with_n}g with)`]);
 
+  rows.push(...circumstanceExtra(p));
+  rows.unshift(...archBox(p));
   if (!rows.length) return '';
   return `<div class="simbox"><h4>circumstance</h4>
     <table class="gtab"><tbody>${rows.map(([a, b]) =>
@@ -2256,47 +2300,449 @@ function shotZone(x, y, pts){
   const d = Math.hypot(x - 25, y);
   return d <= 4 ? 'rim' : d <= 14 ? 'paint' : 'mid-range';
 }
-function shotChart(p){
-  if ((p.sp || '').toUpperCase() !== 'NBA' || p.kd === 'team') return '';
-  const games = ((D.shots || {})[boxKey('NBA', p.pl)] || []);
-  if (!games.length) return `<div class="simbox"><h4>shot chart</h4>
-    <div class="simcrit"><span class="unv">No play-by-play saved for his recent
-    games yet. It fills in as box scores are re-read.</span></div></div>`;
-  const B = 5.25, Y = v => (v + B).toFixed(2);
-  const shots = [], zone = {};
-  for (const [, , sh] of games) for (const [x, y, m, pts] of sh) {
-    const z = shotZone(x, y, pts);
-    if (!z) continue;
-    shots.push([x, y, m]);
-    const t = zone[z] ||= [0, 0]; t[1]++; if (m) t[0]++;
-  }
-  const fga = shots.length, fgm = shots.filter(s => s[2]).length;
-  const dots = shots.map(([x, y, m]) => m
-    ? `<circle cx="${x.toFixed(2)}" cy="${Y(Math.min(y, 41))}" r=".75" class="shm"/>`
-    : `<path d="M${(x-.6).toFixed(2)} ${(+Y(Math.min(y,41))-.6).toFixed(2)}l1.2 1.2m0 -1.2l-1.2 1.2" class="shx"/>`).join('');
-  const court = `<rect x="0" y="0" width="50" height="47" class="ct"/>
-    <rect x="17" y="0" width="16" height="19" class="ct"/>
-    <circle cx="25" cy="19" r="6" class="ct"/>
-    <circle cx="25" cy="${B}" r=".75" class="ct"/>
-    <line x1="22" y1="4" x2="28" y2="4" class="ct"/>
-    <path d="M3 0L3 ${Y(8.95)}A23.75 23.75 0 0 0 47 ${Y(8.95)}L47 0" class="ct"/>
-    <path d="M21 ${B}A4 4 0 0 0 29 ${B}" class="ct"/>`;
-  const pct = t => t && t[1] ? Math.round(100 * t[0] / t[1]) + '%' : '\u2014';
-  return `<div class="simbox"><h4>shot chart · last ${games.length} game${games.length === 1 ? '' : 's'}</h4>
-    <svg class="shotc" viewBox="0 0 50 42" role="img"
-      aria-label="${fga} field-goal attempts, ${fgm} made">${court}${dots}</svg>
-    <div class="shleg"><span><i class="shm"></i> made</span><span><i class="shx"></i> missed</span>
-      <span>${fgm}/${fga} FG · ${pct([fgm, fga])}</span></div>
-    <table class="gtab"><tbody>${SHOT_ZONES.map(z => {
-      const t = zone[z];
-      return `<tr><td>${z}</td><td class="v" style="text-align:right">${
-        t ? `${t[0]}/${t[1]} · ${pct(t)}` : '\u2014'}</td>
-        <td class="v dim" style="text-align:right">${t ? Math.round(100 * t[1] / fga) + '% of shots' : ''}</td></tr>`;
-    }).join('')}</tbody></table>
-    <div class="simcrit" style="margin:7px 0 0"><span class="unv">From ESPN
-      play-by-play. Rim is within 4 ft, paint within 14 ft, and a corner 3 is
-      any three taken less than 8 ft up the floor from the rim.</span></div></div>`;
+/* ---------- where the plays happen, every sport ----------
+
+   NBA shots carry floor coordinates, NHL shots carry rink
+   coordinates, and NFL plays name the throw's depth and direction and
+   the run's gap. The card shows the last SHOT_SHOW games -- three to
+   five is what describes tonight's player; eight or nine is the
+   bigger sample, and lives in Trending. */
+const SHOT_SHOW = 5;
+const SHOTN = {};               // per prop: 3 or 5 games
+const NHL_ZONES = ['crease', 'slot', 'high slot', 'point', 'wide'];
+const NFL_PASS_ZONES = ['short left', 'short middle', 'short right',
+                        'deep left', 'deep middle', 'deep right'];
+const NFL_RUN_LANES = ['left end', 'left tackle', 'left guard', 'middle',
+                       'right guard', 'right tackle', 'right end'];
+function hockeyZone(x, y){
+  if (x == null || y == null || Math.abs(x) > 100 || Math.abs(y) > 43) return null;
+  if (x < 0) { x = -x; y = -y; }
+  if (Math.hypot(89 - x, y) <= 10) return 'crease';
+  if (Math.abs(y) > 22) return 'wide';
+  if (x >= 54) return 'slot';
+  if (x >= 40) return 'high slot';
+  return 'point';
 }
+
+/* Team abbreviation for a full team name, from the names the build
+   already carries. */
+const ABBR = {};
+function teamAbbr(sp, name){
+  const lg = String(sp || '').toUpperCase();
+  if (!ABBR[lg]) {
+    ABBR[lg] = {};
+    for (const [ab, nm] of Object.entries(((D && D.team_names) || {})[lg] || {}))
+      ABBR[lg][teamNorm(nm)] = ab;
+  }
+  return ABBR[lg][teamNorm(name || '')] || null;
+}
+function teamName(sp, ab){
+  return (((D && D.team_names) || {})[String(sp || '').toUpperCase()] || {})[ab] || ab;
+}
+function matchSides(p){
+  const [away, home] = String(p.mu || '').split(' @ ');
+  return {away: away || '', home: home || ''};
+}
+/* His own team from his newest box score; the opponent is the other
+   side of tonight's matchup. Null when either cannot be placed. */
+function playerTeam(p){
+  const rows = (((D.box || {}).p) || {})[boxKey(p.sp, p.pl)] || [];
+  return rows.length ? rows[0][1] : null;
+}
+function oppTeam(p){
+  const id = matchupIdentity(p);
+  if (id) return teamAbbr(p.sp, id.opponent);
+  const {away, home} = matchSides(p);
+  const a = teamAbbr(p.sp, away), h = teamAbbr(p.sp, home), t = playerTeam(p);
+  if (!t || !a || !h) return null;
+  return t === a ? h : t === h ? a : null;
+}
+
+/* Which chart a prop wants, from its market. */
+function shotKind(p){
+  const lg = (p.sp || '').toUpperCase(), mk = (p.mkk || p.mk || '').toLowerCase();
+  if (lg === 'NBA') return 'sh';
+  if (lg === 'NHL') return /save|goalie/.test(mk) ? null : 'sh';
+  if (lg === 'NFL') {
+    if (/pass|completion|interception/.test(mk)) return 'sh';
+    if (/rush|carr/.test(mk)) return 'ru';
+    if (/rec|target|catch/.test(mk)) return 'tg';
+    return 'auto';
+  }
+  return null;
+}
+
+/* One sport's zone tally over a list of games' play rows. */
+function zoneTally(lg, kind, games){
+  const z = {}; let made = 0, att = 0, pts = 0;
+  for (const g of games) {
+    const rows = lg === 'NFL' ? ((g[2] || {})[kind] || []) : (g[2] || []);
+    for (const r of rows) {
+      let k, m, pv;
+      if (lg === 'NBA') { k = shotZone(r[0], r[1], r[3]); m = r[2] ? 1 : 0; pv = r[2] ? r[3] : 0; }
+      else if (lg === 'NHL') { k = hockeyZone(r[0], r[1]); m = r[2] ? 1 : 0; pv = r[3] === 1 ? 1 : 0; }
+      else if (kind === 'ru') { k = NFL_RUN_LANES[r[0]]; m = (r[1] || 0) >= 4 ? 1 : 0; pv = r[1] || 0; }
+      else { k = NFL_PASS_ZONES[r[0]]; m = r[1] ? 1 : 0; pv = r[2] || 0; }
+      if (!k) continue;
+      const t = z[k] ||= [0, 0, 0]; t[0] += m; t[1]++; t[2] += pv;
+      made += m; att++; pts += pv;
+    }
+  }
+  return {z, made, att, pts};
+}
+const zoneList = (lg, kind) => lg === 'NBA' ? SHOT_ZONES : lg === 'NHL' ? NHL_ZONES
+  : kind === 'ru' ? NFL_RUN_LANES : NFL_PASS_ZONES;
+const zlabel = (lg, kind) => lg === 'NBA' ? ['FG', 'shots'] : lg === 'NHL'
+  ? ['goals', 'attempts'] : kind === 'ru' ? ['4+ yd carries', 'carries']
+  : kind === 'tg' ? ['catches', 'targets'] : ['completions', 'throws'];
+
+/* The drawing, per sport. `fade` marks rows from games outside the
+   highlighted window (Trending uses it). */
+function shotSvg(lg, kind, games, hot){
+  const isHot = i => hot == null || i < hot;
+  if (lg === 'NBA') {
+    const B = 5.25, Y = v => (v + B).toFixed(2);
+    const dots = [];
+    games.forEach((g, gi) => { for (const [x, y, m] of (g[2] || [])) {
+      const cls = isHot(gi) ? '' : ' fade';
+      dots.push(m
+        ? `<circle cx="${x.toFixed(2)}" cy="${Y(Math.min(y, 41))}" r="${isHot(gi) ? .85 : .6}" class="shm${cls}"/>`
+        : `<path d="M${(x-.6).toFixed(2)} ${(+Y(Math.min(y,41))-.6).toFixed(2)}l1.2 1.2m0 -1.2l-1.2 1.2" class="shx${cls}"/>`);
+    }});
+    const court = `<rect x="0" y="0" width="50" height="47" class="ct"/>
+      <rect x="17" y="0" width="16" height="19" class="ct"/>
+      <circle cx="25" cy="19" r="6" class="ct"/>
+      <circle cx="25" cy="${B}" r=".75" class="ct"/>
+      <line x1="22" y1="4" x2="28" y2="4" class="ct"/>
+      <path d="M3 0L3 ${Y(8.95)}A23.75 23.75 0 0 0 47 ${Y(8.95)}L47 0" class="ct"/>
+      <path d="M21 ${B}A4 4 0 0 0 29 ${B}" class="ct"/>`;
+    return `<svg class="shotc" viewBox="0 0 50 42" role="img" aria-label="shot chart">${court}${dots.join('')}</svg>`;
+  }
+  if (lg === 'NHL') {
+    // Attacking half, net on the right at x=89; drawn with the net at
+    // the top so it reads like the basketball chart.
+    const X = y => (42.5 + y).toFixed(1), Yy = x => (100 - x).toFixed(1);
+    const dots = [];
+    games.forEach((g, gi) => { for (const [x, y, gl, k] of (g[2] || [])) {
+      const cls = isHot(gi) ? '' : ' fade';
+      dots.push(gl ? `<circle cx="${X(y)}" cy="${Yy(x)}" r="1.9" class="shm${cls}"/>`
+        : k === 1 ? `<circle cx="${X(y)}" cy="${Yy(x)}" r="1.3" class="shs${cls}"/>`
+        : `<path d="M${(+X(y)-1.1).toFixed(1)} ${(+Yy(x)-1.1).toFixed(1)}l2.2 2.2m0 -2.2l-2.2 2.2" class="shx${cls}"/>`);
+    }});
+    const rink = `<rect x="0" y="0" width="85" height="75" rx="14" class="ct"/>
+      <line x1="0" y1="11" x2="85" y2="11" class="ct"/>
+      <line x1="0" y1="75" x2="85" y2="75" class="ctb"/>
+      <path d="M38.5 11 A4 4 0 0 0 46.5 11" class="ct"/>
+      <rect x="39.5" y="8" width="6" height="3" class="ct"/>
+      <circle cx="20.5" cy="31" r="15" class="ct"/><circle cx="64.5" cy="31" r="15" class="ct"/>
+      <rect x="20.5" y="11" width="44" height="35" class="ctz"/>`;
+    return `<svg class="shotc" viewBox="0 0 85 76" role="img" aria-label="shot chart">${rink}${dots.join('')}</svg>`;
+  }
+  // NFL: a field diagram with one cell per zone, sized by volume.
+  const zs = zoneList(lg, kind), t = zoneTally(lg, kind, games);
+  const hotT = hot == null ? null : zoneTally(lg, kind, games.slice(0, hot));
+  const max = Math.max(1, ...zs.map(z => (t.z[z] || [0, 0])[1]));
+  if (kind === 'ru') {
+    const w = 100 / zs.length;
+    return `<svg class="shotc" viewBox="0 0 100 40" role="img" aria-label="run lanes">
+      <rect x="0" y="0" width="100" height="40" class="ct"/>
+      <line x1="0" y1="30" x2="100" y2="30" class="ctb"/>
+      ${zs.map((z, i) => { const v = t.z[z] || [0, 0, 0], hv = hotT ? (hotT.z[z] || [0, 0, 0]) : null;
+        const h = 26 * v[1] / max;
+        return `<rect x="${(i * w + 1).toFixed(1)}" y="${(30 - h).toFixed(1)}" width="${(w - 2).toFixed(1)}"
+          height="${h.toFixed(1)}" class="zbar${hv && !hv[1] ? ' fade' : ''}"/>
+          <text x="${(i * w + w / 2).toFixed(1)}" y="${(28 - h).toFixed(1)}" class="ztx">${v[1] || ''}</text>
+          <text x="${(i * w + w / 2).toFixed(1)}" y="37" class="ztx dim">${['LE','LT','LG','M','RG','RT','RE'][i]}</text>`; }).join('')}
+    </svg>`;
+  }
+  return `<svg class="shotc" viewBox="0 0 90 56" role="img" aria-label="pass zones">
+    <rect x="0" y="0" width="90" height="56" class="ct"/>
+    <line x1="0" y1="28" x2="90" y2="28" class="ctb"/>
+    <line x1="30" y1="0" x2="30" y2="56" class="ct"/><line x1="60" y1="0" x2="60" y2="56" class="ct"/>
+    ${zs.map((z, i) => { const col = i % 3, deep = i >= 3, v = t.z[z] || [0, 0, 0];
+      const op = (0.12 + 0.75 * v[1] / max).toFixed(2), x = col * 30, y = deep ? 0 : 28;
+      const hv = hotT ? (hotT.z[z] || [0, 0, 0]) : null;
+      return `<rect x="${x + 1}" y="${y + 1}" width="28" height="26" class="zcell" style="opacity:${op}"/>
+        <text x="${x + 15}" y="${y + 13}" class="ztx">${v[1] ? `${v[0]}/${v[1]}` : '\u2014'}</text>
+        <text x="${x + 15}" y="${y + 22}" class="ztx dim">${v[1] ? `${v[2]} yd` : ''}${
+          hv && hv[1] ? ` \u00b7 ${hv[1]} in window` : ''}</text>`; }).join('')}
+    <text x="45" y="54.5" class="ztx dim">line of scrimmage \u2014 short below, deep above</text>
+  </svg>`;
+}
+
+/* What the opponent allows by zone, over its last games, against the
+   league's per-game rate in the same zone. */
+function defBox(lg, kind, opp, mine){
+  const DZ = ((D.dzones || {})[lg]) || null;
+  if (!DZ || !opp) return '';
+  const T = (DZ.t || {})[opp];
+  if (!T || !T.g) return `<div class="mnote">No play-by-play saved yet for ${esc(opp)}'s
+    recent opponents, so what it allows by zone is not available.</div>`;
+  const zs = zoneList(lg, kind).map(z => lg === 'NFL' && kind === 'ru' ? `run ${z}` : z);
+  const lgG = DZ.g || 1, pg = (t, g) => t ? t[1] / g : 0;
+  const rate = t => t && t[1] ? t[0] / t[1] : null;
+  const rows = zs.map(z => {
+    const t = T.z[z], L = DZ.lg[z];
+    return {z, t, L, per: pg(t, T.g), lper: pg(L, lgG), r: rate(t), lr: rate(L)};
+  }).filter(r => r.L && r.L[1]);
+  if (!rows.length) return '';
+  const vol = rows.map(r => ({...r, d: r.lper ? r.per / r.lper - 1 : 0}));
+  const most = vol.slice().sort((a, b) => b.d - a.d)[0], least = vol.slice().sort((a, b) => a.d - b.d)[0];
+  const [mk, ak] = zlabel(lg, kind);
+  const pct = v => v == null ? '\u2014' : Math.round(100 * v) + '%';
+  const myZ = mine ? mine.z : {};
+  return `<div class="mbox"><div class="mhead">${esc(teamName(lg, opp))} defence by zone
+      <span class="dim">· last ${T.g} games</span></div>
+    <div class="tscroll"><table class="gtab dz"><thead><tr><th>zone</th><th>his ${lg === 'NFL' ? 'rate' : 'pct'}</th>
+      <th>allowed</th><th>league</th><th>${ak}/g vs lg</th></tr></thead><tbody>${vol.map(r => {
+        const zk = r.z.replace(/^run /, ''), m = myZ[zk];
+        const hot = r === most ? ' most' : r === least ? ' least' : '';
+        const tone = r.r != null && r.lr != null ? (r.r > r.lr + .03 ? 'hit' : r.r < r.lr - .03 ? 'miss' : '') : '';
+        return `<tr class="${hot}"><td>${esc(zk)}</td>
+          <td class="v">${m && m[1] ? `${pct(m[0] / m[1])} <small class="dim">${m[0]}/${m[1]}</small>` : '\u2014'}</td>
+          <td class="v ${tone}">${pct(r.r)}</td><td class="dim">${pct(r.lr)}</td>
+          <td class="${r.d > .1 ? 'hit' : r.d < -.1 ? 'miss' : 'dim'}">${r.per.toFixed(1)} <small>(${
+            r.d > 0 ? '+' : ''}${Math.round(100 * r.d)}%)</small></td></tr>`; }).join('')}</tbody></table></div>
+    <div class="mnote">Allows the most ${esc(ak)} at <b>${esc(most.z.replace(/^run /, ''))}</b>
+      (${most.d > 0 ? '+' : ''}${Math.round(100 * most.d)}% vs league) and the fewest at
+      <b>${esc(least.z.replace(/^run /, ''))}</b> (${Math.round(100 * least.d)}%).
+      ${lg === 'NBA' ? 'Allowed % is opponents\u2019 FG% there.' : lg === 'NHL'
+        ? 'Allowed % is goals per attempt there.' : kind === 'ru'
+        ? 'Allowed % is the share of carries there going 4+ yards.' : 'Allowed % is completions per target there.'}
+      Built from every opponent's play-by-play, so it is a team number, not a matchup on him.</div></div>`;
+}
+
+function shotChart(p){
+  if (p.kd === 'team') return teamZones(p);
+  const lg = (p.sp || '').toUpperCase();
+  let kind = shotKind(p);
+  if (!kind) return '';
+  const all = ((D.shots || {})[boxKey(lg, p.pl)] || []);
+  if (lg === 'NFL' && kind === 'auto') {
+    const have = k => all.some(g => ((g[2] || {})[k] || []).length);
+    kind = have('sh') ? 'sh' : have('ru') ? 'ru' : have('tg') ? 'tg' : null;
+    if (!kind) return '';
+  }
+  const opp = oppTeam(p);
+  if (!all.length) return `<div class="simbox"><h4>${lg === 'NFL' ? 'zone chart' : 'shot chart'}</h4>
+    <div class="simcrit"><span class="unv">No play-by-play saved for his recent
+    games yet. It fills in as box scores are re-read.</span></div>${defBox(lg, kind, opp, null)}</div>`;
+  const n = SHOTN[p.i] || SHOT_SHOW;
+  const games = all.slice(0, n);
+  const t = zoneTally(lg, kind, games);
+  const [mk, ak] = zlabel(lg, kind);
+  const pct = v => v && v[1] ? Math.round(100 * v[0] / v[1]) + '%' : '\u2014';
+  const zs = zoneList(lg, kind);
+  const pick = [3, 5].map(k => `<button class="chip${k === n ? ' on' : ''}"
+    data-shotn="${p.i}:${k}">last ${k}</button>`).join('');
+  const legend = lg === 'NBA'
+    ? `<span><i class="shm"></i> made</span><span><i class="shx"></i> missed</span>`
+    : lg === 'NHL'
+    ? `<span><i class="shm"></i> goal</span><span><i class="shs"></i> on goal</span><span><i class="shx"></i> missed / blocked</span>`
+    : '';
+  const extra = lg === 'NHL' ? ` · ${t.pts} on goal` : lg === 'NFL' ? ` · ${t.pts} yds` : '';
+  return `<div class="simbox"><h4>${lg === 'NFL' ? (kind === 'ru' ? 'run lanes' : kind === 'tg'
+      ? 'targets by zone' : 'throws by zone') : 'shot chart'} · last ${games.length}
+      game${games.length === 1 ? '' : 's'}</h4>
+    <div class="chips shotn">${pick}</div>
+    ${shotSvg(lg, kind, games)}
+    <div class="shleg">${legend}<span>${t.made}/${t.att} ${esc(mk)} · ${pct([t.made, t.att])}${extra}</span></div>
+    <table class="gtab"><tbody>${zs.map(z => {
+      const v = t.z[z];
+      return `<tr><td>${esc(z)}</td><td class="v" style="text-align:right">${
+        v ? `${v[0]}/${v[1]} · ${pct(v)}` : '\u2014'}</td>
+        <td class="v dim" style="text-align:right">${v ? Math.round(100 * v[1] / t.att) + '% of ' + esc(ak) : ''}</td></tr>`;
+    }).join('')}</tbody></table>
+    ${defBox(lg, kind, opp, t)}
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">From ESPN
+      play-by-play, ${games.map(g => `${String(g[0]).slice(5)} v ${esc(g[1] || '?')}`).join(', ')}.
+      ${lg === 'NBA' ? 'Rim is within 4 ft, paint within 14 ft, a corner 3 is any three less than 8 ft up the floor.'
+        : lg === 'NHL' ? 'Every shot is folded to one net. Slot is between the faceoff dots out to the tops of the circles; crease is within 10 ft of the net.'
+        : 'Zones are the play-by-play\u2019s own words: short/deep and left/middle/right for throws, the gap named for runs.'}</span></div></div>`;
+}
+
+/* Team markets: both defences by zone, side by side. */
+function teamZones(p){
+  const lg = (p.sp || '').toUpperCase();
+  if (!((D.dzones || {})[lg])) return '';
+  const {away, home} = matchSides(p);
+  const a = teamAbbr(lg, away), h = teamAbbr(lg, home);
+  const kind = lg === 'NFL' ? 'tg' : 'sh';
+  return [a, h].filter(Boolean).map(ab => defBox(lg, kind, ab, null)).join('')
+    + (lg === 'NFL' ? [a, h].filter(Boolean).map(ab => defBox(lg, 'ru', ab, null)).join('') : '');
+}
+
+/* Trending: the nine-game sample with the window games standing out. */
+function trendShots(r){
+  const lg = (r.sport || '').toUpperCase();
+  const all = ((D.shots || {})[boxKey(lg, r.player)] || []).slice(0, 9);
+  if (!all.length) return '';
+  const w = Math.min(+TWIN || 3, all.length);
+  let kind = 'sh';
+  if (lg === 'NFL') {
+    const have = k => all.some(g => ((g[2] || {})[k] || []).length);
+    kind = have('sh') ? 'sh' : have('ru') ? 'ru' : 'tg';
+  }
+  const hot = zoneTally(lg, kind, all.slice(0, w)), cold = zoneTally(lg, kind, all.slice(w));
+  const zs = zoneList(lg, kind);
+  const [mk, ak] = zlabel(lg, kind);
+  const share = (t, z) => t.att ? (t.z[z] || [0, 0])[1] / Math.max(1, t.att) : 0;
+  const pct = v => v && v[1] ? Math.round(100 * v[0] / v[1]) + '%' : '\u2014';
+  const nH = w, nC = all.length - w;
+  return `<div class="tshots"><div class="glab">${lg === 'NFL' ? 'zones' : 'shots'} · last ${all.length}
+      <small>bright = the ${w}-game window, faded = the ${nC} before it</small></div>
+    ${shotSvg(lg, kind, all, w)}
+    <table class="gtab"><thead><tr><th>zone</th><th>window</th><th>before</th><th>${esc(ak)}/g</th></tr></thead>
+    <tbody>${zs.map(z => { const a = hot.z[z], b = cold.z[z];
+      const pa = a ? a[1] / nH : 0, pb = b && nC ? b[1] / nC : 0;
+      return `<tr><td>${esc(z)}</td><td class="v">${pct(a)}</td><td class="dim">${pct(b)}</td>
+        <td class="${pa > pb * 1.15 ? 'hit' : pa < pb * .85 ? 'miss' : 'dim'}">${pa.toFixed(1)} vs ${nC ? pb.toFixed(1) : '\u2014'}</td></tr>`; }).join('')}</tbody></table></div>`;
+}
+
+/* Every injury on both sides of tonight's game, from the same feed as
+   the Health tab. */
+function injuryBox(p){
+  const lg = (p.sp || '').toUpperCase();
+  const I = ((D.injuries || {})[lg]) || null;
+  if (!I) return '';
+  const {away, home} = matchSides(p);
+  const sides = [away, home].filter(Boolean);
+  const out = sides.map(nm => {
+    const rows = (I.rows || []).filter(r => teamNorm(r.team || '') === teamNorm(nm));
+    const mine = p.kd !== 'team' && rows.some(r => boxKey('', r.name) === boxKey('', p.pl));
+    return `<div class="injside"><div class="mhead">${esc(nm)} <span class="dim">${rows.length
+        ? rows.length + ' listed' : 'nobody listed'}</span></div>${rows.map(r => `<div class="injr${
+        boxKey('', r.name) === boxKey('', p.pl || '') ? ' me' : ''}">
+        <b class="${/out|doubt/i.test(r.status) ? 'miss' : /quest|day/i.test(r.status) ? 'unv' : ''}">${esc(r.status || '')}</b>
+        ${esc(r.name)} <span class="dim">${esc(r.pos || '')}${r.injury ? ' \u00b7 ' + esc(r.injury) : ''}${
+          r.ret ? ' \u00b7 back ' + esc(String(r.ret).slice(5)) : ''}</span></div>`).join('')}</div>`
+      + (mine ? '' : '');
+  }).join('');
+  return `<div class="simbox"><h4>injuries in this game</h4>${out}
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">ESPN injury report${
+      I.at ? `, read ${since(I.at)}` : ''}. Shown, not scored: the Injury leaf above
+      is what the engine measured.</span></div></div>`;
+}
+
+/* Box-score type, from the build. */
+function archOf(sp, name){
+  return ((D.arch || {})[boxKey(sp, name)]) || [];
+}
+function archChips(p){
+  const a = archOf(p.sp, p.pl);
+  if (!a.length) return '';
+  return `<div class="archs">${a.map(([l, why, g]) =>
+    `<span class="arch" title="${esc(why)} (${g} games)">${esc(l)}</span>`).join('')}</div>`;
+}
+function archBox(p){
+  const a = archOf(p.sp, p.pl);
+  if (!a.length) return '';
+  return a.map(([l, why, g]) => [`type: ${esc(l)}`, `${esc(why)} <span class="dim">(${g}g)</span>`]);
+}
+
+/* Home/away, rest and minutes, from the games on the card. */
+function circumstanceExtra(p){
+  const rec = ((p.ev || {}).recent || []).filter(g => g.v != null);
+  const rows = [];
+  if (rec.length < 3) return rows;
+  const mean = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  const r1 = v => v == null ? '\u2014' : (Math.round(v * 10) / 10).toString();
+  const H = rec.filter(g => g.ha === 'home'), A = rec.filter(g => g.ha === 'away');
+  if (H.length >= 2 && A.length >= 2) rows.push(['home vs away',
+    `${r1(mean(H.map(g => g.v)))} vs ${r1(mean(A.map(g => g.v)))} (${H.length}g / ${A.length}g)`]);
+  // Rest: days since the game before, newest first.
+  const rest = [], b2b = [];
+  for (let i = 0; i < rec.length - 1; i++) {
+    const d0 = Date.parse(rec[i].d), d1 = Date.parse(rec[i + 1].d);
+    if (!isFinite(d0) || !isFinite(d1)) continue;
+    ((d0 - d1) / 864e5 <= 1 ? b2b : rest).push(rec[i].v);
+  }
+  if (b2b.length >= 2 && rest.length >= 2) rows.push(['back-to-back vs rested',
+    `${r1(mean(b2b))} vs ${r1(mean(rest))} (${b2b.length}g / ${rest.length}g)`]);
+  const mins = rec.map(g => g.m).filter(v => v != null);
+  if (mins.length >= 5) {
+    const a = mean(mins.slice(0, 3)), b = mean(mins.slice(3));
+    rows.push(['minutes trend', `<span class="${a > b + 1.5 ? 'hit' : a < b - 1.5 ? 'miss' : ''}">${r1(a)}</span>
+      last 3 vs ${r1(b)} before`]);
+  }
+  const last = rec[0] && rec[1] ? (Date.parse(rec[0].d) - Date.parse(rec[1].d)) / 864e5 : null;
+  if (p.gd && rec[0] && rec[0].d) {
+    const dd = Math.round((Date.parse(p.gd) - Date.parse(rec[0].d)) / 864e5);
+    if (isFinite(dd) && dd > 0) rows.push(['rest tonight', `${dd - 1} day${dd - 1 === 1 ? '' : 's'} off${
+      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`]);
+  }
+  return rows;
+}
+
+/* Team markets: what the card was missing. */
+function teamExtra(p){
+  const lg = (p.sp || '').toUpperCase(), T = (D && D.tbox) || {};
+  const {away, home} = matchSides(p);
+  const sides = [[away, teamAbbr(lg, away)], [home, teamAbbr(lg, home)]].filter(s => s[1]);
+  if (!sides.length) return '';
+  const mean = xs => xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length) : null;
+  const f1 = v => v == null ? '\u2014' : v.toFixed(1);
+  const body = sides.map(([nm, ab]) => {
+    const rows = T[`${lg}|${ab}`] || [];
+    if (!rows.length) return '';
+    const win = k => { const r = rows.slice(0, k).filter(x => x[3] != null && x[4] != null);
+      return r.length ? [mean(r.map(x => x[3])), mean(r.map(x => x[4])), r.length] : null; };
+    const l3 = win(3), l5 = win(5), l10 = win(10);
+    const H = rows.slice(0, 10).filter(x => x[2] === 'home' && x[3] != null);
+    const A = rows.slice(0, 10).filter(x => x[2] === 'away' && x[3] != null);
+    const rec = k => { const r = rows.slice(0, k); const w = r.filter(x => x[5] > 0).length; return `${w}-${r.length - w}`; };
+    const rest = rows[0] && p.gd ? Math.round((Date.parse(p.gd) - Date.parse(rows[0][0])) / 864e5) - 1 : null;
+    return `<tr><td><b>${esc(ab)}</b></td><td class="v">${l3 ? `${f1(l3[0])}\u2013${f1(l3[1])}` : '\u2014'}</td>
+      <td class="v">${l5 ? `${f1(l5[0])}\u2013${f1(l5[1])}` : '\u2014'}</td>
+      <td class="v">${l10 ? `${f1(l10[0])}\u2013${f1(l10[1])}` : '\u2014'}</td>
+      <td class="dim">${rec(10)}</td></tr>
+      <tr class="sub"><td></td><td colspan="4" class="dim">home ${H.length ? f1(mean(H.map(x => x[3]))) + ' for, ' + f1(mean(H.map(x => x[4]))) + ' against (' + H.length + 'g)' : '\u2014'}
+        · away ${A.length ? f1(mean(A.map(x => x[3]))) + ' for, ' + f1(mean(A.map(x => x[4]))) + ' against (' + A.length + 'g)' : '\u2014'}${
+        rest != null && rest >= 0 ? ` · ${rest} day${rest === 1 ? '' : 's'} rest${rest === 0 ? ' (back-to-back)' : ''}` : ''}</td></tr>`;
+  }).join('');
+  if (!body) return '';
+  return `<div class="mbox"><div class="mhead">scoring for\u2013against</div>
+    <table class="gtab"><thead><tr><th>team</th><th>L3</th><th>L5</th><th>L10</th><th>W-L L10</th></tr></thead>
+    <tbody>${body}</tbody></table>
+    <div class="mnote">Average points scored\u2013allowed over each team's last 3, 5 and 10 finals,
+      then the same split home and away. Football and shootout finals with no rebuilt score are left out.</div></div>`;
+}
+
+/* The other props on this player (or this game, for team markets),
+   one tap away from the open card. */
+function siblings(p){
+  if (p.kd === 'team') return PROPS.filter(q => q.kd === 'team' && q.mu === p.mu && q.gd === p.gd);
+  return PROPS.filter(q => q.kd !== 'team' && q.pl === p.pl && q.sp === p.sp && q.gd === p.gd);
+}
+function propSwitch(p, p0){
+  const sib = siblings(p);
+  if (sib.length < 2) return '';
+  // One chip per market; the side/line actually open is marked.
+  const byMk = new Map();
+  for (const q of sib) {
+    const k = (q.mk || '') + (p.kd === 'team' ? '|' + q.sd : '');
+    const cur = byMk.get(k);
+    if (!cur || q.i === p.i || ((q.sc ?? 0) > (cur.sc ?? 0) && cur.i !== p.i)) byMk.set(k, q);
+  }
+  const list = [...byMk.values()].sort((a, b) => (a.mk || '').localeCompare(b.mk || ''));
+  const lbl = q => p.kd === 'team'
+    ? `${esc((q.mk || '').replace(/_/g, ' '))} ${esc(q.sd === 'Over' || q.sd === 'Under' ? q.sd : teamAbbr(q.sp, q.sd) || q.sd)} ${spreadSign(q, q.ln) ?? ''}`
+    : `${esc(mkShort(q.mk))} ${q.sd === 'Under' ? 'u' : 'o'}${q.ln ?? ''}`;
+  return `<div class="pswitch" role="tablist" aria-label="other props">${list.map(q =>
+    `<button class="pchip${q.i === p.i ? ' on' : ''}" data-swap="${p0.i}:${q.i}"
+      aria-selected="${q.i === p.i}">${lbl(q)}<small>${q.gr ? esc(q.gr) : (q.sc ?? '')}</small></button>`).join('')}</div>`;
+}
+function mkShort(mk){
+  const m = String(mk || '').replace(/^player_/, '');
+  const S = {points_rebounds_assists: 'PRA', points_rebounds: 'P+R', points_assists: 'P+A',
+    rebounds_assists: 'R+A', threes: '3PM', three_pointers: '3PM', shots_on_goal: 'SOG',
+    blocked_shots: 'BLK', power_play_points: 'PPP'};
+  return S[m] || m.replace(/_/g, ' ');
+}
+const SWAP = new Map();
+
+/* Fanatics: the bet-slip link the odds feed returned for each leg, at
+   this leg's line. */
 
 /* Where to read further. Search pages, not deep links: these sites
    key players by their own ids, and a guessed id is a wrong page. */
@@ -2318,11 +2764,13 @@ function researchLinks(p){
       opened in a new tab. Their numbers are not pulled into this page.</span></div></div>`;
 }
 
-function detail(p){
+function detail(p, p0){
   const cur = SEC[p.i] || 'read';
-  const nav = `<div class="secnav">${SECTIONS.map(([k, label]) =>
+  // The prop switcher sits right on top of the big bar, so another
+  // line on this player is one tap away without leaving the card.
+  const nav = `<div class="secnav"><div class="secrow">${SECTIONS.map(([k, label]) =>
     `<button class="secbtn ${k === cur ? 'on' : ''}"
-      data-sec="${p.i}:${k}">${label}</button>`).join('')}</div>`;
+      data-sec="${p.i}:${k}">${label}</button>`).join('')}</div></div>`;
 
   const facts = [
     p.cl != null && p.dc
@@ -2337,8 +2785,8 @@ function detail(p){
 
   const body =
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
-    : cur === 'games'  ? `${games(p)}${shotChart(p)}`
-    : cur === 'matchup'? `${matchup(p)}${researchLinks(p)}`
+    : cur === 'games'  ? `${games(p)}${p.kd === 'team' ? teamExtra(p) : ''}${shotChart(p)}`
+    : cur === 'matchup'? `${matchup(p)}${p.kd === 'team' ? teamExtra(p) + teamZones(p) : ''}${injuryBox(p)}${researchLinks(p)}`
     : cur === 'market' ? `${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
@@ -2349,9 +2797,11 @@ function detail(p){
         <i class="dot ${l[1]}"></i>
         <div><span class="lb">${esc(l[0])}${l[4] === false ? ' · not applicable'
           : l[1] === 'dark' ? ' · missing evidence' : ''}</span>
-          <div class="rs">${esc(l[2])}</div></div></div>`).join('');
+          <div class="rs">${esc(l[2])}</div></div></div>`).join('')
+      + injuryBox(p);
 
   return `<div class="detail">
+    ${propSwitch(p, p0 || p)}
     ${card(p)}
     ${nav}
     <div class="secbody">${body}</div>
@@ -2461,7 +2911,9 @@ function draw(){
     $('rows').innerHTML = '';
     return;
   }
-  $('rows').innerHTML = list.map(p => {
+  $('rows').innerHTML = list.map(p0 => {
+    const sw = SWAP.get(p0.i);
+    const p = (sw != null && PROPS.find(q => q.i === sw)) || p0;
     const open = OPEN.has(p.i), on = SEL.has(p.i), thin = (p.n||0) < 8;
     return `<div class="row" data-sp="${esc((p.sp||'').toUpperCase())}">
       <div class="rowhead">
@@ -2483,10 +2935,11 @@ function draw(){
         >${on ? '\u2713' : '+'}</button>
       </div>
       ${recentStrip(p)}
+      ${p.kd !== 'team' ? archChips(p) : ''}
       ${srail(p)}
       ${p.elig === false && (p.pend||[]).length
         ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
-      ${open ? detail(p) : ''}</div>`;
+      ${open ? detail(p, p0) : ''}</div>`;
   }).join('');
 }
 
@@ -2799,6 +3252,7 @@ function parlay(){
   const legs = [...SEL.values()];
   $('tray').hidden = legs.length === 0;
   if (!legs.length) return;
+  $('pFan').innerHTML = fanaticsSlip(legs);
   if (legs.some(p => p.kd === 'team' &&
       (p.elig === false || p.data_error || p.mp == null || p.fp == null))) {
     $('pOdds').textContent = 'not verified';
@@ -2884,6 +3338,40 @@ function parlay(){
   }
   $('pNote').className = cls;
   $('pNote').innerHTML = note;
+}
+
+function fanaticsLeg(p){
+  const bl = p.bl || [];
+  const exact = bl.find(b => b.b === 'fanatics' && b.u && (b.l == null || b.l === p.ln));
+  return exact || null;
+}
+
+/* Fanatics. The odds feed returns a bet-slip link per selection
+   (includeLinks). Each leg's link adds that leg to the Fanatics slip
+   in the app; there is no documented single link for a whole parlay,
+   so the legs are opened one at a time rather than a combined URL
+   being guessed at. */
+function fanaticsSlip(legs){
+  const rows = legs.map(p => ({p, f: fanaticsLeg(p)}));
+  const have = rows.filter(r => r.f).length;
+  const anyFan = legs.some(p => (p.bl || []).some(b => b.b === 'fanatics'));
+  if (!have && !anyFan) return `<div class="fanbox"><b>Fanatics</b>
+    <span class="dim">no Fanatics price on these legs in this build.</span></div>`;
+  const list = rows.map(({p, f}, k) => {
+    const fp = (p.bl || []).find(b => b.b === 'fanatics' && b.l === p.ln);
+    const price = fp ? ` <span class="dim">${fp.p > 0 ? '+' : ''}${fp.p}</span>` : '';
+    return f
+      ? `<a class="fanleg" href="${esc(f.u)}" target="_blank" rel="noopener">
+          <span class="n">${k + 1}</span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}${price}<span class="go">add →</span></a>`
+      : `<div class="fanleg off"><span class="n">${k + 1}</span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}
+          <span class="dim">${fp ? 'priced at Fanatics, no slip link in this build' : 'not offered at this line on Fanatics'}</span></div>`;
+  }).join('');
+  return `<div class="fanbox"><div class="fanhd"><b>Build it on Fanatics</b>
+      <span class="dim">${have}/${legs.length} legs linked</span></div>${list}
+    <div class="dim fannote">Tap each leg in order. Each opens the Fanatics
+      Sportsbook app on that selection and adds it to your bet slip; check
+      the slip shows all ${legs.length} before you place it, and that the
+      price there matches. ${have < legs.length ? 'Legs without a link have to be added by hand.' : ''}</div></div>`;
 }
 
 /* ---------- today / slate ---------- */
@@ -3271,6 +3759,7 @@ function trendRow(r, id, name, sub, rank){
         r.dv.state.startsWith('together') ? '' : 'warn'}"
         title="${esc(r.dv.note || '')}">${esc(r.dv.state)}</span>` : ''}</div>
     ${trendChart(seriesFor(r, top.stat), +TWIN || 3, top)}
+    ${r.player ? trendShots(r) : ''}
     <button class="tgl" data-trow="${id}">${open ? 'hide games' : 'show games'}</button>
     ${open ? ms.map(m => (m.stat === top.stat ? '' : trendChart(
         seriesFor(r, m.stat), +TWIN || 3, m))
@@ -3420,6 +3909,27 @@ document.addEventListener('click', e => {
     document.querySelectorAll('[data-tdir]').forEach(x =>
       x.classList.toggle('on', x === b));
     return drawTrending(); }
+  const sw = e.target.closest('[data-swap]');
+  if (sw) {
+    const [from, to] = sw.dataset.swap.split(':').map(Number);
+    const curShown = SWAP.has(from) ? SWAP.get(from) : from;
+    if (to === from) SWAP.delete(from); else SWAP.set(from, to);
+    OPEN.delete(curShown); OPEN.add(to);
+    if (SEC[curShown] && !SEC[to]) SEC[to] = SEC[curShown];
+    // Keep the card where it is on screen while its contents change.
+    const row = sw.closest('.row'), y0 = row ? row.getBoundingClientRect().top : null;
+    draw();
+    const again = document.querySelector(`[data-swap="${from}:${to}"]`);
+    const r2 = again && again.closest('.row');
+    if (r2 && y0 != null) window.scrollBy(0, r2.getBoundingClientRect().top - y0);
+    return;
+  }
+  const sn = e.target.closest('[data-shotn]');
+  if (sn) {
+    const [i, k] = sn.dataset.shotn.split(':').map(Number);
+    SHOTN[i] = k;
+    return draw();
+  }
   const sc = e.target.closest('[data-sec]');
   if (sc) {
     const [i, k] = sc.dataset.sec.split(':');
@@ -3547,7 +4057,10 @@ function drawLeafValue(){
     const sig = r.signal, c = r.lift > 0 ? 'hit' : 'miss';
     return `<td class="${sig ? c : 'dim'}"><b>${r.lift > 0 ? '+' : ''}${
       r.lift.toFixed(1)}</b><small class="dim"> \u00b1${r.se.toFixed(1)}${
-      sig ? '' : ' ns'}</small></td>`;
+      sig ? '' : ' ns'}</small>${r.adj_lift != null ? `<div class="adjl ${
+      r.adj_signal ? (r.adj_lift > 0 ? 'hit' : 'miss') : 'dim'}">priced ${
+      r.adj_lift > 0 ? '+' : ''}${r.adj_lift.toFixed(1)}<small> \u00b1${
+      (r.adj_se || 0).toFixed(1)}${r.adj_signal ? '' : ' ns'}</small></div>` : ''}</td>`;
   };
   const rows = ls.map(r => `<tr>
     <td>${esc(r.label)}</td>
@@ -3564,7 +4077,10 @@ function drawLeafValue(){
         ${esc((lv[k] || []).join(', '))}</div>` : '';
   const verdict = [
     list('carrying', 'Carrying weight', 'hit'),
-    list('backwards', 'Pointing the wrong way', 'miss'),
+    list('backwards', 'Pointing the wrong way (raw)', 'miss'),
+    list('backwards_adj', 'Still backwards after pricing', 'miss'),
+    list('mix_only', 'Raw backwards is the bet mix, not the leaf', 'unv'),
+    list('carrying_adj', 'Carrying after pricing', 'hit'),
     list('unproven', 'No effect detectable yet', 'dim'),
     list('mostly_dark', 'Dark on 80%+ of the board', 'unv'),
   ].join('') || `<div class="dim">Nothing has reached ${lv.min || 40}
@@ -3619,7 +4135,15 @@ function drawLeafValue(){
       winner turns up about every third run — and reweighting on noise is
       worse than leaving the leaves equal, because it looks principled.
       Rows marked <b>ns</b> have a lift inside that band: not "no effect",
-      but no effect this sample can distinguish from chance.</div></div>`;
+      but no effect this sample can distinguish from chance.</div>
+      <div class="dim" style="margin-top:7px"><b>Raw vs priced.</b> The raw
+      lift compares how often green and red picks won. But a green leaf
+      also tends to show up on longer prices, which win less often by
+      construction, so a leaf can look backwards purely because of what it
+      was attached to. The <b>priced</b> line compares each side's wins
+      with what its own odds implied (no-vig), so only the leaf's effect on
+      top of the price is left. A leaf is only called wrong-way here when
+      the priced line agrees. Thresholds are not changed by this panel.</div></div>`;
 }
 
 function drawMvm(){
@@ -3786,6 +4310,110 @@ function askVenue(r, A){
     const al = teamAliasSet(nm, r[9]);
     if (home && al.has(teamNorm(home))) return 'home';
     if (away && al.has(teamNorm(away))) return 'away';
+  }
+  return null;
+}
+
+/* Questions about TONIGHT rather than the graded history: injuries,
+   player types, shot zones, defences, clutch and starting roles, and
+   the props on the board. Each is answered from the same data the
+   cards show, and says which. Returns HTML, or null to fall through to
+   the history search. */
+function askFindPlayer(t){
+  const names = [...new Set(PROPS.filter(p => p.kd !== 'team').map(p => p.pl)
+    .concat(((D.trending || {}).players || []).map(r => r.player)))].filter(Boolean);
+  let full = null; const sur = [];
+  for (const nm of names) {
+    const n = askNorm(nm);
+    if (askWord(n, t)) { if (!full || n.length > askNorm(full).length) full = nm; continue; }
+    const last = n.split(' ').pop();
+    if (last.length >= 4 && askWord(last, t)) sur.push(nm);
+  }
+  return full || (sur.length === 1 ? sur[0] : null);
+}
+function askFindTeam(t){
+  for (const [lg, names] of Object.entries(D.team_names || {}))
+    for (const [ab, nm] of Object.entries(names)) {
+      const n = askNorm(nm), nick = n.split(' ').pop();
+      if (askWord(n, t) || (nick.length >= 4 && askWord(nick, t)) || askWord(ab.toLowerCase(), t))
+        return {lg, ab, nm};
+    }
+  return null;
+}
+function askIntent(q){
+  const t = askNorm(q);
+  if (!t) return null;
+  const pl = askFindPlayer(t);
+  const sp = pl ? ((PROPS.find(p => p.pl === pl) || {}).sp
+    || (((D.trending || {}).players || []).find(r => r.player === pl) || {}).sport) : null;
+  const say = (title, body, src) => `<div class="simbox"><h4>${title}</h4>${body}
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">${src}</span></div></div>`;
+
+  // Archetype lists: "gunners tonight", "catch and shoot players".
+  const ARCHW = ['catch and shoot', 'gunner', 'star', 'main option', 'playmaker', 'hustle rebounder',
+    'rim protector', 'main defender', 'slasher', 'sniper', 'volume shooter', 'physical',
+    'power play', 'shutdown', 'faceoff', 'gunslinger', 'game manager', 'dual threat',
+    'workhorse', 'receiving back', 'deep threat', 'possession receiver', 'target hog',
+    'pass rusher', 'goal line back', 'bench role'];
+  const aw = ARCHW.find(w => askWord(w, t) || askWord(w + 's', t));
+  if (aw && !pl) {
+    const want = aw.replace(/ /g, '');
+    const hits = [...new Set(PROPS.filter(p => p.kd !== 'team'
+      && archOf(p.sp, p.pl).some(a => askNorm(a[0]).replace(/ /g, '').startsWith(want)))
+      .map(p => p.pl))];
+    return say(`${esc(aw)} on tonight's board \u00b7 ${hits.length}`,
+      hits.length ? `<div class="chips">${hits.slice(0, 60).map(n => `<button class="chip" data-ask="${esc(n)} type">${esc(n)}</button>`).join('')}</div>`
+        : '<div class="empty">Nobody on tonight\u2019s board carries that type.</div>',
+      'Box-score types from his last 20 saved games, ranked against the league over the same days. Tap a name for the numbers behind it.');
+  }
+  if (/\b(injur|injuries|injured|hurt|out tonight|questionable|health)/.test(t)) {
+    const tm = !pl && askFindTeam(t);
+    const rows = [];
+    for (const [lg, blk] of Object.entries(D.injuries || {})) for (const r of (blk.rows || [])) {
+      if (pl && boxKey('', r.name) !== boxKey('', pl)) continue;
+      if (tm && (lg !== tm.lg || teamNorm(r.team) !== teamNorm(tm.nm))) continue;
+      if (!pl && !tm) continue;
+      rows.push([lg, r]);
+    }
+    if (pl || tm) return say(`injuries \u00b7 ${esc(pl || tm.nm)}`,
+      rows.length ? rows.map(([lg, r]) => `<div class="injr"><b class="${/out|doubt/i.test(r.status) ? 'miss' : 'unv'}">${esc(r.status)}</b>
+        ${esc(r.name)} <span class="dim">${esc(r.team)} \u00b7 ${esc(r.injury || '')}${r.ret ? ' \u00b7 back ' + esc(r.ret) : ''}</span>
+        ${r.note ? `<div class="dim" style="font-size:12px">${esc(r.note)}</div>` : ''}</div>`).join('')
+        : `<div class="empty">${pl ? esc(pl) + ' is not on the injury report.' : 'Nobody listed for ' + esc(tm.nm) + '.'}</div>`,
+      'ESPN injury report, the same feed as the Health tab.');
+  }
+  if (pl && /\b(type|archetype|kind of player|role|what is he|profile)\b/.test(t)) {
+    const a = archOf(sp, pl);
+    return say(`what kind of player \u00b7 ${esc(pl)}`,
+      a.length ? `<table class="gtab"><tbody>${a.map(([l, why, g]) => `<tr><td><b>${esc(l)}</b></td><td class="v">${esc(why)} <span class="dim">(${g}g)</span></td></tr>`).join('')}</tbody></table>`
+        : '<div class="empty">No type: fewer than three saved games, or nothing about his numbers stands out against the league.</div>',
+      'From box scores only. These are statistical profiles, not scouting reports.');
+  }
+  if (pl && /\b(zone|zones|where|chart|hot spots?)\b/.test(t)) {
+    const p = PROPS.find(x => x.pl === pl && x.kd !== 'team') || {pl, sp, i: -1, mk: ''};
+    const html = shotChart(p);
+    return html || say(`zones \u00b7 ${esc(pl)}`, '<div class="empty">No play-by-play saved for him yet.</div>', '');
+  }
+  if (!pl && /\b(defen[cs]e|allows|allow|gives up)\b/.test(t)) {
+    const tm = askFindTeam(t);
+    if (tm) {
+      const kinds = tm.lg === 'NFL' ? ['tg', 'ru'] : ['sh'];
+      return kinds.map(k => defBox(tm.lg, k, tm.ab, null)).join('')
+        || say(`defence \u00b7 ${esc(tm.nm)}`, '<div class="empty">No zone data for this team yet.</div>', '');
+    }
+  }
+  if (pl && /\b(clutch|close games|crunch|starter|starting|start|bench)\b/.test(t)) {
+    const p = PROPS.find(x => x.pl === pl && x.kd !== 'team' && x.role && Object.keys(x.role).length);
+    if (p) return roleBox(p) || say(`role \u00b7 ${esc(pl)}`, '<div class="empty">No role data on his card.</div>', '');
+  }
+  if (pl && /\b(props|tonight|board|lines)\b/.test(t)) {
+    const ps = PROPS.filter(x => x.pl === pl && x.kd !== 'team');
+    return say(`${esc(pl)} on tonight's board \u00b7 ${ps.length}`,
+      `<table class="gtab"><tbody>${ps.sort((a, b) => (b.mp ?? 0) - (a.mp ?? 0)).map(x => `<tr>
+        <td>${esc(mkShort(x.mk))} ${esc(x.sd)} ${x.ln}</td><td class="v">${x.pr > 0 ? '+' : ''}${x.pr}</td>
+        <td class="v">${x.mp != null ? (100 * x.mp).toFixed(1) + '%' : '\u2014'}</td>
+        <td>${x.gr ? `<b class="grade ${gcls(x.gr)}">${esc(x.gr)}</b>` : esc(x.ti || '')}</td></tr>`).join('')}</tbody></table>`,
+      'Sorted by model probability. Open the Board to read any of them.');
   }
   return null;
 }
@@ -4032,6 +4660,21 @@ function askExamples(A){
     line != null ? `${who} ${word} over ${line}` : null,
     `${who} ${word} home`,
     team ? `${team.split(' ').pop()} spread last 10` : null,
+  ].filter(Boolean).concat(askTonightExamples());
+}
+/* Examples for tonight's questions, seeded from the board itself. */
+function askTonightExamples(){
+  const p = PROPS.find(x => x.kd !== 'team' && archOf(x.sp, x.pl).length && (D.shots || {})[boxKey(x.sp, x.pl)]);
+  const g = PROPS.find(x => x.kd === 'team');
+  const tm = g ? (matchSides(g).home || '').split(' ').pop() : null;
+  const a = p ? archOf(p.sp, p.pl)[0][0] : null;
+  return [
+    p ? `${p.pl} type` : null,
+    p ? `${p.pl} shot chart` : null,
+    tm ? `${tm} injuries` : null,
+    tm ? `${tm} defense` : null,
+    a ? `${a}s tonight` : null,
+    p ? `${p.pl} props tonight` : null,
   ].filter(Boolean);
 }
 
@@ -4058,6 +4701,8 @@ function drawAsk(){
       : 'No graded history yet.'}</div>`;
     return;
   }
+  const tonight = askIntent(q);
+  if (tonight) { out.innerHTML = tonight; return; }
   const res = askQuery(q);
   if (!res) { out.innerHTML = ''; return; }
   const r = res.read || {};
