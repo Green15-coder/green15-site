@@ -582,6 +582,23 @@ td:first-child{text-align:left;font-family:var(--b);min-width:0}
 .pos{color:var(--over);font-weight:600} .neg{color:var(--under);font-weight:600}
 .dim{color:var(--ink-2)}
 .tscroll{overflow-x:auto}
+/* Grid items default to min-width:auto, so a wide box-score table
+   would stretch the card past the phone screen instead of scrolling. */
+.secbody,.secbody>*,.boxd{min-width:0;max-width:100%}
+.boxd{margin-top:10px;border-top:1px solid var(--rule);padding-top:8px}
+.boxd summary{cursor:pointer;font-family:var(--m);font-size:11px;
+  letter-spacing:.04em;color:var(--ink-2);min-height:32px;display:flex;
+  align-items:center}
+.boxt{border-collapse:collapse;font-family:var(--m);font-size:11px;
+  white-space:nowrap}
+.boxt th{font-weight:400;color:var(--ink-2);font-size:9.5px;text-align:right;
+  padding:3px 6px}
+.boxt th:nth-child(-n+2),.boxt td:nth-child(-n+2){text-align:left}
+.boxt td{padding:3px 6px;border-top:1px solid var(--rule);text-align:right;
+  font-variant-numeric:tabular-nums}
+.boxt .bxhi{font-weight:700;background:var(--clover-soft)}
+.askrow{cursor:pointer}
+.askbx td{padding:0 0 8px;border-top:0}
 .empty{padding:28px 0;color:var(--ink-2);font-size:14px}
 .gamehead{grid-template-columns:1fr auto auto auto}
 .gamehead .sc b{display:inline;font-size:15px;margin-right:3px}
@@ -945,7 +962,7 @@ section{padding-block:16px}
 <script>
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
 const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
-           trk:new Set()};
+           trk:new Set(), mk:new Set(), odds:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -992,6 +1009,26 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- filters ---------- */
+/* American-odds ranges for the price filter. Each band is closed on
+   both ends, so -150 sits in "-100 to -150" and -151 starts the next
+   one. Even money is +100 or -100: both read as the shortest band of
+   their own sign. */
+const PRICE_BANDS = [
+  ['+201 and up',   v => v >= 201],
+  ['+151 to +200',  v => v >= 151 && v <= 200],
+  ['+100 to +150',  v => v >= 100 && v <= 150],
+  ['-100 to -150',  v => v <= -100 && v >= -150],
+  ['-151 to -200',  v => v <= -151 && v >= -200],
+  ['-201 to -300',  v => v <= -201 && v >= -300],
+  ['-301 or shorter', v => v <= -301],
+];
+const priceBand = pr => {
+  const v = Number(pr);
+  if (pr == null || pr === '' || !Number.isFinite(v)) return null;
+  const b = PRICE_BANDS.find(([, t]) => t(Math.round(v)));
+  return b ? b[0] : null;
+};
+
 const FILTERS = [
   ['Sport','sport',['NBA','NHL','NFL']],
   ['Tier','tier',['Legendary','Elite','Strong','Playable','Fringe','Weak']],
@@ -1001,7 +1038,30 @@ const FILTERS = [
      It lives in the same registry as the rest so there is one place a
      filter is declared and one place it is matched. */
   ['Tracked','trk',['Watching','Intend','Placed']],
+  /* The price you would pay, in American odds. Several bands at once
+     widen the list (-100 to -150 OR -151 to -200); only bands that
+     have a row on this board are offered. */
+  ['Price','odds', () => {
+    const have = new Set(PROPS.map(p => priceBand(p.pr)).filter(Boolean));
+    return PRICE_BANDS.map(([l]) => l).filter(l => have.has(l));
+  }],
+  /* Several prop types at once -- points AND rebounds AND assists --
+     not one at a time. Built from the markets actually on this board,
+     most common first, so a chip can never select nothing. Chips in
+     one group widen the list (points OR rebounds); different groups
+     narrow it, the same as every other filter here. */
+  ['Prop','mk', () => {
+    const n = {};
+    PROPS.forEach(p => { if (p.mk) n[p.mk] = (n[p.mk] || 0) + 1; });
+    return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b));
+  }],
 ];
+const mkLabel = m => String(m || '').replace(/^3-pointers_made$/, 'threes')
+  .replace(/^pra$/, 'pts + reb + ast')
+  .replace(/^points_rebounds$/, 'pts + reb')
+  .replace(/^points_assists$/, 'pts + ast')
+  .replace(/^rebounds_assists$/, 'reb + ast')
+  .replace(/_/g, ' ');
 /* The top of the ranking, at the size it deserves.
 
    The board used to open on a search field, which is the control you
@@ -1066,7 +1126,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
-    && !F.trk.size
+    && !F.trk.size && !F.mk.size && !F.odds.size
     && BVIEW !== 'pending' && BVIEW !== 'team';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
@@ -1099,16 +1159,28 @@ function drawHero(){
   </div>`;
 }
 
+// Groups with many chips get a one-tap reset.
+const CLEAR_LABEL = {mk: 'all props', odds: 'any price'};
+
 function drawFilters(){
-  $('filters').innerHTML = FILTERS.map(([label,key,vals]) =>
-    `<span class="chip grp">${label}</span>` + vals.map(v =>
+  $('filters').innerHTML = FILTERS.map(([label,key,vals]) => {
+    const list = typeof vals === 'function' ? vals() : vals;
+    if (!list.length) return '';
+    return `<span class="chip grp">${label}</span>` + list.map(v =>
       `<button class="chip" data-k="${key}" data-v="${esc(v)}"
-        aria-pressed="false">${esc(v)}</button>`).join('')).join('');
+        aria-pressed="${F[key].has(v)}">${esc(key === 'mk' ? mkLabel(v) : v)}</button>`).join('')
+      + (CLEAR_LABEL[key] ? `<button class="chip" data-clear="${key}"
+        ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key]}</button>` : '');
+  }).join('');
   $('filters').onclick = e => {
+    const c = e.target.closest('.chip[data-clear]');
+    if (c) { F[c.dataset.clear].clear(); drawFilters(); draw(); return; }
     const b = e.target.closest('.chip[data-k]'); if (!b) return;
     const on = b.getAttribute('aria-pressed') === 'true';
     b.setAttribute('aria-pressed', String(!on));
     F[b.dataset.k][on ? 'delete' : 'add'](b.dataset.v);
+    const clr = $('filters').querySelector(`[data-clear="${b.dataset.k}"]`);
+    if (clr) clr.hidden = !F[b.dataset.k].size;
     draw();
   };
 }
@@ -1119,6 +1191,8 @@ function matches(p){
   if (F.sport.size && !F.sport.has(p.sp)) return false;
   if (F.tier.size  && !F.tier.has(p.ti))  return false;
   if (F.side.size  && !F.side.has(p.sd))  return false;
+  if (F.mk.size    && !F.mk.has(p.mk))    return false;
+  if (F.odds.size  && !F.odds.has(priceBand(p.pr))) return false;
   if (F.trk.size) {
     const st = trkState(p);
     let hit = false;
@@ -1295,6 +1369,141 @@ function vs(p){
   return `· ${id.venue === 'home' ? 'vs' : '@'} ${esc(id.opponent)}`;
 }
 
+/* ---- Full box scores --------------------------------------------
+   Every stat the saved ESPN box score recorded for the player in each
+   game of his history, not only the one the prop is on. A blank is a
+   stat the box score did not record -- never a zero filled in. */
+const BOX_MK = {
+  points:['points','_points'], rebounds:['rebounds'], assists:['assists'],
+  '3-pointers_made':['threepointfieldgoalsmade'], blocks:['blocks'],
+  steals:['steals'], pra:['points','rebounds','assists'],
+  points_rebounds:['points','rebounds'], points_assists:['points','assists'],
+  rebounds_assists:['rebounds','assists'], shots_on_goal:['shotstotal'],
+  blocked_shots:['blockedshots'], goals:['goals'], saves:['saves'],
+  receptions:['receptions'], receiving_yards:['receivingyards'],
+  passing_yards:['passingyards'], rush_yards:['rushingyards'],
+  rush_attempts:['rushingattempts'], completions:['completions'],
+};
+function boxKey(sp, name){
+  return `${String(sp || '').toUpperCase()}|${String(name || '').toLowerCase()
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '')}`;
+}
+function boxRows(sp, name){
+  return (((D && D.box) || {}).p || {})[boxKey(sp, name)] || [];
+}
+/* "vs Fs", "vs LWs" read as typos. Spelled out, per sport: an NBA
+   "F" is a forward and an NHL "D" a defenceman. */
+const POS_NAMES = {
+  NBA:{G:'guards', F:'forwards', C:'centers', PG:'point guards',
+       SG:'shooting guards', SF:'small forwards', PF:'power forwards'},
+  NHL:{C:'centers', LW:'left wings', RW:'right wings', F:'forwards',
+       D:'defensemen', G:'goalies'},
+  NFL:{QB:'quarterbacks', RB:'running backs', WR:'wide receivers',
+       TE:'tight ends', FB:'fullbacks', K:'kickers'},
+};
+function posLabel(pos, sp){
+  const m = POS_NAMES[String(sp || '').toUpperCase()] || {};
+  return m[pos] || `${pos}s`;
+}
+const dayGap = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 864e5;
+/* The box line for one game of a player's history: same opponent,
+   and a date within a day (the ledger files a 7pm Central game under
+   its UTC date). Two candidates is ambiguous and returns nothing. */
+function boxFor(rows, d, opp){
+  // The ledger names an opponent in full or by code; the box score
+  // by code. Either spelling of the same team matches.
+  const al = opp ? teamAliasSet(opp) : null;
+  const hit = rows.filter(r => d && dayGap(r[0], d) <= 1.01
+    && (!al || !r[2] || al.has(teamNorm(r[2]))));
+  if (hit.length === 1) return hit[0];
+  const exact = hit.filter(r => r[0] === d);
+  return exact.length === 1 ? exact[0] : null;
+}
+function boxTable(sp, name, mk, games, limit){
+  const B = (D && D.box) || {}, lg = String(sp || '').toUpperCase();
+  const labs = (B.cols || {})[lg], keys = (B.keys || {})[lg];
+  const all = boxRows(sp, name);
+  if (!labs || !all.length) return '';
+  let rows;
+  if (games && games.length) {
+    rows = games.map(g => boxFor(all, g.d, g.o)).filter(Boolean);
+  } else rows = all.slice(0, limit || 10);
+  if (!rows.length) return '';
+  const used = labs.map((_, j) => rows.some(r => r[3 + j] != null));
+  const hi = new Set(BOX_MK[mk] || []);
+  const head = labs.map((l, j) => used[j]
+    ? `<th class="${hi.has(keys[j]) ? 'bxhi' : ''}">${esc(l)}</th>` : '').join('');
+  const body = rows.map(r => `<tr><td>${esc(String(r[0]).slice(5))}</td>
+      <td>${esc(r[2] || '?')}</td>${labs.map((_, j) => used[j]
+        ? `<td class="${hi.has(keys[j]) ? 'bxhi' : ''}">${r[3 + j] == null ? '' : r[3 + j]}</td>`
+        : '').join('')}</tr>`).join('');
+  return `<details class="boxd"><summary>Full box score \u00b7 ${rows.length}
+      game${rows.length === 1 ? '' : 's'}</summary>
+    <div class="tscroll"><table class="boxt"><thead><tr><th>Date</th><th>Opp</th>
+      ${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <div class="mnote">From the saved ESPN box scores. Highlighted: the
+      stat this prop is on. A blank is a stat the box score did not record.</div>
+  </details>`;
+}
+/* A team's recent finals, and -- labelled as exactly that -- how each
+   would have settled against TODAY's line. Not this bet's record: the
+   line moved from game to game and these were different bets. */
+function teamResults(p){
+  const T = (D && D.tbox) || {}, lg = String(p.sp || '').toUpperCase();
+  const src = (p.ev || {}).margin || (p.ev || {}).team_total || {};
+  const home = src.home_team, away = src.away_team;
+  if (!home || !away) return '';
+  const kind = p.mkk || p.mk || '';
+  const ln = p.ln;
+  // A spread reads with its sign: "at +5", not "at 5".
+  const lnTxt = ln != null && /spread|puck|run_line/.test(kind) && ln > 0 ? `+${ln}` : ln;
+  // The backed side is named in full; the matchup says which slot it is.
+  const [awayName, homeName] = String(p.mu || '').split(' @ ');
+  const sel = p.sd && teamNorm(p.sd) === teamNorm(homeName || '') ? home
+    : p.sd && teamNorm(p.sd) === teamNorm(awayName || '') ? away : null;
+  return [home, away].map(ab => {
+    const rows = (T[`${lg}|${ab}`] || []).slice(0, 8);
+    if (!rows.length) return '';
+    let tally = null;
+    const body = rows.map(r => {
+      const [d, opp, ha, f, a, m] = r;
+      let vsLine = '';
+      if (ln != null && /total/.test(kind) && !/team_total/.test(kind)
+          && f != null && a != null) {
+        const tot = f + a;
+        vsLine = tot === ln ? 'push' : tot > ln ? 'over' : 'under';
+      } else if (ln != null && /spread|puck|run_line/.test(kind) && sel === ab) {
+        const v = m + ln;
+        vsLine = v === 0 ? 'push' : v > 0 ? 'covers' : 'fails';
+      }
+      if (vsLine) { tally = tally || {}; tally[vsLine] = (tally[vsLine] || 0) + 1; }
+      const res = m > 0 ? 'W' : m < 0 ? 'L' : 'T';
+      return `<tr><td>${esc(String(d).slice(5))}</td>
+        <td>${ha === 'home' ? 'vs' : ha === 'away' ? '@' : ''} ${esc(opp || '?')}</td>
+        <td class="v">${res} ${f != null && a != null ? `${f}\u2013${a}` : ''}</td>
+        <td class="dim">${m > 0 ? '+' : ''}${m}</td>
+        <td class="dim">${vsLine}</td></tr>`;
+    }).join('');
+    const sum = tally ? Object.entries(tally).map(([k, n]) => `${k} ${n}`).join(' \u00b7 ') : '';
+    return `<div class="mbox"><div class="mhead">${esc(ab)} recent results</div>
+      <table class="gtab"><thead><tr><th>date</th><th>opp</th><th>final</th>
+      <th>margin</th><th>${tally ? `at ${lnTxt}` : ''}</th></tr></thead><tbody>${body}</tbody></table>
+      ${tally ? `<div class="mnote">${esc(sum)} \u2014 each past final measured
+        against today's line of ${lnTxt}, not the line those games were priced at.</div>` : ''}
+      ${rows.some(r => r[3] == null) ? `<div class="mnote">Blank final: the score
+        could not be rebuilt from the players' lines (a shootout, or football);
+        the margin is ESPN's.</div>` : ''}</div>`;
+  }).join('');
+}
+
+/* A spread reads with its sign everywhere the row headline already
+   does: "Memphis Grizzlies +5", not "Memphis Grizzlies 5". */
+function spreadSign(p, v){
+  return p && p.kd === 'team' && /spread|puck|run_line/.test(p.mkk || p.mk || '')
+    && Number(v) > 0 ? `+${v}` : v;
+}
+
 function pips(lv){
   return `<div class="pips">${(lv||[]).filter(l => l[4] !== false).map(l =>
     `<i class="pip ${l[1]}"></i>`).join('')}</div>`;
@@ -1310,7 +1519,8 @@ function games(p){
         rows.map(r => `<tr><td>${esc(r.date || '')}</td><td>${esc(r.vs || '')}</td>
           <td class="v">${esc(r.v)}</td></tr>`).join('') + `</tbody></table>`
         : `<div class="mnote">Dated scoring history was not captured for this saved row.</div>`}</div>`;
-    }).join('') + `<div class="mnote">Each team's own scoring, not outcomes against this game's betting line.</div>`;
+    }).join('') + `<div class="mnote">Each team's own scoring, not outcomes against this game's betting line.</div>`
+      + teamResults(p);
   }
   const ev = p.ev || {};
   const rec = ev.recent || [];
@@ -1352,7 +1562,7 @@ function games(p){
     ${(ev.opp_log || []).length ? `<div class="glab">
         ${esc(opponentLabel(p))}'s last
         ${ev.opp_log.length}${ev.pos_vs_opp && ev.pos_vs_opp.position
-          ? ` vs ${esc(ev.pos_vs_opp.position)}s` : ''}
+          ? ` vs ${esc(posLabel(ev.pos_vs_opp.position, p.sp))}` : ''}
         <small>who did the damage</small></div>
       <div class="oplog">${ev.opp_log.map(gm => `<div class="opg">
         <span class="od">${esc((gm.date||'').slice(5))}${gm.vs ? ' ' + esc(gm.vs) : ''}</span>
@@ -1361,10 +1571,11 @@ function games(p){
               ${esc(String(x.p).split(' ').slice(-1)[0])}</span>`).join('')
           : `<span class="op"><b>${gm.v}</b></span>`}</div>`).join('')}</div>` : ''}
     ${ev.pos_vs_opp && ev.pos_vs_opp.n ? `<div class="glab">
-        vs ${esc(ev.pos_vs_opp.position)}s
+        vs ${esc(posLabel(ev.pos_vs_opp.position, p.sp))}
         <small>${ev.pos_vs_opp.mean} allowed vs ${ev.pos_vs_opp.league_mean}
           league average · ${ev.pos_vs_opp.n} seen${ev.pos_vs_opp.n < 4
             ? ', too few to lean on' : ''}</small></div>` : ''}
+    ${boxTable(p.sp, p.pl, p.mk, rec)}
   </div>`;
 }
 
@@ -1620,7 +1831,7 @@ function card(p){
       <div class="tv">${p.pj != null ? p.pj.toFixed(1) : '—'}</div>
       <div class="tn">${p.sv != null ? '±' + p.sv.toFixed(1) + ' sd' : '&nbsp;'}</div></div>
     <div class="tile"><div class="tl">line</div>
-      <div class="tv">${line ?? '—'}</div>
+      <div class="tv">${line == null ? '—' : spreadSign(p, line)}</div>
       <div class="tn">${p.pr != null ? (p.pr > 0 ? '+' : '') + p.pr : '&nbsp;'}</div></div>
     <div class="tile ${diff == null ? '' : dirOK ? 'up' : 'dn'}">
       <div class="tl">difference</div>
@@ -1681,7 +1892,7 @@ function card(p){
   WHY_CACHE[p.i] = whyBox;
 
   return `<div class="hero">
-      <span class="pk">${esc(p.sd)} ${line ?? ''}
+      <span class="pk">${esc(p.sd)} ${line == null ? '' : spreadSign(p, line)}
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
@@ -1758,7 +1969,8 @@ function teamBox(p){
     out.push(`<div class="mbox">
       <div class="mhead">Projected margin</div>
       <div class="mstat"><b>${esc(fav || '')} by ${ah.toFixed(1)}</b>
-        <span class="dim">\u00b7 ${n1(mg.home_proj)} \u2013 ${n1(mg.away_proj)}
+        <span class="dim">\u00b7 ${esc(mg.home_team || 'home')} ${n1(mg.home_proj)}
+        \u2013 ${esc(mg.away_team || 'away')} ${n1(mg.away_proj)}
         \u00b7 \u00b1${n1(p.ev.margin.sd ?? mg.sd)} game to game</span></div>
       <div class="mnote">${[
         mg.home_field_modelled === false ? 'No home-field term is modelled.' : '',
@@ -1773,15 +1985,21 @@ function teamBox(p){
       ].filter(Boolean).join(' ')}</div></div>`);
   }
   if (tt && (tt.home || tt.away)) {
-    const r = (lab, x) => !x ? '' : `<tr><td>${esc(lab)}</td>
+    // Each side's row pairs ITS scoring with what the OTHER side
+    // allows -- the two numbers its projection multiplies -- so the
+    // second column names the team it belongs to.
+    const r = (lab, other, x) => !x ? '' : `<tr><td>${esc(lab)}</td>
       <td class="v">${n1(x.team_per_game)} scored</td>
-      <td class="v">${n1(x.opp_allowed_per_game)} opponent allowed</td>
+      <td class="v">${n1(x.opp_allowed_per_game)} allowed by ${esc(other)}</td>
       <td class="dim">${n1(x.n_team)}g</td></tr>`;
+    const H = tt.home_team || 'home', A = tt.away_team || 'away';
+    const pace = (tt.home || {}).pace_factor ?? (tt.away || {}).pace_factor;
     out.push(`<div class="mbox"><div class="mhead">The two sides</div>
-      <table class="gtab"><tbody>${r(tt.home_team || 'home', tt.home)}
-      ${r(tt.away_team || 'away', tt.away)}</tbody></table>
-      ${tt.pace ? `<div class="mstat">pace <b>${tt.pace}\u00d7</b> league
-        <span class="dim">\u00b7 ${tt.pace > 1 ? 'lifts' : 'lowers'} the
+      <table class="gtab"><tbody>${r(H, A, tt.home)}
+      ${r(A, H, tt.away)}</tbody></table>
+      ${pace != null && Math.abs(pace - 1) >= 0.01 ? `<div class="mstat">pace
+        <b>${(+pace).toFixed(2)}\u00d7</b> league
+        <span class="dim">\u00b7 ${pace > 1 ? 'lifts' : 'lowers'} the
         total</span></div>` : ''}</div>`);
   }
   return out.length ? out.join('')
@@ -1803,7 +2021,7 @@ function matchup(p){
     const over = String(p.sd || '').toLowerCase().startsWith('o');
     out.push(`<div class="mbox">
       <div class="mhead">${esc(opponentLabel(p))}${
-        dr.position ? ` \u00b7 vs ${esc(dr.position)}s` : ''}</div>
+        dr.position ? ` \u00b7 vs ${esc(posLabel(dr.position, p.sp))}` : ''}</div>
       <div class="rankrow">
         <div class="rankno"><b>${dr.rank}</b><span>of ${dr.of}</span></div>
         <div class="rankbar${over ? ' flip' : ''}"><i style="left:${
@@ -1992,9 +2210,21 @@ function draw(){
   $('qclear').hidden = !$('q').value;
   $('norows').hidden = list.length > 0;
   if (!list.length) {
-    $('norows').textContent = PROPS.length
-      ? 'Nothing on this slate matches those filters.'
-      : 'No board published yet — run generate.';
+    // Team markets are ranked on their own scale and kept out of the
+    // player views on purpose. A prop filter that only matches team
+    // rows (or only player rows, from the team view) should say where
+    // those rows are, not report an empty slate.
+    const elsewhere = PROPS.length && (BVIEW === 'team'
+      ? PROPS.filter(p => p.kd !== 'team' && matches(p)).length
+      : PROPS.filter(p => p.kd === 'team' && matches(p)).length);
+    $('norows').innerHTML = !PROPS.length
+      ? 'No board published yet \u2014 run generate.'
+      : elsewhere
+      ? `Nothing in this view matches those filters. ${elsewhere}
+         ${BVIEW === 'team' ? 'player' : 'team-market'} row${elsewhere === 1 ? '' : 's'}
+         match${elsewhere === 1 ? 'es' : ''} \u2014 <button class="chip" data-view="${BVIEW === 'team' ? 'all' : 'team'}">show
+         ${BVIEW === 'team' ? 'the full board' : 'team markets'}</button>`
+      : 'Nothing on this slate matches those filters.';
     $('rows').innerHTML = '';
     return;
   }
@@ -2825,8 +3055,9 @@ document.addEventListener('click', e => {
   const bv = e.target.closest('[data-view]');
   if (bv) {
     BVIEW = bv.dataset.view;
+    // By value, so a shortcut button elsewhere lights the real chip.
     document.querySelectorAll('[data-view]').forEach(x =>
-      x.classList.toggle('on', x === bv));
+      x.classList.toggle('on', x.dataset.view === BVIEW && !x.closest('#norows')));
     return draw();
   }
   const sp = e.target.closest('[data-tsport]');
@@ -3116,22 +3347,94 @@ function drawMvm(){
    stat, and a few filters, and it SHOWS what it understood so a
    misread is visible instead of silent. */
 const MKT_WORDS = {
-  'points':'points', 'pts':'points', 'score':'points', 'scored':'points',
-  'rebounds':'rebounds', 'reb':'rebounds', 'rebs':'rebounds', 'boards':'rebounds',
-  'assists':'assists', 'ast':'assists', 'dimes':'assists',
-  'threes':'3-pointers_made', '3s':'3-pointers_made', '3pm':'3-pointers_made',
-  'treys':'3-pointers_made',
-  'blocks':'blocks', 'blk':'blocks', 'steals':'steals', 'stl':'steals',
-  'shots':'shots_on_goal', 'sog':'shots_on_goal',
-  'goals':'goals', 'saves':'saves',
-  'pra':'pra', 'yards':'receiving_yards', 'receptions':'receptions',
-  'catches':'receptions', 'carries':'rush_attempts',
+  // Phrases, longest first wins, so "points rebounds" beats "points"
+  // and "shots on goal" beats "goals".
+  'points':['points'], 'pts':['points'], 'point':['points'],
+  'rebounds':['rebounds'], 'reb':['rebounds'], 'rebs':['rebounds'],
+  'boards':['rebounds'],
+  'assists':['assists'], 'ast':['assists'], 'dimes':['assists'],
+  'threes':['3-pointers_made'], '3s':['3-pointers_made'],
+  '3pm':['3-pointers_made'], 'treys':['3-pointers_made'],
+  '3 pointers':['3-pointers_made'], 'three pointers':['3-pointers_made'],
+  '3 pointers made':['3-pointers_made'],
+  'blocks':['blocks', 'blocked_shots'], 'blk':['blocks'],
+  'blocked shots':['blocked_shots'],
+  'steals':['steals'], 'stl':['steals'],
+  'shots':['shots_on_goal'], 'sog':['shots_on_goal'],
+  'shots on goal':['shots_on_goal'],
+  'goals':['goals'], 'saves':['saves'],
+  'pra':['pra'], 'pts reb ast':['pra'], 'points rebounds assists':['pra'],
+  'pr':['points_rebounds'], 'pts reb':['points_rebounds'],
+  'points rebounds':['points_rebounds'], 'points and rebounds':['points_rebounds'],
+  'pts ast':['points_assists'], 'points assists':['points_assists'],
+  'points and assists':['points_assists'],
+  'ra':['rebounds_assists'], 'reb ast':['rebounds_assists'],
+  'rebounds assists':['rebounds_assists'],
+  'rebounds and assists':['rebounds_assists'],
+  // A bare "yards" is three markets. It is resolved against the
+  // player's own history below rather than guessed as receiving.
+  'yards':['receiving_yards', 'passing_yards', 'rush_yards'],
+  'receiving yards':['receiving_yards'], 'rec yards':['receiving_yards'],
+  'passing yards':['passing_yards'], 'pass yards':['passing_yards'],
+  'rushing yards':['rush_yards'], 'rush yards':['rush_yards'],
+  'receptions':['receptions'], 'catches':['receptions'], 'rec':['receptions'],
+  'carries':['rush_attempts'], 'rush attempts':['rush_attempts'],
+  'rushing attempts':['rush_attempts'],
+  'completions':['completions'],
+  'spread':['spread', 'alt_spread', 'puck_line'], 'ats':['spread', 'alt_spread', 'puck_line'],
+  'puck line':['puck_line'], 'cover':['spread', 'alt_spread', 'puck_line'],
+  'covers':['spread', 'alt_spread', 'puck_line'],
+  'moneyline':['moneyline'], 'ml':['moneyline'],
+  'total':['game_total', 'game_total_points', 'game_total_goals'],
+  'game total':['game_total', 'game_total_points', 'game_total_goals'],
+  'team total':['team_total_points', 'team_total_goals'],
 };
+// "scored" is a verb, not a stat: "goals scored" is goals. It is only
+// read as points when nothing more specific was said.
+const MKT_FALLBACK = {'scored':['points'], 'score':['points']};
+const TEAM_MKS = new Set(['spread', 'alt_spread', 'puck_line', 'moneyline',
+  'game_total', 'game_total_points', 'game_total_goals',
+  'team_total_points', 'team_total_goals']);
 
 function askNorm(s){
   return String(s||'').toLowerCase()
-    .normalize('NFKD').replace(/[̀-ͯ]/g,'')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+const askEsc = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const askWord = (needle, hay) => new RegExp(`\\b${askEsc(needle)}\\b`).test(hay);
+/* Every spelling a team goes by in one league: "BOS", "Boston
+   Celtics". Older ledger rows name teams by code, newer ones in full. */
+function teamAliasSet(name, sport){
+  const want = teamNorm(name), out = new Set([want]);
+  Object.entries(D.team_names || {}).forEach(([lg, names]) => {
+    if (sport && lg !== sport) return;
+    Object.entries(names).forEach(([ab, nm]) => {
+      if ([teamNorm(ab), teamNorm(nm)].includes(want)) {
+        out.add(teamNorm(ab)); out.add(teamNorm(nm));
+      }
+    });
+  });
+  return out;
+}
+const isTeamName = nm => nm === 'GAME' || Object.values(D.team_names || {})
+  .some(names => Object.values(names).includes(nm) || nm in names);
+/* Which side was he on? Column 10 is his verified opponent that night,
+   so he is home when that opponent is the away team. A team row's
+   own name says it directly. */
+function askVenue(r, A){
+  const away = A.teams[r[5]], home = A.teams[r[6]];
+  if (r[10] != null) {
+    if (r[10] === r[5]) return 'home';
+    if (r[10] === r[6]) return 'away';
+  }
+  const nm = A.players[r[0]];
+  if (TEAM_MKS.has(A.markets[r[1]]) && nm !== 'GAME') {
+    const al = teamAliasSet(nm, r[9]);
+    if (home && al.has(teamNorm(home))) return 'home';
+    if (away && al.has(teamNorm(away))) return 'away';
+  }
+  return null;
 }
 
 /* Parse, then answer. Returns {read, rows, text} so the UI can show
@@ -3144,107 +3447,134 @@ function askQuery(q){
   const read = {};
 
   // last N
-  let m = t.match(/last (\d+)/); if (m) read.last = Math.min(+m[1], 50);
+  let m = t.match(/\blast (\d+)/); if (m) read.last = Math.min(+m[1], 50);
   // over / under a threshold
-  m = t.match(/\b(over|under|above|below) (\d+(?:\.\d+)?)/);
-  if (m) { read.cmp = (m[1]==='over'||m[1]==='above') ? 'over' : 'under';
-           read.thr = parseFloat(m[2]); }
-  if (/\bhome\b/.test(t)) read.ha = 'home';
+  m = t.match(/\b(over|under|above|below|more than|less than|at least) (\d+(?:\.\d+)?)/);
+  if (m) { read.cmp = /over|above|more|least/.test(m[1]) ? 'over' : 'under';
+           read.thr = parseFloat(m[2]);
+           if (m[1] === 'at least') { read.cmp = 'atleast'; } }
+  if (/\bhome\b|\bat home\b/.test(t)) read.ha = 'home';
   if (/\baway\b|\bon the road\b|\broad\b/.test(t)) read.ha = 'away';
 
-  // market: longest word match wins so "3 pointers" beats "3"
+  // market: longest phrase wins
   for (const w of Object.keys(MKT_WORDS).sort((a,b)=>b.length-a.length)) {
-    if (new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`).test(t)) {
-      read.market = MKT_WORDS[w]; read.marketWord = w; break;
-    }
+    if (askWord(w, t)) { read.mks = MKT_WORDS[w]; read.marketWord = w; break; }
   }
+  if (!read.mks) for (const w of Object.keys(MKT_FALLBACK))
+    if (askWord(w, t)) { read.mks = MKT_FALLBACK[w]; read.marketWord = w; break; }
+
   // opponent: "vs BOS" / "against boston"
-  m = t.match(/\b(?:vs|versus|against)\s+([a-z0-9 ]+?)(?=\s+(?:last|over|under|home|away|without)\b|$)/);
+  m = t.match(/\b(?:vs|versus|against)\s+([a-z0-9 ]+?)(?=\s+(?:last|over|under|above|below|home|away|without|at|on)\b|$)/);
   if (m) {
     const want = m[1].trim();
-    const aliases = new Set([teamNorm(want)]);
-    Object.values(D.team_names || {}).forEach(names=>{
-      Object.entries(names).forEach(([ab,nm])=>{
-        if ([teamNorm(ab),teamNorm(nm)].includes(teamNorm(want))) {
-          aliases.add(teamNorm(ab)); aliases.add(teamNorm(nm));
-        }
-      });
-    });
+    const aliases = teamAliasSet(want);
     const literal = (A.teams||[]).filter(tm=>teamNorm(tm) === teamNorm(want));
     const exact = literal.length ? literal
       : (A.teams||[]).filter(tm=>aliases.has(teamNorm(tm)));
-    const matches = exact.length ? exact
-      : (A.teams||[]).filter(tm=>askNorm(tm).includes(want));
-    if (matches.length !== 1)
-      return {read, error: matches.length ? 'That team is ambiguous. Use its full name.'
+    const loose = exact.length ? exact
+      : (A.teams||[]).filter(tm=>askWord(want, askNorm(tm)));
+    // Several spellings of ONE team (BOS and Boston Celtics) are one
+    // opponent, not an ambiguity.
+    const groups = new Set(loose.map(tm => [...teamAliasSet(tm)].sort().join('|')));
+    if (!loose.length || groups.size !== 1)
+      return {read, error: loose.length ? 'That team is ambiguous. Use its full name.'
         : 'That opponent is not identifiable in this history. No filter was silently dropped.'};
-    read.opp = matches[0];
-    read.oppWord = want;
+    read.opps = loose; read.opp = loose[loose.length - 1]; read.oppWord = want;
   }
   // "without embiid and brown" / "missing embiid, george"
-  m = t.match(/\b(?:without|missing|minus|no)\s+([a-z0-9 ,]+?)(?:\s+(?:last|vs|versus|against|over|under|home|away)\b|$)/);
+  m = t.match(/\b(?:without|missing|minus)\s+([a-z0-9 ,]+?)(?:\s+(?:last|vs|versus|against|over|under|home|away)\b|$)/);
   if (m) {
     const who = m[1].split(/\s*(?:,|\band\b)\s*/).map(x => x.trim())
                     .filter(Boolean);
     read.without = who.map(nm => {
-      const hit = (A.roster_players || []).find(p => {
+      const hits = (A.roster_players || []).filter(p => {
         const n = askNorm(p);
-        return n === nm || n.split(' ').pop() === nm || n.includes(nm);
+        return n === nm || n.split(' ').pop() === nm;
       });
-      return {asked: nm, found: hit || null};
+      return {asked: nm, found: hits.length === 1 ? hits[0] : null,
+              ambiguous: hits.length > 1 ? hits.slice(0, 6) : null};
     });
   }
 
-  // player: best substring match on the query
-  // WORD BOUNDARIES, not substrings. The player column also holds
-  // team abbreviations for game-level rows, so a bare `includes`
-  // matched "NO" inside "nobody" and answered a question about New
-  // Orleans. Short keys must match a whole word.
-  const word = (needle, hay) =>
-    new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
-      .test(hay);
-  let best = null;
+  // player: a full name beats a surname, and a surname shared by
+  // several players is a question back, never a silent pick.
+  // WORD BOUNDARIES, not substrings: "NO" inside "nobody" once
+  // answered a question about New Orleans.
+  const cut = t.replace(/\b(?:vs|versus|against)\s+.*$/, '')
+               .replace(/\b(?:without|missing|minus)\s+.*$/, '');
+  let full = null; const bySurname = [];
   (A.players||[]).forEach((nm, i) => {
     const n = askNorm(nm);
     if (!n || n === 'game') return;
-    if (n.includes(' ') ? t.includes(n) : word(n, t)) {
-      if (!best || n.length > best.len) best = {i, nm, len:n.length};
+    if (n.includes(' ') ? askWord(n, cut) : (n.length >= 2 && askWord(n, cut))) {
+      if (!full || n.length > full.len) full = {i, nm, len:n.length};
       return;
     }
     const last = n.split(' ').pop();
-    if (last.length >= 4 && word(last, t)
-        && (!best || last.length > best.len)) best = {i, nm, len:last.length};
+    if (last.length >= 4 && askWord(last, cut)) bySurname.push({i, nm});
   });
-  if (best) { read.player = best.nm; read.pi = best.i; }
-  if (read.player == null && read.opp == null)
+  if (full) { read.player = full.nm; read.pi = full.i; }
+  else if (bySurname.length === 1) { read.player = bySurname[0].nm; read.pi = bySurname[0].i; }
+  else if (bySurname.length > 1) {
+    // Only the namesakes who have the asked-about stat are a real
+    // question: "Mitchell points" is not about a running back.
+    let cands = bySurname;
+    if (read.mks) {
+      const mi = new Set(read.mks.map(x => (A.markets||[]).indexOf(x)).filter(i => i >= 0));
+      const has = new Set(R.filter(r => mi.has(r[1])).map(r => r[0]));
+      const kept = bySurname.filter(x => has.has(x.i));
+      if (kept.length) cands = kept;
+    }
+    if (cands.length === 1) { read.player = cands[0].nm; read.pi = cands[0].i; }
+  }
+  if (read.player == null && bySurname.length > 1) {
+    const mi = read.mks ? new Set(read.mks.map(x => (A.markets||[]).indexOf(x)).filter(i => i >= 0)) : null;
+    const has = mi ? new Set(R.filter(r => mi.has(r[1])).map(r => r[0])) : null;
+    const kept = has ? bySurname.filter(x => has.has(x.i)) : bySurname;
+    return {read, ambiguous: (kept.length ? kept : bySurname).map(x => x.nm).slice(0, 8),
+            error: 'More than one player goes by that name. Pick one:'};
+  }
+  const teamMk = read.mks && read.mks.every(x => TEAM_MKS.has(x));
+  if (read.player == null && !(teamMk && read.opp))
     return {read, error:'No player or team in that. Try a name, a stat, '
-      + 'and a filter — "Maxey points last 5", "Barrett vs BOS".'};
+      + 'and a filter \u2014 "Maxey points last 5", "Celtics spread last 10".'};
+  read.isTeam = read.player != null && isTeamName(read.player);
 
-  const ti = read.opp == null ? -1 : (A.teams||[]).indexOf(read.opp);
-  const mi = read.market == null ? -1 : (A.markets||[]).indexOf(read.market);
+  const oppIdx = new Set((read.opps || []).map(o => (A.teams||[]).indexOf(o)));
+  const mkIdx = read.mks ? new Set(read.mks.map(x => (A.markets||[]).indexOf(x))
+                                      .filter(i => i >= 0)) : null;
+  // "Celtics total": full-game totals are filed under GAME, so a team
+  // asking about a total means GAME rows in a game it played.
+  const totalOfTeam = read.isTeam && read.mks && read.mks.some(x => /^game_total/.test(x));
+  const teamAl = read.isTeam ? teamAliasSet(read.player) : null;
   let rows = R.filter(r => {
-    if (read.pi != null && r[0] !== read.pi) return false;
-    if (mi >= 0 && r[1] !== mi) return false;
-    if (ti >= 0) {
-      if (read.pi != null) {
+    if (mkIdx && !mkIdx.has(r[1])) return false;
+    if (totalOfTeam) {
+      if ((A.players[r[0]]) !== 'GAME') return false;
+      if (!teamAl.has(teamNorm(A.teams[r[5]])) && !teamAl.has(teamNorm(A.teams[r[6]])))
+        return false;
+    } else if (read.pi != null && r[0] !== read.pi) return false;
+    if (oppIdx.size) {
+      if (read.pi != null && !read.isTeam) {
         // Column 10 is verified at the historical game, not today's membership.
         if (r[10] == null) {
-          if (r[5] === ti || r[6] === ti)
+          if (oppIdx.has(r[5]) || oppIdx.has(r[6]))
             read.oppUnverified = (read.oppUnverified || 0) + 1;
           return false;
         }
-        if (r[10] !== ti) return false;
+        if (!oppIdx.has(r[10])) return false;
       }
-      else if (r[5] !== ti && r[6] !== ti) return false;
+      else if (!oppIdx.has(r[5]) && !oppIdx.has(r[6])) return false;
     }
     return true;
   });
   // date desc
   rows.sort((a,b) => (A.dates[b[2]] || '').localeCompare(A.dates[a[2]] || ''));
-  if (read.ha && read.pi != null) {
-    // Home/away needs to know which team was his, which this index
-    // does not carry. Say so rather than guess at it.
-    read.haUnsupported = true;
+  if (read.ha) {
+    const before = rows.length;
+    const known = rows.filter(r => askVenue(r, A) != null);
+    read.haUnknown = before - known.length;
+    rows = known.filter(r => askVenue(r, A) === read.ha);
   }
   // WITHOUT: keep only games where none of the named team-mates
   // appear on a roster for that date. A name this history has never
@@ -3255,6 +3585,7 @@ function askQuery(q){
     const unknown = read.without.filter(w => !w.found).map(w => w.asked);
     if (unknown.length) {
       read.unknown = unknown;
+      read.withoutAmbiguous = read.without.filter(w => w.ambiguous);
     } else if (!(A.rosters && Object.keys(A.rosters).length)) {
       read.noRosters = true;
     } else {
@@ -3267,33 +3598,110 @@ function askQuery(q){
       read.withoutFrom = before;
     }
   }
-  if (read.last) rows = rows.slice(0, read.last);
+  // Several markets in the answer cannot share one average -- points
+  // and rebounds averaged together is a number about nothing. The
+  // answer becomes a market-by-market table instead.
+  // Spread, alt spread and puck line all settle on one number, the
+  // final margin. They are one stat with different lines, not three:
+  // one row per game (the main line where both were tracked).
+  const MARGIN = new Set(['spread', 'alt_spread', 'puck_line']);
+  if (rows.length && rows.every(r => MARGIN.has(A.markets[r[1]]))) {
+    const seen = new Map();
+    rows.forEach(r => {
+      const k = `${r[2]}|${r[5]}|${r[6]}`, cur = seen.get(k);
+      if (!cur || (A.markets[cur[1]] === 'alt_spread' && A.markets[r[1]] !== 'alt_spread'))
+        seen.set(k, r);
+    });
+    rows = rows.filter(r => seen.get(`${r[2]}|${r[5]}|${r[6]}`) === r);
+    read.market = A.markets[rows[0][1]] === 'alt_spread' ? 'spread' : A.markets[rows[0][1]];
+  }
+  const mkSet = read.market ? [] : [...new Set(rows.map(r => r[1]))];
+  if (mkSet.length > 1) {
+    read.split = mkSet.map(i => {
+      const rs = rows.filter(r => r[1] === i);
+      const take = read.last ? rs.slice(0, read.last) : rs;
+      return {mk: A.markets[i], n: rs.length,
+              mean: take.reduce((a, r) => a + r[3], 0) / take.length,
+              shown: take.length};
+    }).sort((a, b) => b.n - a.n);
+  } else if (mkSet.length === 1) read.market = A.markets[mkSet[0]];
+  if (read.last) rows = read.split ? rows : rows.slice(0, read.last);
   return {read, rows, index:A};
 }
 
-const ASK_EGS = ['points last 5', 'rebounds vs BOS', 'shots over 2.5',
-                 'assists last 10'];
+/* What a row's number means, and what it did against its own line. */
+function askSettle(x, A){
+  const mk = A.markets[x[1]], v = x[3], line = x[4];
+  if (mk === 'moneyline')
+    return {val: v > 0 ? `won by ${v}` : v < 0 ? `lost by ${-v}` : 'tied',
+            res: v > 0 ? 'won' : v < 0 ? 'lost' : 'push', ok: v > 0 ? true : v < 0 ? false : null};
+  if (/spread|puck_line/.test(mk)) {
+    const s = line == null ? null : v + line;
+    return {val: `${v > 0 ? '+' : ''}${v} margin`,
+            res: s == null ? '' : s === 0 ? `push ${line > 0 ? '+' : ''}${line}`
+              : `${s > 0 ? 'covered' : 'failed'} ${line > 0 ? '+' : ''}${line}`,
+            ok: s == null || s === 0 ? null : s > 0};
+  }
+  if (line == null) return {val: v, res: '', ok: null};
+  // A value ON the line is a push, not an under.
+  if (v === line) return {val: v, res: `push ${line}`, ok: null};
+  return {val: v, res: `${v > line ? 'over' : 'under'} ${line}`, ok: v > line};
+}
+
+function askExamples(A){
+  // Seeded from the player with the most history, and from markets and
+  // opponents he actually has, so an example can never demonstrate a
+  // question the data cannot answer.
+  const cnt = {};
+  (A.rows || []).forEach(r => {
+    const nm = A.players[r[0]];
+    if (!nm || isTeamName(nm) || TEAM_MKS.has(A.markets[r[1]])) return;
+    cnt[r[0]] = (cnt[r[0]] || 0) + 1;
+  });
+  const pi = +(Object.entries(cnt).sort((a, b) => b[1] - a[1])[0] || [])[0];
+  if (!Number.isFinite(pi)) return [];
+  const nm = A.players[pi], last = nm.split(' ').pop();
+  const same = (A.players || []).filter(p => askNorm(p).split(' ').pop() === askNorm(last));
+  const who = same.length > 1 ? nm : last;
+  const mine = A.rows.filter(r => r[0] === pi);
+  const mcount = {};
+  mine.forEach(r => { mcount[r[1]] = (mcount[r[1]] || 0) + 1; });
+  const mk = A.markets[+Object.entries(mcount).sort((a, b) => b[1] - a[1])[0][0]];
+  const word = Object.keys(MKT_WORDS).find(w => MKT_WORDS[w].length === 1
+                                            && MKT_WORDS[w][0] === mk) || mk.replace(/_/g, ' ');
+  const opp = mine.find(r => r[10] != null && A.markets[r[1]] === mk);
+  const line = (mine.find(r => A.markets[r[1]] === mk && r[4] != null) || [])[4];
+  const team = (A.players || []).find(p => isTeamName(p) && p !== 'GAME'
+    && A.rows.some(r => A.players[r[0]] === p && /spread/.test(A.markets[r[1]])));
+  return [
+    `${who} ${word} last 5`,
+    opp ? `${who} ${word} vs ${A.teams[opp[10]]}` : null,
+    line != null ? `${who} ${word} over ${line}` : null,
+    `${who} ${word} home`,
+    team ? `${team.split(' ').pop()} spread last 10` : null,
+  ].filter(Boolean);
+}
 
 function drawAsk(){
   const A = D.ask || {};
   const eg = $('askeg');
   if (eg && !eg.dataset.on) {
     eg.dataset.on = '1';
-    // Seeded with a player who is actually IN the index, so the
-    // examples cannot demonstrate a question the data cannot answer.
-    const who = (A.players || []).find(n => n && !/^[A-Z]{2,4}$/.test(n)
-                                            && n !== 'GAME') || '';
-    const last = who.split(' ').pop();
-    eg.innerHTML = ASK_EGS.map(x =>
-      `<button class="chip" data-ask="${esc(last + ' ' + x)}">${
-        esc(last + ' ' + x)}</button>`).join('');
+    eg.innerHTML = askExamples(A).map(x =>
+      `<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('');
   }
   const q = ($('askq') && $('askq').value) || '';
   const out = $('askout');
   if (!q.trim()) {
+    const people = (A.players || []).filter(p => !isTeamName(p)).length;
+    const src = A.sources || {};
     out.innerHTML = `<div class="empty">${
       A.n ? `${A.n.toLocaleString()} graded games on record,
-      ${A.from} to ${A.to}, across ${(A.players||[]).length} players.`
+      ${A.from} to ${A.to}, across ${people.toLocaleString()} players and
+      their teams' spreads, moneylines and totals.${src.from_box ? ` ${
+        src.from_box.toLocaleString()} of the values were read back from the
+        saved box scores and kept only where they reproduce the recorded
+        result.` : ''}`
       : 'No graded history yet.'}</div>`;
     return;
   }
@@ -3302,28 +3710,40 @@ function drawAsk(){
   const r = res.read || {};
   const chips = [
     r.player && `<span class="rd">${esc(r.player)}</span>`,
-    r.market && `<span class="rd">${esc(r.market.replace(/_/g,' '))}</span>`,
+    (r.market || r.mks) && `<span class="rd">${esc(r.market ? mkLabel(r.market)
+      : r.marketWord)}</span>`,
     r.opp && `<span class="rd">vs ${esc(r.opp)}</span>`,
+    r.ha && `<span class="rd">${r.ha}</span>`,
     r.last && `<span class="rd">last ${r.last}</span>`,
-    r.cmp && `<span class="rd">${r.cmp} ${r.thr}</span>`,
+    r.cmp && `<span class="rd">${r.cmp === 'atleast' ? 'at least' : r.cmp} ${r.thr}</span>`,
     r.without && `<span class="rd">without ${esc(r.without.map(
       w => w.found || w.asked).join(', '))}</span>`,
   ].filter(Boolean).join('');
   const readBar = (chips
     ? `<div class="readbar"><span class="dim">read as</span>${chips}</div>` : ''
   ) + (r.oppUnverified ? `<div class="callout">${r.oppUnverified} matching
-      history rows excluded: the player's team for that game is unverified.</div>` : '');
+      history rows excluded: the player's team for that game is unverified.</div>` : '')
+    + (r.haUnknown ? `<div class="mnote">${r.haUnknown} game${r.haUnknown === 1 ? '' : 's'}
+      left out of the ${r.ha} split: which side he was on is not verified for
+      ${r.haUnknown === 1 ? 'it' : 'them'}.</div>` : '');
 
   if (res.error) {
-    out.innerHTML = `${readBar}<div class="empty">${esc(res.error)}</div>`;
+    out.innerHTML = `${readBar}<div class="empty">${esc(res.error)}</div>${
+      res.ambiguous ? `<div class="chips">${res.ambiguous.map(nm => {
+        const qq = q.replace(new RegExp(askEsc(nm.split(' ').pop()), 'i'), nm);
+        return `<button class="chip" data-ask="${esc(qq)}">${esc(nm)}</button>`;
+      }).join('')}</div>` : ''}`;
     return;
   }
   if (r.unknown) {
-    out.innerHTML = `${readBar}<div class="empty">No game on record where
-      ${esc(r.unknown.join(' or '))} dressed, so "without" cannot be
-      answered \u2014 a name this history has not seen is missing from
-      every game by default, which would look like an answer and be
-      one.</div>`;
+    const amb = (r.withoutAmbiguous || []);
+    out.innerHTML = `${readBar}<div class="empty">${amb.length
+      ? `"${esc(amb[0].asked)}" matches more than one player in the rosters
+         (${esc(amb[0].ambiguous.join(', '))}). Use the full name.`
+      : `No game on record where ${esc(r.unknown.join(' or '))} dressed, so
+      "without" cannot be answered \u2014 a name this history has not seen is
+      missing from every game by default, which would look like an answer and
+      not be one.`}</div>`;
     return;
   }
   if (r.noRosters) {
@@ -3340,40 +3760,90 @@ function drawAsk(){
       game the slate skipped is not in here.</div>`;
     return;
   }
+  if (r.split) {
+    const base = q.replace(/\b(points|rebounds|assists|yards|blocks)\b/ig, '').trim();
+    out.innerHTML = `${readBar}
+      <div class="askhead">${r.player ? esc(r.player) : 'That'} has
+        ${r.split.length} different stats on record. Averaging them together
+        would be a number about nothing, so here they are one by one \u2014 tap
+        one to ask about it.</div>
+      <div class="tscroll"><table><thead><tr><th>Stat</th><th>Games</th>
+        <th>Average${r.last ? ` (last ${r.last})` : ''}</th></tr></thead><tbody>${
+        r.split.map(s => `<tr class="askrow" data-ask="${esc(`${r.player || base} ${
+          mkLabel(s.mk)}${r.last ? ` last ${r.last}` : ''}${r.opp ? ` vs ${r.opp}` : ''}${
+          r.ha ? ` ${r.ha}` : ''}`)}">
+          <td>${esc(mkLabel(s.mk))}</td><td>${s.n}</td>
+          <td><b>${s.mean.toFixed(1)}</b></td></tr>`).join('')}</tbody></table></div>`;
+    return;
+  }
   const vals = rows.map(x => x[3]);
   const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-  let head = `<b>${mean.toFixed(1)}</b> average
+  const mk = r.market || '';
+  const unit = mk === 'moneyline' || /spread|puck_line/.test(mk) ? 'average margin' : 'average';
+  let head = `<b>${mean.toFixed(1)}</b> ${unit}
     <span class="dim">over ${rows.length} game${rows.length === 1 ? '' : 's'}</span>`;
   if (r.cmp && r.thr != null) {
-    const n = vals.filter(v => r.cmp === 'over' ? v > r.thr : v < r.thr).length;
-    head = `<b>${n} of ${rows.length}</b> ${r.cmp} ${r.thr}
+    const n = vals.filter(v => r.cmp === 'over' ? v > r.thr
+      : r.cmp === 'atleast' ? v >= r.thr : v < r.thr).length;
+    head = `<b>${n} of ${rows.length}</b> ${r.cmp === 'atleast' ? 'at least' : r.cmp} ${r.thr}
       <span class="dim">\u00b7 ${(100 * n / rows.length).toFixed(0)}% \u00b7
-      ${mean.toFixed(1)} average</span>`;
+      ${mean.toFixed(1)} ${unit}</span>`;
+  } else if (mk === 'moneyline' || /spread|puck_line/.test(mk)) {
+    const s = rows.map(x => askSettle(x, A2));
+    const w = s.filter(x => x.ok === true).length, l = s.filter(x => x.ok === false).length;
+    head += ` <span class="dim">\u00b7 ${mk === 'moneyline' ? 'won' : 'covered'}
+      ${w} of ${w + l}${s.length > w + l ? `, ${s.length - w - l} push` : ''}</span>`;
   }
-  const body = rows.slice(0, 25).map(x => {
+  const isPlayer = !r.isTeam && !TEAM_MKS.has(mk);
+  const sp = (rows[0] || [])[9];
+  const bx = isPlayer && r.player ? boxRows(sp, r.player) : [];
+  const body = rows.slice(0, 25).map((x, k) => {
     const d = A2.dates[x[2]], away = A2.teams[x[5]], home = A2.teams[x[6]];
-    const opp = r.player && home && away
-      ? `${esc(away)} @ ${esc(home)}` : `${esc(away||'')} @ ${esc(home||'')}`;
-    const line = x[4];
-    const cleared = line == null ? null : x[3] > line;
-    return `<tr><td>${esc(d)}</td><td class="dim">${opp}</td>
-      <td><b>${x[3]}</b></td>
-      <td class="${cleared == null ? 'dim' : cleared ? 'hit' : 'miss'}">${
-        line == null ? '' : (cleared ? 'over ' : 'under ') + line}</td></tr>`;
+    const venue = askVenue(x, A2);
+    const opp = x[10] != null && !TEAM_MKS.has(A2.markets[x[1]])
+      ? `${venue === 'home' ? 'vs' : '@'} ${esc(A2.teams[x[10]])}`
+      : `${esc(away || '')} @ ${esc(home || '')}`;
+    const st = askSettle(x, A2);
+    const alt = x[11] ? `<small class="dim"> \u00b7 also priced ${x[11]
+      .filter(l => l !== x[4]).join(', ')}</small>` : '';
+    const line = bx.length ? boxFor(bx, d, x[10] != null ? A2.teams[x[10]] : null) : null;
+    return `<tr class="${line ? 'askrow' : ''}" ${line ? `data-askbx="${k}"` : ''}>
+      <td>${esc(d)}</td><td class="dim">${opp}</td>
+      <td><b>${esc(st.val)}</b></td>
+      <td class="${st.ok == null ? 'dim' : st.ok ? 'hit' : 'miss'}">${esc(st.res)}${alt}</td>
+      <td class="dim">${line ? '\u25be' : ''}</td></tr>${line ? `<tr class="askbx" hidden
+        data-askbxrow="${k}"><td colspan="5">${boxLine(sp, line, mk)}</td></tr>` : ''}`;
   }).join('');
 
   out.innerHTML = `${readBar}
     <div class="askhead">${head}</div>
-    ${r.haUnsupported ? `<div class="mnote">Home and away are not in this
-      index \u2014 it records the matchup, not which side he was on \u2014 so
-      that part of the question was ignored.</div>` : ''}
     <div class="tscroll"><table>
-      <thead><tr><th>Date</th><th>Game</th><th>Stat</th><th>vs line</th></tr>
+      <thead><tr><th>Date</th><th>Game</th><th>${TEAM_MKS.has(mk) ? 'Result' : 'Stat'}</th>
+      <th>vs line</th><th>${bx.length ? 'box' : ''}</th></tr>
       </thead><tbody>${body}</tbody></table></div>
     ${rows.length > 25 ? `<div class="dim">Showing 25 of ${rows.length}.</div>`
       : ''}
-    <div class="dim" style="margin-top:7px">Covers ${A2.covers}. A night
+    ${bx.length ? `<div class="mnote">Tap a game for his full box score.</div>` : ''}
+    <div class="dim" style="margin-top:7px">Covers ${A2.covers}. One row per
+      game: alternate lines priced the same night are folded into it. A night
       the slate skipped is not on this list.</div>`;
+  out.onclick = e => {
+    const tr = e.target.closest('[data-askbx]');
+    if (!tr) return;
+    const sub = out.querySelector(`[data-askbxrow="${tr.dataset.askbx}"]`);
+    if (sub) sub.hidden = !sub.hidden;
+  };
+}
+/* One game's full box line, as a compact two-row table. */
+function boxLine(sp, row, mk){
+  const B = (D && D.box) || {}, lg = String(sp || '').toUpperCase();
+  const labs = (B.cols || {})[lg] || [], keys = (B.keys || {})[lg] || [];
+  const hi = new Set(BOX_MK[mk] || []);
+  const used = labs.map((_, j) => row[3 + j] != null);
+  return `<div class="tscroll"><table class="boxt"><thead><tr>${labs.map((l, j) =>
+      used[j] ? `<th class="${hi.has(keys[j]) ? 'bxhi' : ''}">${esc(l)}</th>` : '').join('')}</tr></thead>
+    <tbody><tr>${labs.map((_, j) => used[j]
+      ? `<td class="${hi.has(keys[j]) ? 'bxhi' : ''}">${row[3 + j]}</td>` : '').join('')}</tr></tbody></table></div>`;
 }
 
 function drawRecord(){
