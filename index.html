@@ -540,6 +540,19 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
   border:1px solid var(--rule)}
 .simbox h4{font-family:var(--m);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--clover);margin:0 0 6px;font-weight:600}
+.simbars{position:relative;display:flex;align-items:flex-end;gap:2px;height:64px;margin:8px 0 4px;
+  border-bottom:1px solid var(--rule);overflow:hidden}
+.simbars .simln{position:absolute;left:0;right:0;border-top:1px dashed var(--ink-2);z-index:1}
+.simbars .sbar{flex:1 1 0;min-width:4px;max-width:28px;border-radius:3px 3px 0 0;position:relative;
+  background:var(--rule)}
+.simbars .sbar.hit{background:var(--over)}.simbars .sbar.miss{background:var(--under)}
+.simbars .sbar.close{outline:2px solid var(--ink);outline-offset:-2px}
+.simbars .sbar em{position:absolute;top:-1px;left:0;right:0;text-align:center;font-style:normal;
+  font-family:var(--m);font-size:8.5px;color:#fff;line-height:1.2}
+.simfx{margin:6px 0 0}.simfx .chip[disabled]{opacity:.4}
+.simlike{font-size:12.5px;margin:4px 0 6px}
+.simh2h{margin-top:10px;padding-top:8px;border-top:1px solid var(--rule);font-size:12.5px}
+tr.simclose td{font-weight:600}
 .simn{font-family:var(--m);font-size:19px;font-weight:600}
 .simcrit{font-family:var(--m);font-size:10.5px;color:var(--ink-2);
   margin:2px 0 8px;line-height:1.6}
@@ -1783,44 +1796,153 @@ function ltag(p, id){
    matchups is this player against opponents that resemble tonight's.
    Substituting any one for another answers a question nobody asked,
    and the third is the one most often faked by quoting the second. */
+/* ---- Similar matchups -------------------------------------------
+   The comparable games, readable at a glance: a bar per game against
+   tonight's line, filters for home / away / the most recent five,
+   what he does in games like these next to his own recent form, the
+   closest three, and -- kept separate, because it is a different
+   question -- his own history against tonight's opponent. */
+const SIMF = {};
+function simSideOk(p, v){
+  if (v == null || p.ln == null || v === p.ln) return null;
+  return p.sd === 'Under' ? v < p.ln : v > p.ln;
+}
+function simHA(p, g){
+  if (g.ha) return /^h/i.test(g.ha) ? 'home' : /^a/i.test(g.ha) ? 'away' : null;
+  const op = ((p.op || {}).rows || []).find(r => r.date === g.date && r.ha);
+  if (op) return /^h/i.test(op.ha) ? 'home' : 'away';
+  const b = boxFor(boxRows(p.sp, p.pl), g.date, g.opp);
+  if (!b) return null;
+  const sp = String(p.sp || '').toUpperCase();
+  const t = ((D.tbox || {})[`${sp}|${b[1]}`] || []).find(x => dayGap(x[0], b[0]) <= 1.01
+                                                       && teamNorm(x[1]) === teamNorm(b[2]));
+  return t ? t[2] : null;
+}
+function simBars(p, games){
+  if (!games.length) return '';
+  const vs = games.map(g => +g.v || 0), top = Math.max(p.ln || 0, ...vs) * 1.12 || 1;
+  const lnPct = p.ln == null ? null : 100 * p.ln / top;
+  return `<div class="simbars" title="Oldest left, newest right. Dashed line: tonight's ${p.ln}.">
+    ${lnPct == null ? '' : `<i class="simln" style="bottom:${lnPct.toFixed(1)}%"></i>`}
+    ${games.slice().reverse().map(g => {
+      const o = simSideOk(p, g.v);
+      return `<span class="sbar ${o == null ? 'push' : o ? 'hit' : 'miss'}${g.close ? ' close' : ''}"
+        style="height:${Math.max(4, 100 * (+g.v || 0) / top).toFixed(1)}%">
+        <em>${g.v}</em></span>`;
+    }).join('')}</div>`;
+}
+function simH2H(p){
+  const id = matchupIdentity(p);
+  if (!id || !BOX_MK[p.mk]) return '';
+  const sp = String(p.sp || '').toUpperCase();
+  const keys = (((D.box || {}).keys) || {})[sp] || [];
+  const idx = BOX_MK[p.mk].map(k => keys.indexOf(k)).filter(j => j >= 0);
+  const mi = keys.indexOf('minutes');
+  if (!idx.length) return '';
+  const al = teamAliasSet(id.opponent, sp);
+  const games = boxRows(p.sp, p.pl).filter(b => al.has(teamNorm(b[2]))
+      && !(mi >= 0 && !(+b[3 + mi] > 0)))
+    .map(b => ({d: b[0], v: idx.reduce((a, j) => a + (+b[3 + j] || 0), 0)}));
+  if (!games.length) return `<div class="simh2h"><b>vs ${esc(id.opponent)}</b>
+    <span class="dim">\u2014 no saved box score against them yet.</span></div>`;
+  const ok = games.map(g => simSideOk(p, g.v)), w = ok.filter(x => x === true).length,
+        dec = ok.filter(x => x != null).length;
+  const mean = games.reduce((a, g) => a + g.v, 0) / games.length;
+  return `<div class="simh2h"><b>Head to head vs ${esc(id.opponent)}</b>
+    <span class="dim">\u00b7 ${games.length} saved game${games.length === 1 ? '' : 's'} \u00b7 avg</span>
+    <b>${mean.toFixed(1)}</b> <span class="dim">\u00b7 ${esc(p.sd)} ${p.ln}: ${w} of ${dec}</span>
+    <div class="chips" style="margin-top:4px">${games.slice(0, 8).map((g, k) =>
+      `<span class="rd ${ok[k] == null ? '' : ok[k] ? 'hit' : 'miss'}">${esc(g.d.slice(5))} \u00b7 ${g.v}</span>`).join('')}</div>
+    <div class="mnote">A different question from the comparable games above: these are
+      only the games against this opponent, whatever the circumstances.</div></div>`;
+}
 function similar(p){
   const s = p.sim;
   if (!s || !s.market) return '';
   const side = esc(p.sd), ln = p.ln;
   const head = `<h4>similar matchups — ${esc((p.mk||'').replace(/_/g,' '))}
     ${side} ${ln}</h4>`;
+  const h2h = simH2H(p);
   if (s.empty) return `<div class="simbox">${head}
     <div class="simcrit">${esc(s.empty[0].toUpperCase() + s.empty.slice(1))}.
-    Nothing is loosened to fill this section.</div></div>`;
+    Nothing is loosened to fill this section.</div>${h2h}</div>`;
   const crit = `<div class="simcrit">Criteria<ul>${
     (s.criteria||[]).map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`;
+  const all = (s.games || []).map(g => Object.assign({}, g, {hax: simHA(p, g)}))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  // Closest three: the games that met the most criteria, newest first.
+  [...all].sort((a, b) => (b.why || []).length - (a.why || []).length
+    || String(b.date).localeCompare(String(a.date))).slice(0, 3).forEach(g => { g.close = true; });
+  const f = SIMF[p.i] || 'all';
+  const games = f === 'home' ? all.filter(g => g.hax === 'home')
+    : f === 'away' ? all.filter(g => g.hax === 'away')
+    : f === 'l5' ? all.slice(0, 5) : all;
+  const nh = all.filter(g => g.hax === 'home').length, na = all.filter(g => g.hax === 'away').length;
+  const chip = (k, lab, n) => `<button class="chip${f === k ? ' on' : ''}" data-simf="${p.i}|${k}"
+    ${n === 0 ? 'disabled' : ''}>${lab}${n != null ? ` ${n}` : ''}</button>`;
+  const fx = `<div class="chips simfx">${chip('all', 'All', all.length)}${chip('home', 'Home', nh)}${
+    chip('away', 'Away', na)}${all.length > 5 ? chip('l5', 'Last 5', null) : ''}</div>`;
+  const okv = games.map(g => simSideOk(p, g.v));
+  const fh = okv.filter(x => x === true).length, fm = okv.filter(x => x === false).length,
+        fp = games.length - fh - fm;
+  const fmean = games.length ? games.reduce((a, g) => a + (+g.v || 0), 0) / games.length : null;
+  // Games like this vs how he is playing now.
+  const l10 = recentAvg(p, 10), l5 = recentAvg(p, 5);
+  const ref = l10 != null ? ['last 10', l10] : l5 != null ? ['last 5', l5] : null;
+  const like = fmean == null || !ref ? '' : (() => {
+    const dlt = fmean - ref[1];
+    return `<div class="simlike">In games like this he averages <b>${fmean.toFixed(1)}</b>
+      vs <b>${ref[1].toFixed(1)}</b> over his ${ref[0]} \u2014 ${Math.abs(dlt) < 0.05 ? 'no different'
+      : `<b class="${(p.sd === 'Under' ? dlt < 0 : dlt > 0) ? 'hit' : 'miss'}">${Math.abs(dlt).toFixed(1)}</b> ${dlt > 0 ? 'higher' : 'lower'}, ${(p.sd === 'Under' ? dlt < 0 : dlt > 0)
+        ? 'which leans with' : 'which leans against'} the ${side.toLowerCase()}`}.</div>`;
+  })();
+  // Per minute, where minutes were recorded, against his overall rate.
+  const wm = games.filter(g => g.mins > 0);
+  const simPm = wm.length >= 2 ? wm.reduce((a, g) => a + g.v, 0) / wm.reduce((a, g) => a + g.mins, 0) : null;
+  const opr = ((p.op || {}).rows || []).filter(r => r.mins > 0 && r.v != null);
+  const allPm = opr.length >= 3 ? opr.reduce((a, r) => a + r.v, 0) / opr.reduce((a, r) => a + r.mins, 0) : null;
+  const pm = simPm == null ? '' : `<div class="mnote">Per minute in these games: <b>${simPm.toFixed(2)}</b>${
+    allPm != null ? ` vs ${allPm.toFixed(2)} across his recent games (${opr.length}) \u2014 ${
+      Math.abs(simPm - allPm) < 0.02 ? 'the same rate, so any gap is minutes'
+      : simPm > allPm ? 'he produces faster in this kind of game' : 'he produces slower in this kind of game'}` : ''}
+    \u00b7 ${(wm.reduce((a, g) => a + g.mins, 0) / wm.length).toFixed(1)} min a game.</div>`;
   const open = OPENT.has('sim' + p.i);
-  const tbl = open ? `<table class="gtab"><thead><tr><th>Date</th><th>Opp</th>
+  const tbl = open ? `<div class="tscroll"><table class="gtab"><thead><tr><th>Date</th><th>Opp</th>
     <th>H/A</th><th>Result</th><th>Min</th><th>vs ${ln}</th>
     <th>Qualified because</th></tr></thead><tbody>${
-    s.games.map(g => `<tr><td>${esc((g.date||'').slice(5))}</td>
-      <td>${esc(g.opp)}</td><td>${esc(g.ha||'—')}</td><td class="v">${g.v}</td>
+    games.map(g => `<tr class="${g.close ? 'simclose' : ''}"><td>${esc((g.date||'').slice(5))}${g.close ? ' <span class="unv">\u2605</span>' : ''}</td>
+      <td>${esc(g.opp)}</td><td>${esc(g.hax || '—')}</td><td class="v">${g.v}</td>
       <td>${g.mins == null ? '—' : g.mins}</td>
       <td class="${g.result}">${g.result}</td>
-      <td>${esc((g.why||[]).join('; '))}</td></tr>`).join('')}</tbody></table>`
+      <td>${esc((g.why||[]).join('; '))}</td></tr>`).join('')}</tbody></table></div>`
     : '';
   return `<div class="simbox">${head}${crit}
     <div><span class="simn">${s.n}</span> comparable game${s.n===1?'':'s'}
       ${s.from ? `· ${esc(s.from.slice(5))} – ${esc(s.to.slice(5))}` : ''}
       ${s.thin ? '<span class="unv"> · small sample</span>' : ''}</div>
-    <div class="simcrit">Average <b>${s.mean}</b> · median <b>${s.median}</b><br>
-      Against today's ${ln} line: ${s.above} above · ${s.below} below ·
-      ${s.equal} exactly on it<br>
-      ${side}: <span class="hit">${s.hits} success${s.hits===1?'':'es'}</span> ·
-      <span class="miss">${s.misses} miss${s.misses===1?'':'es'}</span> ·
-      ${s.pushes} push${s.pushes===1?'':'es'}${
-      s.rate != null ? ` — ${(100*s.rate).toFixed(0)}% of ${s.decided} decided`
+    ${fx}
+    ${simBars(p, games)}
+    ${like}
+    <div class="simcrit">${f === 'all' ? '' : `<b>${games.length} shown</b> of ${s.n} \u00b7 `}Average <b>${
+      f === 'all' ? s.mean : fmean == null ? '\u2014' : fmean.toFixed(1)}</b>${f === 'all' ? ` · median <b>${s.median}</b>` : ''}<br>
+      Against today's ${ln} line: ${f === 'all' ? `${s.above} above · ${s.below} below ·
+      ${s.equal} exactly on it` : `${games.filter(g => g.v > ln).length} above · ${
+        games.filter(g => g.v < ln).length} below · ${games.filter(g => g.v === ln).length} exactly on it`}<br>
+      ${side}: <span class="hit">${f === 'all' ? s.hits : fh} success${(f === 'all' ? s.hits : fh)===1?'':'es'}</span> ·
+      <span class="miss">${f === 'all' ? s.misses : fm} miss${(f === 'all' ? s.misses : fm)===1?'':'es'}</span> ·
+      ${f === 'all' ? s.pushes : fp} push${(f === 'all' ? s.pushes : fp)===1?'':'es'}${
+      f !== 'all' ? (fh + fm ? ` — ${(100 * fh / (fh + fm)).toFixed(0)}% of ${fh + fm} decided` : ' — no decided results')
+      : s.rate != null ? ` — ${(100*s.rate).toFixed(0)}% of ${s.decided} decided`
                      : ' — no decided results'}<br>
       <span class="unv">Not historical betting results: the line hung on
       those nights is not in this data. ${esc(s.note)}</span></div>
+    ${pm}
+    ${all.length >= 3 ? `<div class="mnote">\u2605 closest 3 (most criteria met): ${all.filter(g => g.close)
+      .map(g => `${esc((g.date || '').slice(5))} ${esc(g.opp)} <b>${g.v}</b>`).join(' \u00b7 ')}</div>` : ''}
     <button class="tgl" data-trow="sim${p.i}" style="margin:0">${
-      open ? 'hide games' : `show all ${s.n} games and why they qualified`}</button>
-    ${tbl}</div>`;
+      open ? 'hide games' : games.length === 1 ? 'show the game and why it qualified'
+        : `show all ${games.length} games and why they qualified`}</button>
+    ${tbl}${h2h}</div>`;
 }
 
 /* Circumstance, from box scores already in the cache. None of this
@@ -1856,9 +1978,12 @@ function roleBox(p){
     + (r.clutch.last3 && r.clutch.last3.length
       ? ` · last ${r.clutch.last3.length}: ${r.clutch.last3.join(', ')}` : '')
     + (r.clutch.none ? ` <span class="dim">(${r.clutch.none} never got close)</span>` : '')]);
+  // With ten or fewer games "recent" IS the season; saying "5.8
+  // recent vs 5.8 season" reads like two measurements when it is one.
   if (r.rate) rows.push([`per ${r.rate.base} ${esc(r.rate.unit)}`,
-    `${r1(r.rate.recent)} recent vs ${r1(r.rate.season)} season `
-    + `(${r.rate.n}g)`]);
+    r.rate.n <= 10 && r1(r.rate.recent) === r1(r.rate.season)
+      ? `${r1(r.rate.recent)} over all ${r.rate.n} games`
+      : `${r1(r.rate.recent)} recent vs ${r1(r.rate.season)} season (${r.rate.n}g)`]);
   if (r.fouls) rows.push(['fouls',
     `${r.fouls.mean} avg · ${r.fouls.five_plus} game${
       r.fouls.five_plus === 1 ? '' : 's'} at 5+ (${r.fouls.n}g)`]);
@@ -1887,9 +2012,36 @@ function roleBox(p){
    role, and those point opposite ways for tonight. Attempts and
    minutes sit under the game they belong to rather than in another
    average elsewhere on the card. */
+/* Rebounds, assists, blocks and steals were measured per FGA by older
+   builds. That rate means nothing, so on those cards the opportunity is
+   read as minutes instead, and the panel built on FGA is withheld. */
+function badOppBase(p){
+  const op = p.op || {}, mk = String(p.mk || '').replace(/^player_/, '');
+  return String(p.sp || '').toUpperCase() === 'NBA' && op.label === 'FGA'
+    && !/^(points|threes|three_pointers_made|3-pointers_made)$/.test(mk);
+}
+/* The trend read, from the two percentages. Older builds called one
+   side moving on its own "flat -- neither has moved much". */
+function dvRead(dv){
+  if (!dv || dv.production_pct == null || dv.opportunity_pct == null) return dv || {};
+  const dp = dv.production_pct / 100, d0 = dv.opportunity_pct / 100;
+  const up = x => x >= .08, dn = x => x <= -.08;
+  const S = (state, note) => ({...dv, state, note});
+  if (up(d0) && up(dp)) return S('together up', 'role grew and he is using it');
+  if (dn(d0) && dn(dp)) return S('together down', 'role shrank and production followed');
+  if (up(d0) && dn(dp)) return S('opportunity up, production down', 'getting the chances and missing them; the chances are the repeatable half');
+  if (dn(d0) && up(dp)) return S('production up, opportunity down', 'converting at a rate nothing underneath supports');
+  if (up(dp)) return S('production up, same chances', 'finishing better on the same opportunity; the hotter rate is the less repeatable half');
+  if (dn(dp)) return S('production down, same chances', 'same opportunity, colder finishing; the chances are what usually holds');
+  if (up(d0)) return S('opportunity up, production flat', 'more chances that have not turned into more yet');
+  if (dn(d0)) return S('opportunity down, production flat', 'fewer chances, production holding for now');
+  return S('flat', 'neither has moved much');
+}
+const perFmt = v => v == null ? null : (v >= 10 ? Math.round(v) : v >= 1 ? +v.toFixed(1) : +v.toFixed(2));
 function oppRow(p, rec){
   const op = p.op || {};
   if (!op.rows || !op.rows.length) return '';
+  const bad = badOppBase(p);
   const by = {}; for (const r of op.rows) by[r.date] = r;
   const cell = (g, pick) => {
     const r = by[g.d || g.date]; const v = r ? pick(r) : null;
@@ -1898,11 +2050,13 @@ function oppRow(p, rec){
   const line = (label, pick) => `<div class="oprow">
     <b>${esc(label)}</b><div class="opcells">${
       rec.map(g => cell(g, pick)).join('')}</div></div>`;
-  const dv = p.dv || {};
+  const dv = bad ? {} : dvRead(p.dv);
+  const isMin = /^min/i.test(op.label || '');
   return `<div class="oppane">
-    ${line(op.label || 'opp', r => r.opportunity)}
+    ${bad || isMin ? '' : line(op.label || 'opp', r => r.opportunity)}
     ${line('min', r => r.mins == null ? null : Math.round(r.mins))}
-    ${line('per', r => r.per_opp)}
+    ${bad ? line('per min', r => perFmt(r.per_min ?? (r.mins && r.v != null ? r.v / r.mins : null)))
+          : line(isMin ? 'per min' : 'per', r => perFmt(r.per_opp))}
     ${dv.state ? `<div class="opnote ${
       dv.state.startsWith('together') ? '' : 'warn'}">${esc(dv.state)} —
       opportunity ${dv.opportunity_pct > 0 ? '+' : ''}${dv.opportunity_pct}%,
@@ -1923,7 +2077,7 @@ function oppRow(p, rec){
    about how hard the number is. */
 function reqBox(p){
   const r = p.req;
-  if (!r || !r.need) return '';
+  if (!r || !r.need || badOppBase(p)) return '';
   const pct = v => v == null ? '\u2014' : v.toFixed(2);
   const easier = r.required_at_recent != null
     && r.required_at_recent < r.actual_rate;
@@ -2472,12 +2626,31 @@ function shotSvg(lg, kind, games, hot){
 
 /* What the opponent allows by zone, over its last games, against the
    league's per-game rate in the same zone. */
+/* The defence span, shared by every defence box so flipping it on one
+   card flips them all: last 3, 5 or 10 games. */
+let DEFN = 5;
+const DEF_SPANS = [3, 5, 10];
+function defSpan(T, n){
+  // Per-game tallies when the build has them; the pooled ten otherwise.
+  const gz = T.gz || [];
+  if (!gz.length) return {g: T.g, z: T.z, pooled: true};
+  const use = gz.slice(0, n), z = {};
+  for (const g of use) for (const [k, v] of Object.entries(g.z || {})) {
+    const t = z[k] || (z[k] = [0, 0, 0]);
+    t[0] += v[0]; t[1] += v[1]; t[2] += v[2];
+  }
+  return {g: use.length, z, from: use.length ? use[use.length - 1].d : null};
+}
 function defBox(lg, kind, opp, mine){
   const DZ = ((D.dzones || {})[lg]) || null;
   if (!DZ || !opp) return '';
-  const T = (DZ.t || {})[opp];
-  if (!T || !T.g) return `<div class="mnote">No play-by-play saved yet for ${esc(opp)}'s
+  const T0 = (DZ.t || {})[opp];
+  if (!T0 || !T0.g) return `<div class="mnote">No play-by-play saved yet for ${esc(opp)}'s
     recent opponents, so what it allows by zone is not available.</div>`;
+  const T = defSpan(T0, DEFN);
+  const spanChips = (T0.gz || []).length ? `<div class="chips shotn">${DEF_SPANS.map(k =>
+    `<button class="chip${k === DEFN ? ' on' : ''}" data-defn="${k}"${
+      k > T0.gz.length && k !== DEF_SPANS[0] ? ' disabled' : ''}>last ${k}</button>`).join('')}</div>` : '';
   const zs = zoneList(lg, kind).map(z => lg === 'NFL' && kind === 'ru' ? `run ${z}` : z);
   const lgG = DZ.g || 1, pg = (t, g) => t ? t[1] / g : 0;
   const rate = t => t && t[1] ? t[0] / t[1] : null;
@@ -2492,7 +2665,7 @@ function defBox(lg, kind, opp, mine){
   const pct = v => v == null ? '\u2014' : Math.round(100 * v) + '%';
   const myZ = mine ? mine.z : {};
   return `<div class="mbox"><div class="mhead">${esc(teamName(lg, opp))} defence by zone
-      <span class="dim">· last ${T.g} games</span></div>
+      <span class="dim">· last ${T.g} game${T.g === 1 ? '' : 's'}${T.pooled ? ' (pooled)' : ''}</span></div>${spanChips}
     <div class="tscroll"><table class="gtab dz"><thead><tr><th>zone</th><th>his ${lg === 'NFL' ? 'rate' : 'pct'}</th>
       <th>allowed</th><th>league</th><th>${ak}/g vs lg</th></tr></thead><tbody>${vol.map(r => {
         const zk = r.z.replace(/^run /, ''), m = myZ[zk];
@@ -3755,9 +3928,9 @@ function trendRow(r, id, name, sub, rank){
     <div class="tbig ${top.pct == null ? '' : top.pct > 0 ? 'up' : 'down'}">${
       top.pct == null ? 'n/a' : (top.pct > 0 ? '+' : '') + top.pct + '%'}</div>
     <div class="tmoves">${ms.map(moveChip).join('')}${
-      r.dv && r.dv.state ? `<span class="tmv ${
-        r.dv.state.startsWith('together') ? '' : 'warn'}"
-        title="${esc(r.dv.note || '')}">${esc(r.dv.state)}</span>` : ''}</div>
+      r.dv && r.dv.state ? (dv => `<span class="tmv ${
+        dv.state.startsWith('together') ? '' : 'warn'}"
+        title="${esc(dv.note || '')}">${esc(dv.state)}</span>`)(dvRead(r.dv)) : ''}</div>
     ${trendChart(seriesFor(r, top.stat), +TWIN || 3, top)}
     ${r.player ? trendShots(r) : ''}
     <button class="tgl" data-trow="${id}">${open ? 'hide games' : 'show games'}</button>
@@ -3922,6 +4095,27 @@ document.addEventListener('click', e => {
     const again = document.querySelector(`[data-swap="${from}:${to}"]`);
     const r2 = again && again.closest('.row');
     if (r2 && y0 != null) window.scrollBy(0, r2.getBoundingClientRect().top - y0);
+    return;
+  }
+  const dn = e.target.closest('[data-defn]');
+  if (dn) {
+    DEFN = +dn.dataset.defn;
+    // Keep the box under the thumb while every defence box redraws.
+    const y0 = dn.getBoundingClientRect().top;
+    const idx = [...document.querySelectorAll('[data-defn]')].indexOf(dn);
+    if (dn.closest('#askout')) drawAsk(); else if (dn.closest('#tab-trending')) drawTrending(); else draw();
+    const again = document.querySelectorAll('[data-defn]')[idx];
+    if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0);
+    return;
+  }
+  const sf = e.target.closest('[data-simf]');
+  if (sf) {
+    const [i, k] = sf.dataset.simf.split('|');
+    SIMF[i] = k;
+    const y0 = sf.getBoundingClientRect().top;
+    draw();
+    const again = document.querySelector(`[data-simf="${i}|${k}"]`);
+    if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0);
     return;
   }
   const sn = e.target.closest('[data-shotn]');
@@ -4319,6 +4513,120 @@ function askVenue(r, A){
    the props on the board. Each is answered from the same data the
    cards show, and says which. Returns HTML, or null to fall through to
    the history search. */
+/* ---- Forgiving names --------------------------------------------
+   A question should not fail because "Wembanyama" lost a letter, or
+   because only "Tyrese" was typed. Exact names still win; only when
+   none matches does this look for the closest real name: a nickname,
+   a first or last name on its own, the start of a surname ("gilg"),
+   or a spelling one or two letters off. Several equally close names
+   come back as "did you mean" chips -- never a silent pick. */
+const ASK_NICK = {
+  'wemby':'victor wembanyama', 'sga':'shai gilgeous alexander', 'shai':'shai gilgeous alexander',
+  'bron':'lebron james', 'king james':'lebron james', 'kd':'kevin durant',
+  'greek freak':'giannis antetokounmpo', 'joker':'nikola jokic', 'steph':'stephen curry',
+  'chef curry':'stephen curry', 'dame':'damian lillard', 'ant':'anthony edwards',
+  'ant man':'anthony edwards', 'cp3':'chris paul', 'ja':'ja morant', 'zion':'zion williamson',
+  'ad':'anthony davis', 'the brow':'anthony davis', 'pg13':'paul george', 'spida':'donovan mitchell',
+  'trae':'trae young', 'luka':'luka doncic', 'book':'devin booker', 'jdub':'jalen williams',
+  'kat':'karl anthony towns', 'jjj':'jaren jackson jr', 'scoot':'scoot henderson',
+  'ovi':'alex ovechkin', 'mcjesus':'connor mcdavid', 'nate dogg':'nathan mackinnon',
+  'cmc':'christian mccaffrey', 'arsb':'amon ra st brown', 'sauce':'ahmad gardner',
+  'jjetas':'justin jefferson', 'jj':'justin jefferson', 'tyreek':'tyreek hill',
+  'cheetah':'tyreek hill', 'king henry':'derrick henry', 'lamar':'lamar jackson',
+};
+const ASK_SUFFIX = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
+const ASK_STOP = new Set(('last over under above below more than less at least home away road on the '
+  + 'vs versus against without missing minus and or of in a an his her he she their games game '
+  + 'how many much does did do what whats is are was were with when where who tonight today type '
+  + 'types archetype kind player players profile role shot shots chart charts zone zones hot spot spots '
+  + 'injury injuries injured hurt health questionable out defense defence allows allow gives up props '
+  + 'prop board lines line clutch close crunch starter starting start bench season all avg average '
+  + 'per game scored score hit hits made make get got gets total team spread cover covers ml '
+  + 'moneyline gunner gunners star stars playmaker sniper slasher physical shutdown workhorse').split(' '));
+function askLev(a, b){
+  // Edit distance where swapping two neighbouring letters ("jokci")
+  // is one slip, not two.
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  const d = [];
+  for (let i = 0; i <= a.length; i++) { d[i] = [i]; }
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1,
+                       d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+      d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
+}
+let ASK_TEAMWORDS = null;
+function askTeamWords(){
+  if (ASK_TEAMWORDS) return ASK_TEAMWORDS;
+  ASK_TEAMWORDS = new Set();
+  Object.values(D.team_names || {}).forEach(names => Object.entries(names).forEach(([ab, nm]) => {
+    ASK_TEAMWORDS.add(ab.toLowerCase());
+    askNorm(nm).split(' ').forEach(w => ASK_TEAMWORDS.add(w));
+  }));
+  return ASK_TEAMWORDS;
+}
+function askTokens(t, keepTeams){
+  const mw = new Set(Object.keys(MKT_WORDS).flatMap(w => w.split(' ')));
+  const tw = keepTeams ? new Set() : askTeamWords();
+  return t.split(' ').filter(w => w && !ASK_STOP.has(w) && !mw.has(w) && !tw.has(w)
+    && !/^\d/.test(w) && w.length >= 2);
+}
+/* Returns {nm, fuzzy, used} for one clear match, {cands, used} for a
+   tie, or null. `used` is the words that matched, so a suggestion can
+   rewrite the question with the real name in their place. */
+function askResolve(t, names, opts){
+  opts = opts || {};
+  const pool = names.filter(nm => nm && nm !== 'GAME');
+  const byNorm = new Map(pool.map(nm => [askNorm(nm), nm]));
+  for (const [nick, full] of Object.entries(ASK_NICK).sort((a, b) => b[0].length - a[0].length))
+    if (askWord(nick, t) && byNorm.has(full))
+      return {nm: byNorm.get(full), fuzzy: true, used: nick.split(' ')};
+  const toks = askTokens(t, opts.keepTeams);
+  if (!toks.length) return null;
+  const tol = w => w.length >= 7 ? 2 : w.length >= 4 ? 1 : 0;
+  let best = 0, hits = [];
+  for (const nm of pool) {
+    const parts = askNorm(nm).split(' ').filter(Boolean);
+    if (!parts.length) continue;
+    let li = parts.length - 1;
+    while (li > 0 && ASK_SUFFIX.has(parts[li])) li--;
+    const first = parts[0], last = parts[li], joined = parts.join('');
+    let score = 0; const used = [];
+    for (const w of toks) {
+      let s = 0;
+      if (w === joined) s = 100;
+      else if (w === last) s = 70;
+      else if (parts.includes(w)) s = w === first ? 45 : 50;
+      else if (w.length >= 3 && last.startsWith(w)) s = 40;
+      else if (w.length >= 3 && first.startsWith(w)) s = 28;
+      else if (tol(w) && askLev(w, last) <= tol(w)) s = 38;
+      else if (tol(w) && askLev(w, first) <= tol(w)) s = 26;
+      else if (w.length >= 8 && askLev(w, joined) <= 2) s = 60;
+      else if (parts.length > li + 1 || li > 1) {
+        // middle parts of hyphenated names ("gilgeous")
+        if (parts.slice(1, li).some(p => p === w)) s = 50;
+        else if (w.length >= 3 && parts.slice(1, li).some(p => p.startsWith(w))) s = 36;
+        else if (parts.slice(1, li).some(p => tol(w) && askLev(w, p) <= tol(w))) s = 30;
+      }
+      if (s) { score += s; used.push(w); }
+    }
+    if (!score) continue;
+    if (score > best) { best = score; hits = [{nm, used}]; }
+    else if (score === best) hits.push({nm, used});
+  }
+  if (best < 26) return null;
+  if (hits.length === 1) return {nm: hits[0].nm, fuzzy: true, used: hits[0].used, score: best};
+  return {cands: hits.map(h => h.nm).slice(0, 8), used: hits[0].used, score: best};
+}
+/* The question again with the matched words replaced by a real name. */
+function askRewrite(q, used, nm){
+  let t = askNorm(q);
+  (used || []).forEach(w => { t = t.replace(new RegExp(`\\b${askEsc(w)}\\b`), ' '); });
+  return `${nm} ${t.replace(/\s+/g, ' ').trim()}`.trim();
+}
 function askFindPlayer(t){
   const names = [...new Set(PROPS.filter(p => p.kd !== 'team').map(p => p.pl)
     .concat(((D.trending || {}).players || []).map(r => r.player)))].filter(Boolean);
@@ -4329,7 +4637,10 @@ function askFindPlayer(t){
     const last = n.split(' ').pop();
     if (last.length >= 4 && askWord(last, t)) sur.push(nm);
   }
-  return full || (sur.length === 1 ? sur[0] : null);
+  if (full || sur.length === 1) return full || sur[0];
+  if (sur.length > 1) return null;
+  const fz = askResolve(t, names);
+  return fz && fz.nm ? fz.nm : null;
 }
 function askFindTeam(t){
   for (const [lg, names] of Object.entries(D.team_names || {}))
@@ -4429,8 +4740,12 @@ function askQuery(q){
 
   // last N
   let m = t.match(/\blast (\d+)/); if (m) read.last = Math.min(+m[1], 50);
+  if (/\b(season|all games|career|all time|every game)\b/.test(t)) read.season = true;
   // over / under a threshold
-  m = t.match(/\b(over|under|above|below|more than|less than|at least) (\d+(?:\.\d+)?)/);
+  // Read the number from the raw text: normalising turns "24.5" into
+  // "24 5", which read as a threshold of 24.
+  m = String(q).toLowerCase().replace(/\s+/g, ' ')
+    .match(/\b(over|under|above|below|more than|less than|at least) (\d+(?:\.\d+)?)/);
   if (m) { read.cmp = /over|above|more|least/.test(m[1]) ? 'over' : 'under';
            read.thr = parseFloat(m[2]);
            if (m[1] === 'at least') { read.cmp = 'atleast'; } }
@@ -4472,6 +4787,11 @@ function askQuery(q){
         const n = askNorm(p);
         return n === nm || n.split(' ').pop() === nm;
       });
+      if (!hits.length) {
+        const fz = askResolve(nm, A.roster_players || [], {keepTeams: true});
+        if (fz && fz.nm) return {asked: nm, found: fz.nm, fuzzy: true};
+        if (fz && fz.cands) return {asked: nm, found: null, ambiguous: fz.cands.slice(0, 6)};
+      }
       return {asked: nm, found: hits.length === 1 ? hits[0] : null,
               ambiguous: hits.length > 1 ? hits.slice(0, 6) : null};
     });
@@ -4494,7 +4814,16 @@ function askQuery(q){
     const last = n.split(' ').pop();
     if (last.length >= 4 && askWord(last, cut)) bySurname.push({i, nm});
   });
+  // "paul georg": the exact surname "Paul" belongs to someone else,
+  // but two words that both fit one player beat one word that fits
+  // another.
+  const fz2 = full ? null : askResolve(cut, (A.players || []), {keepTeams: true});
   if (full) { read.player = full.nm; read.pi = full.i; }
+  else if (fz2 && fz2.nm && fz2.used.length >= 2 && fz2.score > 70
+           && !(bySurname.length === 1 && bySurname[0].nm === fz2.nm)) {
+    read.player = fz2.nm; read.pi = (A.players || []).indexOf(fz2.nm); read.fuzzy = fz2.used.join(' ');
+    bySurname.length = 0;
+  }
   else if (bySurname.length === 1) { read.player = bySurname[0].nm; read.pi = bySurname[0].i; }
   else if (bySurname.length > 1) {
     // Only the namesakes who have the asked-about stat are a real
@@ -4516,6 +4845,40 @@ function askQuery(q){
             error: 'More than one player goes by that name. Pick one:'};
   }
   const teamMk = read.mks && read.mks.every(x => TEAM_MKS.has(x));
+  if (read.player == null && !bySurname.length && !(teamMk && read.opp)) {
+    // Nothing typed matched exactly: try the closest real name.
+    const pool = A.players || [];
+    const fz = askResolve(cut, pool, {keepTeams: true});
+    if (fz && fz.nm) {
+      read.player = fz.nm; read.pi = pool.indexOf(fz.nm); read.fuzzy = fz.used.join(' ');
+    } else if (fz && fz.cands) {
+      return {read, ambiguous: fz.cands, suggest: fz.cands.map(nm => askRewrite(q, fz.used, nm)),
+              error: `Not sure who "${fz.used.join(' ')}" is. Did you mean:`};
+    } else {
+      // Not in the graded history at all: he may still have box scores
+      // (every game, priced or not), which is enough for form questions.
+      const extra = [...new Set((A.roster_players || []).concat(
+        PROPS.filter(x => x.kd !== 'team').map(x => x.pl),
+        ((D.trending || {}).players || []).map(x => x.player)))].filter(Boolean);
+      const ex = extra.filter(nm => askWord(askNorm(nm), cut));
+      const hit = ex.length === 1 ? {nm: ex[0], used: []} : askResolve(cut, extra);
+      if (hit && hit.nm) {
+        const sp = ['NBA', 'NHL', 'NFL'].find(lg => boxRows(lg, hit.nm).length);
+        if (sp) {
+          read.player = hit.nm; read.boxOnly = true; read.sp = sp;
+          if (hit.used.length) read.fuzzy = hit.used.join(' ');
+          if (read.mks) {
+            const ks = (((D.box || {}).keys) || {})[sp] || [];
+            read.market = read.mks.find(x => (BOX_MK[x] || []).some(k => ks.includes(k))) || read.mks[0];
+          }
+          return {read, rows: [], index: A};
+        }
+      } else if (hit && hit.cands) {
+        return {read, ambiguous: hit.cands, suggest: hit.cands.map(nm => askRewrite(q, hit.used, nm)),
+                error: `Not sure who "${hit.used.join(' ')}" is. Did you mean:`};
+      }
+    }
+  }
   if (read.player == null && !(teamMk && read.opp))
     return {read, error:'No player or team in that. Try a name, a stat, '
       + 'and a filter \u2014 "Maxey points last 5", "Celtics spread last 10".'};
@@ -4595,6 +4958,14 @@ function askQuery(q){
     });
     rows = rows.filter(r => seen.get(`${r[2]}|${r[5]}|${r[6]}`) === r);
     read.market = A.markets[rows[0][1]] === 'alt_spread' ? 'spread' : A.markets[rows[0][1]];
+  }
+  // Recent first: with no window asked for, the answer is his last 10
+  // -- not a season average that hides how he is playing now. Small
+  // filtered samples (vs a team, home/away, without) keep every game,
+  // and "season" asks for all of it.
+  if (!read.last && !read.season && !read.opps && !read.ha && !read.without
+      && rows.length > 10) {
+    read.last = 10; read.defaulted = rows.length;
   }
   const mkSet = read.market ? [] : [...new Set(rows.map(r => r[1]))];
   if (mkSet.length > 1) {
@@ -4678,6 +5049,99 @@ function askTonightExamples(){
   ].filter(Boolean);
 }
 
+/* His form from EVERY game in the saved box scores -- priced or not --
+   as last 3 / 5 / 10 beside the full span, so a question is answered
+   by how he is playing now first and the long average second. Uses
+   the same opponent and home/away filters as the question. */
+function askForm(r, rows){
+  if (!r.player || r.isTeam) return '';
+  const sp = String(r.sp || (rows[0] || [])[9]
+    || ['NBA', 'NHL', 'NFL'].find(lg => boxRows(lg, r.player).length) || '').toUpperCase();
+  if (!sp) return '';
+  const keys = (((D.box || {}).keys) || {})[sp] || [];
+  // With no graded rows the market was never narrowed to one: take
+  // the asked word's market that this sport's box score records.
+  const mk = r.market || (r.mks || []).find(x => (BOX_MK[x] || []).some(k => keys.includes(k)));
+  if (!mk || !BOX_MK[mk] || TEAM_MKS.has(mk)) return '';
+  const idx = BOX_MK[mk].map(k => keys.indexOf(k)).filter(j => j >= 0);
+  if (!idx.length) return '';
+  const mi = keys.indexOf('minutes');
+  let games = boxRows(sp, r.player).map(b => {
+    const v = idx.map(j => b[3 + j]);
+    if (v.every(x => x == null)) return null;
+    if (mi >= 0 && !(+b[3 + mi] > 0)) return null;      // did not play
+    return {d: b[0], tm: b[1], opp: b[2], v: v.reduce((a, x) => a + (+x || 0), 0)};
+  }).filter(Boolean);
+  const total = games.length, notes = [];
+  if (r.opps && r.opps.length) {
+    const al = new Set(r.opps.flatMap(o => [...teamAliasSet(o, sp)]));
+    games = games.filter(g => al.has(teamNorm(g.opp)));
+    notes.push(`vs ${r.opp}`);
+  }
+  let haUnk = 0;
+  if (r.ha) {
+    const tb = D.tbox || {}, A = D.ask || {}, pi = (A.players || []).indexOf(r.player);
+    // His graded rows know the venue too, for the games the team box
+    // history is too short to reach.
+    const led = pi < 0 ? [] : (A.rows || []).filter(x => x[0] === pi && x[10] != null)
+      .map(x => ({d: A.dates[x[2]], opp: A.teams[x[10]], ha: askVenue(x, A)})).filter(x => x.ha);
+    games = games.filter(g => {
+      const t = (tb[`${sp}|${g.tm}`] || []).find(x => dayGap(x[0], g.d) <= 1.01
+                                                 && teamNorm(x[1]) === teamNorm(g.opp));
+      const al = teamAliasSet(g.opp, sp);
+      const l = t ? null : led.find(x => dayGap(x.d, g.d) <= 1.01 && al.has(teamNorm(x.opp)));
+      const ha = t ? t[2] : l ? l.ha : null;
+      if (!ha) haUnk++;
+      return ha === r.ha;
+    });
+    notes.push(r.ha);
+  }
+  if (!games.length) return '';
+  let line = null, under = false, lineSrc = '';
+  if (r.cmp && r.thr != null) { line = r.thr; under = r.cmp === 'under'; lineSrc = 'asked'; }
+  else {
+    const bp = PROPS.find(x => x.pl === r.player && x.mk === mk && x.kd !== 'team' && x.ln != null);
+    if (bp) { line = bp.ln; under = bp.sd === 'Under'; lineSrc = `tonight's ${bp.sd.toLowerCase()} ${bp.ln}`; }
+  }
+  const atl = r.cmp === 'atleast';
+  const ok = v => line == null ? null : v === line && !atl ? null
+    : atl ? v >= line : under ? v < line : v > line;
+  const wins = [...new Set([3, 5, 10].concat(r.last && r.last > 10 ? [r.last] : []))]
+    .filter(k => k < games.length);
+  wins.push(games.length);
+  const avg = a => a.reduce((s, g) => s + g.v, 0) / a.length;
+  const cell = k => {
+    const a = games.slice(0, k);
+    return {avg: avg(a), hit: a.filter(g => ok(g.v) === true).length,
+            dec: a.filter(g => ok(g.v) != null).length};
+  };
+  const cells = wins.map(cell);
+  const head = wins.map((k, j) => `<th>${j === wins.length - 1 ? `All ${k}` : `L${k}`}</th>`).join('');
+  const all = cells[cells.length - 1].avg, l5 = games.length >= 5 ? cell(5).avg : null;
+  const trend = l5 == null || !all ? '' : Math.abs(l5 - all) < Math.max(0.5, 0.08 * all)
+    ? 'His last 5 are in line with the full span.'
+    : `His last 5 run <b class="${l5 > all ? 'hit' : 'miss'}">${l5 > all ? '+' : ''}${(l5 - all).toFixed(1)}</b>
+       ${l5 > all ? 'above' : 'below'} the full span \u2014 the recent number is the one to weigh.`;
+  const strip = games.slice(0, 10).reverse().map(g => {
+    const o = ok(g.v);
+    return `<b class="${o == null ? (line == null ? '' : 'push') : o ? 'hit' : 'miss'}"
+      title="${esc(g.d)} vs ${esc(g.opp)}">${g.v}</b>`;
+  }).join('');
+  return `<div class="simbox askform"><h4>form \u00b7 ${esc(r.player)} \u00b7 ${esc(mkLabel(mk))}${
+      notes.length ? ' \u00b7 ' + esc(notes.join(' \u00b7 ')) : ''}</h4>
+    <div class="tscroll"><table class="gtab"><thead><tr><th></th>${head}</tr></thead><tbody>
+      <tr><td>Average</td>${cells.map(c => `<td class="v"><b>${c.avg.toFixed(1)}</b></td>`).join('')}</tr>
+      ${line != null ? `<tr><td>${atl ? 'At least' : under ? 'Under' : 'Over'} ${line}</td>${cells.map(c =>
+        `<td class="v">${c.hit}/${c.dec}</td>`).join('')}</tr>` : ''}
+    </tbody></table></div>
+    <div class="rstrip"><span class="dim" style="font-size:11px">last ${Math.min(10, games.length)}, newest right</span>
+      <span class="rsg">${strip}</span></div>
+    <div class="mnote">${trend} From every game in his saved box scores${
+      total > games.length ? ` (${games.length} of ${total} match the filter)` : ` (${total})`},
+      not only the nights a prop was priced.${haUnk ? ` ${haUnk} game${haUnk === 1 ? '' : 's'}
+      left out: home or away is not on record for ${haUnk === 1 ? 'it' : 'them'}.` : ''}${line != null ? ` Line: ${esc(lineSrc)}.` : ''}</div></div>`;
+}
+
 function drawAsk(){
   const A = D.ask || {};
   const eg = $('askeg');
@@ -4723,11 +5187,17 @@ function drawAsk(){
       history rows excluded: the player's team for that game is unverified.</div>` : '')
     + (r.haUnknown ? `<div class="mnote">${r.haUnknown} game${r.haUnknown === 1 ? '' : 's'}
       left out of the ${r.ha} split: which side he was on is not verified for
-      ${r.haUnknown === 1 ? 'it' : 'them'}.</div>` : '');
+      ${r.haUnknown === 1 ? 'it' : 'them'}.</div>` : '')
+    + (r.fuzzy ? `<div class="mnote">Read "${esc(r.fuzzy)}" as <b>${esc(r.player)}</b>.</div>` : '')
+    + (r.defaulted ? `<div class="mnote">Showing his last 10 of ${r.defaulted} graded games \u2014 recent
+      first. <button class="chip" data-ask="${esc(q + ' season')}">all ${r.defaulted}</button>
+      <button class="chip" data-ask="${esc(q + ' last 5')}">last 5</button></div>` : '');
 
   if (res.error) {
     out.innerHTML = `${readBar}<div class="empty">${esc(res.error)}</div>${
-      res.ambiguous ? `<div class="chips">${res.ambiguous.map(nm => {
+      res.suggest ? `<div class="chips">${res.ambiguous.map((nm, k) =>
+        `<button class="chip" data-ask="${esc(res.suggest[k])}">${esc(nm)}</button>`).join('')}</div>`
+      : res.ambiguous ? `<div class="chips">${res.ambiguous.map(nm => {
         const qq = q.replace(new RegExp(askEsc(nm.split(' ').pop()), 'i'), nm);
         return `<button class="chip" data-ask="${esc(qq)}">${esc(nm)}</button>`;
       }).join('')}</div>` : ''}`;
@@ -4752,6 +5222,18 @@ function drawAsk(){
     return;
   }
   const rows = res.rows || [], A2 = res.index;
+  const form = r.split ? '' : askForm(r, rows);
+  if (!rows.length && form) {
+    out.innerHTML = `${readBar}${form}<div class="dim" style="margin-top:7px">${r.boxOnly
+      ? `${esc(r.player)} has no graded props on record yet, so this is his box-score form only.`
+      : 'No graded props match that, so this is his box-score form only.'}</div>`;
+    return;
+  }
+  if (!rows.length && r.boxOnly) {
+    out.innerHTML = `${readBar}<div class="empty">${esc(r.player)} has box scores but no graded
+      props yet. Add a stat \u2014 "${esc(r.player.split(' ').pop())} points" \u2014 for his form.</div>`;
+    return;
+  }
   if (!rows.length) {
     out.innerHTML = `${readBar}<div class="empty">Nothing on record for
       that. This covers ${A2.covers} \u2014 ${A2.from} to ${A2.to} \u2014 so a
@@ -4813,7 +5295,7 @@ function drawAsk(){
         data-askbxrow="${k}"><td colspan="5">${boxLine(sp, line, mk)}</td></tr>` : ''}`;
   }).join('');
 
-  out.innerHTML = `${readBar}
+  out.innerHTML = `${readBar}${form}
     <div class="askhead">${head}</div>
     <div class="tscroll"><table>
       <thead><tr><th>Date</th><th>Game</th><th>${TEAM_MKS.has(mk) ? 'Result' : 'Stat'}</th>
