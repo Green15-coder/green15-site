@@ -4264,17 +4264,30 @@ function drawLeafValue(){
       r.red_n}</small>` : '<span class="dim">\u2014</span>'}</td>
     ${cell(r)}
     <td class="${r.dark_pct >= 80 ? 'unv' : 'dim'}">${
-      r.dark_pct.toFixed(0)}%</td></tr>`).join('');
+      r.dark_pct == null ? 'new' : r.dark_pct.toFixed(0) + '%'}</td></tr>`).join('');
 
+  // The positive side gets the same raw-vs-priced test the negative
+  // side always had. A leaf that is green on picks the market already
+  // made favourites wins more often by construction: its raw lift is
+  // the price, not the leaf. Worked out here from the rows so builds
+  // published before the key existed read the same way.
+  const rated = ls.filter(r => r.enough);
+  if (!lv.carry_mix_only) lv.carry_mix_only = rated.filter(r => r.signal && r.lift > 0
+    && r.adj_lift != null && !(r.adj_signal && r.adj_lift > 0)).map(r => r.label);
+  const carryRaw = (lv.carrying || []).length, carryAdj = (lv.carrying_adj || []).length;
   const list = (k, lab, cls) => (lv[k] || []).length
     ? `<div class="lvv"><span class="${cls}">${lab}</span>
         ${esc((lv[k] || []).join(', '))}</div>` : '';
   const verdict = [
-    list('carrying', 'Carrying weight', 'hit'),
+    list('carrying', 'Carrying weight (raw)', 'hit'),
+    list('carrying_adj', 'Still carrying after pricing', 'hit'),
+    carryRaw && !carryAdj ? `<div class="lvv"><span class="unv">Still carrying after pricing</span>
+        none yet \u2014 every raw winner above shrinks inside its error once each pick
+        is measured against its own odds.</div>` : '',
+    list('carry_mix_only', 'Raw lift is the price, not the leaf', 'unv'),
     list('backwards', 'Pointing the wrong way (raw)', 'miss'),
     list('backwards_adj', 'Still backwards after pricing', 'miss'),
     list('mix_only', 'Raw backwards is the bet mix, not the leaf', 'unv'),
-    list('carrying_adj', 'Carrying after pricing', 'hit'),
     list('unproven', 'No effect detectable yet', 'dim'),
     list('mostly_dark', 'Dark on 80%+ of the board', 'unv'),
   ].join('') || `<div class="dim">Nothing has reached ${lv.min || 40}
@@ -4317,8 +4330,19 @@ function drawLeafValue(){
        change rather than show it. Current rule set: v${
        root.rules_version}.</div>` : '';
 
+  // Leaves whose definition changed restart; the rest keep the older
+  // rows that are still the same measurement for them.
+  const rp = root.rules_partial;
+  const partial = rp && (rp.restarted || []).length
+    ? `<div class="callout" style="margin:0 0 10px">
+       <b>${esc(rp.restarted.join(' and '))} ${
+       rp.restarted.length === 1 ? 'was' : 'were'} redefined in v${
+       root.rules_version}</b> and count only picks scored from then on.
+       Every other leaf still reads the ${rp.n.toLocaleString()} v${
+       rp.from} picks, because its definition has not changed.</div>` : '';
+
   $('leafval').innerHTML = `<div class="chips lvchips">${chips}</div>
-    ${stale}${conflictBox}<div class="tscroll"><table>
+    ${stale}${partial}${conflictBox}<div class="tscroll"><table>
     <thead><tr><th>Leaf</th><th>Green won</th><th>Red won</th>
       <th>Lift \u00b1SE</th><th>Dark</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
@@ -4337,7 +4361,10 @@ function drawLeafValue(){
       was attached to. The <b>priced</b> line compares each side's wins
       with what its own odds implied (no-vig), so only the leaf's effect on
       top of the price is left. A leaf is only called wrong-way here when
-      the priced line agrees. Thresholds are not changed by this panel.</div></div>`;
+      the priced line agrees. It works the other way too: a leaf that is
+      green mostly on favourites wins more often because favourites do, so
+      a raw winner is only an edge when the priced line holds up.
+      Thresholds are not changed by this panel.</div></div>`;
 }
 
 function drawMvm(){
