@@ -757,6 +757,77 @@ section{padding-block:16px}
 
 @media (prefers-reduced-motion:no-preference){
   .add,.chip,.detail{transition:background .15s ease,color .15s ease}}
+
+/* ---- v11: smoother, glossier ------------------------------------ */
+html{scroll-behavior:smooth}
+.row{content-visibility:auto;contain-intrinsic-size:auto 76px}
+.row.open{content-visibility:visible}
+.chip{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .12s ease}
+.chip:active{transform:scale(.96)}
+.tile,.chart,.mbox,.simbox{background-image:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 60%);
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 6px 18px -12px rgba(0,0,0,.45)}
+.detail{animation:g15in .22s ease-out both}
+@keyframes g15in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.detail{animation:none}}
+.gbar .gbf{transition:height .25s ease}
+.more{display:block;width:100%;margin:12px 0;padding:11px;border:1px dashed var(--rule);
+  border-radius:11px;font-family:var(--m);font-size:12px;color:var(--ink-2)}
+/* Why-chart filters */
+.cfrow{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin:0 0 7px}
+.cfrow.cfscroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.cfrow.cfscroll::-webkit-scrollbar{display:none}
+.cfrow .chip{font-size:10px;padding:3px 8px;flex:0 0 auto}
+.cfsep{flex:0 0 1px;align-self:stretch;background:var(--rule);margin:2px 2px}
+.cfl{font-family:var(--m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-right:3px;flex:0 0 auto}
+.cfstat{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--m);font-size:10.5px;color:var(--ink-2);margin:7px 0 2px}
+.cfstat b{color:var(--ink)}
+.cfcmp{font-size:11.5px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+.cfcmp .chip{font-size:10px;padding:2px 8px;margin-left:4px}
+.chart.many .gbv{display:none}
+.chart.many .xax span{font-size:0}
+/* Matchup scorecard */
+.mtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.mtile{background:var(--raise);border-radius:9px;padding:7px 8px;border-top:2px solid var(--rule);min-width:0}
+.mtile.up{border-top-color:var(--up)} .mtile.dn{border-top-color:var(--dn)}
+.mtile .tl{font-family:var(--m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtile .tv{font-family:var(--m);font-size:17px;font-weight:600}
+.mtile .tn{font-family:var(--m);font-size:9px;color:var(--ink-2)}
+.vsrow{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.vsg{flex:0 0 auto;min-width:52px;text-align:center;background:var(--raise);border-radius:8px;padding:5px 6px;
+  font-family:var(--m);border-bottom:2px solid var(--rule)}
+.vsg.hit{border-bottom-color:var(--up)} .vsg.miss{border-bottom-color:var(--dn)}
+.vsg b{display:block;font-size:15px;color:var(--ink)} .vsg span{display:block;font-size:9px;color:var(--ink-2)}
+/* Parlays */
+.pfil{display:grid;gap:6px;margin:12px 0 14px}
+.pfrow{display:grid;grid-template-columns:74px 1fr;align-items:center;gap:6px;min-width:0}
+.pfrow .chips{padding-bottom:0}
+.pfrow .chip{font-size:10.5px;padding:4px 9px;flex:0 0 auto}
+.ph{font-size:15px;margin:16px 0 8px}
+.ph .dim{font-family:var(--m);font-size:10px;font-weight:400}
+.pcard{border:1px solid var(--rule);border-radius:14px;padding:11px 12px;margin:0 0 10px;background:var(--card);
+  background-image:linear-gradient(160deg,var(--clover-soft),transparent 55%);
+  box-shadow:0 8px 22px -16px rgba(0,0,0,.55)}
+.pchead{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.ptag{font-family:var(--m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--clover);width:100%}
+.pcp{display:flex;flex-direction:column;line-height:1.1}
+.pcp b{font-family:var(--m);font-size:21px}
+.pcp small{font-family:var(--m);font-size:9px;color:var(--ink-2)}
+.pcp.hit b{color:var(--over)} .pcp.miss b{color:var(--under)}
+.plegs{margin:9px 0 7px;padding-left:18px;display:grid;gap:5px;font-size:13px}
+.plegs .dim{display:block;font-family:var(--m);font-size:10px}
+.plegs .sp{font-family:var(--m);font-size:9px;padding:1px 5px;border-radius:4px;background:var(--raise);margin-right:3px}
+.pfoot{font-family:var(--m);font-size:10px;color:var(--ink-2);line-height:1.55}
+.pfoot .h2go{display:block;margin:8px 0 0 auto}
+.calt th,.calt td{padding:7px 6px;white-space:nowrap}
+.calt td:nth-child(2){color:var(--ink-2)}
+/* Back to top */
+#totop{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  z-index:30;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--paper);
+  font-size:19px;line-height:44px;text-align:center;box-shadow:0 8px 20px -8px rgba(0,0,0,.6);
+  opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .2s ease,transform .2s ease,bottom .2s ease}
+#totop.show{opacity:.92;transform:none;pointer-events:auto}
+body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 </style>
 </head>
 <body>
@@ -770,6 +841,7 @@ section{padding-block:16px}
 
   <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="board">Board<span class="cnt" id="cBoard"></span></button>
+  <button role="tab" aria-selected="false" data-tab="parlays">Parlays<span class="cnt" id="cParlays"></span></button>
   <button role="tab" aria-selected="false" data-tab="trending">Trending<span class="cnt" id="cTrend"></span></button>
   <button role="tab" aria-selected="false" data-tab="games">Today<span class="cnt" id="cGames"></span></button>
   <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
@@ -810,6 +882,21 @@ section{padding-block:16px}
   <p class="eyebrow" id="topnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
+</div>
+
+<!-- ───────────────────────── PARLAYS ─────────────────────── -->
+<div id="tab-parlays" hidden>
+  <section>
+    <div class="hrow"><h2>Parlay builder</h2></div>
+    <p class="traynote">Built from the model's probabilities on tonight's board. Each leg's
+      chance is the calibrated one (the anchored probability, adjusted by how that
+      range has actually landed), and same-game legs carry the correlation measured
+      from the games both players logged. It is an estimate, not a promise.</p>
+    <div id="parlayrec"></div>
+    <h3 class="ph">Build your own</h3>
+    <div id="parlayfil" class="pfil"></div>
+    <div id="parlayout"></div>
+  </section>
 </div>
 
 <!-- ───────────────────────── TODAY ──────────────────────── -->
@@ -1052,6 +1139,7 @@ section{padding-block:16px}
 </div>
 
 <!-- ──────────────────── PARLAY TRAY ──────────────────── -->
+<button id="totop" aria-label="Back to top" title="Back to top">↑</button>
 <div class="tray" id="tray" hidden>
   <div class="inner">
     <div class="trayrow">
@@ -2253,7 +2341,7 @@ function card(p){
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
-    </div>${tiles}${chart}${strip}`;
+    </div>${tiles}${whyChart(p) || chart}${strip}`;
 }
 
 const WHY_CACHE = {};
@@ -2368,6 +2456,7 @@ function teamBox(p){
 function matchup(p){
   const ev = p.ev || {}, out = [];
   if (p.kd === 'team') return teamBox(p);
+  out.push(matchupScore(p));
   const dr = ev.def_rank_pos || ev.def_rank;
   if (dr && dr.rank) {
     const pct = dr.of > 1 ? (dr.rank - 1) / (dr.of - 1) : 0;
@@ -2815,6 +2904,8 @@ function archBox(p){
 
 /* Home/away, rest and minutes, from the games on the card. */
 function circumstanceExtra(p){
+  const hc = circumstanceHist(p);
+  if (hc) return hc;
   const rec = ((p.ev || {}).recent || []).filter(g => g.v != null);
   const rows = [];
   if (rec.length < 3) return rows;
@@ -3084,11 +3175,27 @@ function draw(){
     $('rows').innerHTML = '';
     return;
   }
-  $('rows').innerHTML = list.map(p0 => {
+  // WINDOWED. The board is two to nine thousand rows, and every tap
+  // that opened a card rebuilt all of them -- that rebuild is what
+  // made the app feel choppy. The first BATCH rows render now; more
+  // arrive as the end of the list scrolls into view. A redraw of the
+  // same list keeps however many were already showing, so opening a
+  // card deep in the list does not snap it back to sixty.
+  const sig = BVIEW + '|' + list.length + '|' + list.slice(0, 40).map(p => p.i).join(',');
+  const keep = sig === BOARD.sig ? Math.max(BOARD.n, BATCH) : BATCH;
+  BOARD.sig = sig; BOARD.list = list;
+  BOARD.n = Math.min(list.length, keep);
+  $('rows').innerHTML = list.slice(0, BOARD.n).map(rowHtml).join('') + moreRow();
+  watchMore();
+}
+
+const BATCH = 60;
+const BOARD = {sig: '', list: [], n: 0};
+function rowHtml(p0){
     const sw = SWAP.get(p0.i);
     const p = (sw != null && PROPS.find(q => q.i === sw)) || p0;
     const open = OPEN.has(p.i), on = SEL.has(p.i), thin = (p.n||0) < 8;
-    return `<div class="row" data-sp="${esc((p.sp||'').toUpperCase())}">
+    return `<div class="row" data-ri="${p0.i}" data-sp="${esc((p.sp||'').toUpperCase())}">
       <div class="rowhead">
         <button class="pick" data-open="${p.i}" aria-expanded="${open}">
           <span class="nm">${headline(p)}</span>
@@ -3113,9 +3220,559 @@ function draw(){
       ${p.elig === false && (p.pend||[]).length
         ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
       ${open ? detail(p, p0) : ''}</div>`;
-  }).join('');
+}
+function moreRow(){
+  const left = BOARD.list.length - BOARD.n;
+  return left > 0 ? `<div class="more" id="more"><button class="chip" data-more="1">show ${
+    Math.min(left, BATCH)} more <span class="dim">of ${left.toLocaleString()} left</span></button></div>` : '';
+}
+function moreRows(){
+  const m = $('more'); if (!m) return;
+  const from = BOARD.n, to = Math.min(BOARD.list.length, from + BATCH);
+  BOARD.n = to;
+  m.insertAdjacentHTML('beforebegin', BOARD.list.slice(from, to).map(rowHtml).join(''));
+  m.outerHTML = moreRow();
+  watchMore();
+}
+let MORE_IO = null;
+function watchMore(){
+  const m = $('more'); if (!m || !('IntersectionObserver' in window)) return;
+  if (!MORE_IO) MORE_IO = new IntersectionObserver(es => {
+    if (es.some(e => e.isIntersecting)) moreRows();
+  }, {rootMargin: '900px 0px'});
+  MORE_IO.disconnect(); MORE_IO.observe(m);
+}
+/* Re-render ONE board row in place -- what every control inside an
+   open card does, instead of rebuilding the board. Returns false when
+   the control is not inside a board row (hero, Ask, Trending), so the
+   caller can fall back to its own redraw. */
+function redrawRow(el){
+  const row = el && el.closest && el.closest('#rows .row[data-ri]');
+  if (!row) return false;
+  const p0 = PROPS.find(p => p.i === +row.dataset.ri);
+  if (!p0) return false;
+  row.outerHTML = rowHtml(p0);
+  return true;
+}
+/* Keep the control under the thumb while its row re-renders. */
+function holdPlace(el, sel, fn){
+  const y0 = el.getBoundingClientRect().top;
+  fn();
+  const again = sel && document.querySelector(sel);
+  if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0);
 }
 
+
+/* ================================================================
+   GAME CONTEXT HISTORY
+   One row per saved box score for this player and this market, joined
+   to the game it came from (D.gctx): where it was played, the final
+   margin, who dressed for his team and who started. Everything below
+   -- the Why chart filters, the combined "without" row, home/away and
+   the matchup history -- reads from this, so a split is only ever as
+   wide as the saved box scores and says how many games it used.
+   ================================================================ */
+const OUT_RX = /\bout\b|doubtful|injured reserve|^ir\b|suspend/i;
+const normName = n => boxKey('', n).split('|')[1];
+const mean = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+const medianOf = xs => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b);
+  const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const r1 = v => v == null ? '\u2014' : (Math.round(v * 10) / 10).toString();
+function mkIdx(sp, mk){
+  const keys = (((D.box || {}).keys) || {})[String(sp || '').toUpperCase()] || [];
+  const ks = BOX_MK[String(mk || '').replace(/^player_/, '')];
+  if (!ks) return null;
+  // 'points' lists the NBA key and the NHL key; a league has one.
+  // 'points' lists the NBA key and the NHL key ('_points'); a league
+  // uses one. Drop the alternate only -- never a real second stat.
+  const use = keys.includes('points') ? ks.filter(k => k !== '_points') : ks;
+  const idx = use.map(k => keys.indexOf(k)).filter(j => j >= 0);
+  if (idx.length !== use.length && !(use.includes('points') && use.includes('_points'))) return null;
+  return idx.length ? idx : null;
+}
+function rowVal(idx, row){
+  let t = 0;
+  for (const j of idx) { const v = row[3 + j]; if (v == null) return null; t += +v; }
+  return t;
+}
+const HIST = new Map();
+function hist(p){
+  if (!D || !p || p.kd === 'team') return [];
+  const k = `${p.sp}|${p.pl}|${p.mk}`;
+  if (HIST.has(k)) return HIST.get(k);
+  const lg = String(p.sp || '').toUpperCase();
+  const keys = (((D.box || {}).keys) || {})[lg] || [];
+  const mj = keys.indexOf(lg === 'NHL' ? 'timeonice' : 'minutes');
+  const idx = mkIdx(p.sp, p.mk), G = (D.gctx || {})[lg] || {}, me = normName(p.pl);
+  const out = [];
+  if (idx) for (const r of boxRows(p.sp, p.pl)) {
+    const v = rowVal(idx, r); if (v == null) continue;
+    const c = G[`${r[0]}|${r[1]}`] || null;
+    const m = mj >= 0 ? r[3 + mj] : null;
+    out.push({d: r[0], tm: r[1], o: r[2], v, m: m == null ? null : +m,
+      ha: c ? c[0] : null, mg: c ? c[1] : null, pl: c ? c[2] : null,
+      st: c && c[3] && c[3].length ? c[3].includes(me) : null});
+  }
+  for (let i = 0; i < out.length; i++) {          // rows are newest first
+    const nx = out[i + 1];
+    out[i].rest = nx ? Math.round((Date.parse(out[i].d) - Date.parse(nx.d)) / 864e5) - 1 : null;
+  }
+  HIST.set(k, out);
+  return out;
+}
+const won = (p, v) => p.ln == null ? null : v === p.ln ? null : (p.sd === 'Under' ? v < p.ln : v > p.ln);
+function hitText(p, G){
+  const h = G.filter(g => won(p, g.v) === true).length;
+  return `${h}/${G.length}`;
+}
+/* Teammates listed Out / Doubtful tonight -- and whether his saved
+   games can say anything about them (a name that never dressed in the
+   saved box scores is unknown, not "always out"). */
+const SEEN = new Map();
+function teamSeen(lg, tm){
+  const k = lg + '|' + tm; if (SEEN.has(k)) return SEEN.get(k);
+  const s = new Set();
+  for (const [key, c] of Object.entries((D.gctx || {})[lg] || {}))
+    if (key.endsWith('|' + tm)) (c[2] || []).forEach(x => s.add(x));
+  SEEN.set(k, s); return s;
+}
+function outMates(p){
+  if (!D || p.kd === 'team') return [];
+  const lg = String(p.sp || '').toUpperCase(), tm = playerTeam(p);
+  if (!tm) return [];
+  const full = teamNorm(teamName(lg, tm)), me = normName(p.pl), seen = teamSeen(lg, tm);
+  const got = new Map();
+  for (const r of (((D.injuries || {})[lg] || {}).rows || [])) {
+    if (teamNorm(r.team || '') !== full || !r.name) continue;
+    const k = normName(r.name); if (k === me) continue;
+    got.set(k, {name: r.name, k, status: r.status || '', out: OUT_RX.test(r.status || ''), known: seen.has(k)});
+  }
+  for (const n of ((p.ev || {}).team_out || [])) {
+    const k = normName(n); if (k === me || got.has(k)) continue;
+    got.set(k, {name: n, k, status: 'Out', out: true, known: seen.has(k)});
+  }
+  return [...got.values()].sort((a, b) => (b.out - a.out) || (b.known - a.known));
+}
+/* Games for his CURRENT team in which none of these mates dressed. */
+function withoutAll(p, ks){
+  const tm = playerTeam(p), H = hist(p).filter(g => g.tm === tm && g.pl);
+  const wo = H.filter(g => ks.every(k => !g.pl.includes(k)));
+  const wi = H.filter(g => ks.some(k => g.pl.includes(k)));
+  return {wo, wi};
+}
+
+/* ================================================================
+   WHY CHART -- filterable
+   ================================================================ */
+const CHF = {};
+const CHF0 = () => ({n: 10, ha: '', st: '', rest: '', res: '', mg: '', vs: 0, mn: 0, wo: []});
+const chf = p => CHF[p.i] || (CHF[p.i] = CHF0());
+const CLOSE = {NBA: [8, 15], NHL: [1, 3], NFL: [8, 17], MLB: [2, 5]};
+function histFilter(p, f, H){
+  const lg = String(p.sp || '').toUpperCase(), [cl, bl] = CLOSE[lg] || [8, 15];
+  const opp = oppTeam(p), tm = playerTeam(p);
+  const mm = medianOf(H.map(g => g.m).filter(x => x != null && x > 0));
+  return H.filter(g => (!f.ha || g.ha === f.ha)
+    && (!f.st || (f.st === 's' ? g.st === true : g.st === false))
+    && (!f.rest || (f.rest === 'b2b' ? g.rest === 0 : f.rest === '1' ? g.rest === 1 : g.rest != null && g.rest >= 2))
+    && (!f.res || (g.mg != null && g.mg !== 0 && (f.res === 'w' ? g.mg > 0 : g.mg < 0)))
+    && (!f.mg || (g.mg != null && (f.mg === 'c' ? Math.abs(g.mg) <= cl : Math.abs(g.mg) >= bl)))
+    && (!f.vs || (opp && g.o === opp))
+    && (!f.mn || (g.m != null && mm != null && g.m >= mm))
+    && (!f.wo.length || (g.tm === tm && g.pl && f.wo.every(k => !g.pl.includes(k)))));
+}
+const chfActive = f => !!(f.ha || f.st || f.rest || f.res || f.mg || f.vs || f.mn || f.wo.length);
+function whyChart(p){
+  const H = hist(p);
+  if (H.length < 3 || p.ln == null) return '';
+  const f = chf(p), i = p.i, line = p.ln, isUnder = p.sd === 'Under';
+  const sel = histFilter(p, f, H);
+  const G = f.n === 'all' ? sel : sel.slice(0, f.n);
+  const rec = G.slice().reverse();
+  const chip = (k, v, lab, on) => `<button class="chip cf" data-chf="${i}|${k}|${v}"
+    aria-pressed="${on ? 'true' : 'false'}">${lab}</button>`;
+  const anyHa = H.some(g => g.ha), anySt = H.some(g => g.st != null), anyMg = H.some(g => g.mg != null);
+  const opp = oppTeam(p), vsN = opp ? H.filter(g => g.o === opp).length : 0;
+  const mates = outMates(p).filter(m => m.known);
+  const spans = [5, 10, 15, 20, 'all'].map(n => chip('n', n, n === 'all' ? `All ${sel.length}` : `L${n}`, f.n === n)).join('');
+  const groups = [
+    anyHa ? chip('ha', 'h', 'Home', f.ha === 'h') + chip('ha', 'a', 'Away', f.ha === 'a') : '',
+    anySt ? chip('st', 's', 'Started', f.st === 's') + chip('st', 'b', 'Bench', f.st === 'b') : '',
+    chip('rest', 'b2b', 'B2B', f.rest === 'b2b') + chip('rest', '1', '1 day rest', f.rest === '1')
+      + chip('rest', '2', '2+ days', f.rest === '2'),
+    anyMg ? chip('res', 'w', 'Team won', f.res === 'w') + chip('res', 'l', 'Team lost', f.res === 'l')
+      + chip('mg', 'c', 'Close game', f.mg === 'c') + chip('mg', 'b', 'Blowout', f.mg === 'b') : '',
+    (vsN ? chip('vs', 1, `vs ${esc(opp)} (${vsN})`, f.vs) : '')
+      + (H.some(g => g.m) ? chip('mn', 1, 'Minutes \u2265 median', f.mn) : ''),
+  ].filter(Boolean);
+  const woChips = mates.length ? `<div class="cfrow"><span class="cfl">without</span>${
+    mates.map(m => chip('wo', m.k, `${esc(m.name.split(' ').slice(-1)[0])}${m.out ? '' : ' (' + esc(m.status.slice(0, 1)) + ')'}`, f.wo.includes(m.k))).join('')}${
+    mates.filter(m => m.out).length >= 2 ? chip('woall', 1, 'All out tonight', mates.filter(m => m.out).every(m => f.wo.includes(m.k))) : ''}</div>` : '';
+
+  const vals = G.map(g => g.v);
+  const top = Math.max(line || 0, ...(vals.length ? vals : [1])) * 1.12 || 1, HH = 94;
+  const bars = rec.map(g => {
+    const h = Math.max(3, Math.round((g.v / top) * HH));
+    const tag = [g.ha === 'h' ? 'home' : g.ha === 'a' ? 'away' : '', g.st === true ? 'started' : g.st === false ? 'bench' : '',
+      g.mg != null ? (g.mg > 0 ? 'W' : 'L') + ' ' + Math.abs(g.mg) : '', g.m ? Math.round(g.m) + ' min' : ''].filter(Boolean).join(' \u00b7 ');
+    return `<div class="gbar ${won(p, g.v) ? 'hit' : ''}" title="${esc(g.d)} vs ${esc(g.o)} \u00b7 ${esc(tag)}">
+      <span class="gbv">${g.v}</span><span class="gbf" style="height:${h}px"></span></div>`;
+  }).join('');
+  const xs = rec.map(g => `<span>${g.ha === 'a' ? '@' : ''}${esc(g.o || g.d.slice(5))}</span>`).join('');
+  const lineY = Math.round((line / top) * HH);
+  const all = f.n === 'all' ? H : H.slice(0, f.n === 'all' ? H.length : Math.max(f.n, G.length));
+  const cmp = chfActive(f) ? `<div class="cfcmp">These ${G.length} games: avg <b>${r1(mean(vals))}</b>,
+    hit <b>${hitText(p, G)}</b> \u00b7 unfiltered L${all.length}: avg ${r1(mean(all.map(g => g.v)))},
+    hit ${hitText(p, all)} <button class="chip cf" data-chf="${i}|reset|1">reset</button></div>` : '';
+  const body = G.length ? `<div class="gbars">${bars}<div class="lref" style="bottom:${lineY}px"></div></div>
+    <div class="xax">${xs}</div>` : `<div class="empty" style="padding:14px 0">No saved games match these filters.
+      <button class="chip cf" data-chf="${i}|reset|1">reset</button></div>`;
+  return `<div class="chart${G.length > 20 ? ' many' : ''}" data-chw="${i}">
+    <div class="chead"><span>${G.length} game${G.length === 1 ? '' : 's'} \u00b7 ${esc((p.mk || '').replace(/_/g, ' '))}
+      \u00b7 line ${line}</span><b>${hitText(p, G)} ${isUnder ? 'under' : 'over'}</b></div>
+    <div class="cfrow">${spans}</div>
+    <div class="cfrow cfscroll">${groups.join('<span class="cfsep"></span>')}</div>${woChips}
+    ${body}
+    ${G.length ? `<div class="cfstat"><span>avg <b>${r1(mean(vals))}</b></span><span>median <b>${r1(medianOf(vals))}</b></span>
+      <span>high <b>${Math.max(...vals)}</b></span><span>low <b>${Math.min(...vals)}</b></span>
+      <span>hit <b>${G.length ? Math.round(100 * G.filter(g => won(p, g.v)).length / G.length) : 0}%</b></span></div>` : ''}
+    ${cmp}</div>`;
+}
+function chfClick(t){
+  const [i, k, v] = t.dataset.chf.split('|'), id = +i;
+  const p = PROPS.find(x => x.i === id); if (!p) return;
+  const f = chf(p);
+  if (k === 'reset') CHF[id] = Object.assign(CHF0(), {n: f.n});
+  else if (k === 'n') f.n = v === 'all' ? 'all' : +v;
+  else if (k === 'wo') f.wo = f.wo.includes(v) ? f.wo.filter(x => x !== v) : [...f.wo, v];
+  else if (k === 'woall') {
+    const ks = outMates(p).filter(m => m.known && m.out).map(m => m.k);
+    f.wo = ks.every(x => f.wo.includes(x)) ? [] : ks;
+  } else if (k === 'vs' || k === 'mn') f[k] = f[k] ? 0 : 1;
+  else f[k] = f[k] === v ? '' : v;
+  const html = whyChart(p);
+  document.querySelectorAll(`[data-chw="${id}"]`).forEach(el => {
+    const y0 = el.getBoundingClientRect().top;
+    el.outerHTML = html;
+    const n = document.querySelector(`[data-chw="${id}"]`);
+    if (n) window.scrollBy(0, n.getBoundingClientRect().top - y0);
+  });
+}
+
+/* ================================================================
+   CIRCUMSTANCE -- home/away, started/bench, won/lost, rest and the
+   combined "without all of them" split, from the saved box scores.
+   ================================================================ */
+function circumstanceHist(p){
+  const H = hist(p), rows = [];
+  if (H.length < 3) return null;
+  const sp = (a, b, la, lb) => (a.length >= 2 && b.length >= 2) ? `<span class="${
+    mean(a.map(g => g.v)) > mean(b.map(g => g.v)) ? 'hit' : 'miss'}">${r1(mean(a.map(g => g.v)))}</span> vs ${r1(mean(b.map(g => g.v)))}
+    <span class="dim">(${a.length}g / ${b.length}g \u00b7 hit ${hitText(p, a)} ${la} / ${hitText(p, b)} ${lb})</span>` : null;
+  const ev = p.ev || {}, tn = (ev.home_away || {}).tonight;
+  if (tn) {
+    const T = H.filter(g => g.ha === (tn === 'home' ? 'h' : 'a'));
+    rows.push(['tonight', `<b>${tn}</b>${T.length ? ` \u2014 ${r1(mean(T.map(g => g.v)))} avg, hit ${hitText(p, T)} in his ${T.length} ${tn} games` : ''}`]);
+  }
+  const x = [
+    ['home vs away', H.filter(g => g.ha === 'h'), H.filter(g => g.ha === 'a'), 'home', 'away'],
+    ['started vs bench', H.filter(g => g.st === true), H.filter(g => g.st === false), 'S', 'B'],
+    ['team won vs lost', H.filter(g => g.mg > 0), H.filter(g => g.mg < 0), 'W', 'L'],
+    ['back-to-back vs rested', H.filter(g => g.rest === 0), H.filter(g => g.rest != null && g.rest >= 1), 'b2b', 'rest'],
+  ];
+  for (const [lab, a, b, la, lb] of x) { const t = sp(a, b, la, lb); if (t) rows.push([lab, t]); }
+  const mins = H.map(g => g.m).filter(v => v != null && v > 0);
+  if (mins.length >= 5) {
+    const a = mean(mins.slice(0, 3)), b = mean(mins.slice(3, 10));
+    rows.push(['minutes trend', `<span class="${a > b + 1.5 ? 'hit' : a < b - 1.5 ? 'miss' : ''}">${r1(a)}</span> last 3 vs ${r1(b)} before`]);
+  }
+  if (p.gd && H[0]) {
+    const dd = Math.round((Date.parse(p.gd) - Date.parse(H[0].d)) / 864e5);
+    if (isFinite(dd) && dd > 0) rows.push(['rest tonight', `${dd - 1} day${dd - 1 === 1 ? '' : 's'} off${
+      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`]);
+  }
+  // The combined split. Separate "without A" and "without B" rows each
+  // still include games the other one played; tonight both are out.
+  const M = outMates(p), outs = M.filter(m => m.out), known = outs.filter(m => m.known);
+  if (outs.length >= 2) {
+    const nm = outs.map(m => esc(m.name)).join(' + ');
+    if (known.length >= 2) {
+      const {wo, wi} = withoutAll(p, known.map(m => m.k));
+      const unk = outs.filter(m => !m.known).map(m => esc(m.name));
+      rows.push([`without all ${known.length} out`, wo.length >= 2
+        ? `<span class="${mean(wo.map(g => g.v)) > mean(wi.map(g => g.v)) ? 'hit' : 'miss'}">${r1(mean(wo.map(g => g.v)))}</span> without vs ${r1(mean(wi.map(g => g.v)))} with
+          <span class="dim">(${wo.length}g / ${wi.length}g \u00b7 hit ${hitText(p, wo)} / ${hitText(p, wi)})</span>
+          <div class="dim" style="font-size:11px">${known.map(m => esc(m.name)).join(' + ')}${unk.length ? ` \u00b7 ${unk.join(', ')} never dressed in his saved games` : ''}</div>
+          <button class="chip cf" data-chf="${p.i}|woall|1">show these games in the chart</button>`
+        : `only ${wo.length} saved game${wo.length === 1 ? '' : 's'} with ${nm} all out \u2014 not enough to read`]);
+    } else rows.push([`without all ${outs.length} out`, `${nm}: too few of them appear in his saved box scores to split`]);
+  } else if (p.woa && p.woa.n_without != null) {
+    rows.push(['without all of them', `${r1(p.woa.without_mean)} vs ${r1(p.woa.with_mean)} (${p.woa.n_without}g / ${p.woa.n_with}g)`]);
+  }
+  return rows;
+}
+
+/* ================================================================
+   MATCHUP SCORECARD -- every factor, pointed at THIS bet's side.
+   ================================================================ */
+function matchupScore(p){
+  if (p.kd === 'team') return '';
+  const ev = p.ev || {}, H = hist(p), opp = oppTeam(p), over = p.sd !== 'Under';
+  const tiles = [];
+  const t = (lab, val, sub, dir) => tiles.push(`<div class="mtile ${dir > 0 ? 'up' : dir < 0 ? 'dn' : ''}">
+    <div class="tl">${lab}</div><div class="tv">${val}</div><div class="tn">${sub || '&nbsp;'}</div></div>`);
+  const dr = ev.def_rank_pos || ev.def_rank;
+  if (dr && dr.rank && dr.of) {
+    const gen = dr.rank > dr.of / 2;
+    t('defense', `${dr.rank}/${dr.of}`, `${dr.allowed_per_game} vs lg ${dr.league_per_game}`,
+      Math.abs(dr.rank - (dr.of + 1) / 2) < dr.of / 6 ? 0 : (gen === over ? 1 : -1));
+  }
+  const oa = (ev.opp_allowed || []).filter(v => v != null);
+  if (oa.length >= 5) {
+    const a = mean(oa.slice(0, 3)), b = mean(oa);
+    t('they allowed L3', r1(a), `L${oa.length} ${r1(b)}`, Math.abs(a - b) < 0.04 * b ? 0 : ((a > b) === over ? 1 : -1));
+  }
+  const V = opp ? H.filter(g => g.o === opp) : [];
+  if (V.length) {
+    const a = mean(V.map(g => g.v));
+    t(`vs ${esc(opp)}`, r1(a), `${V.length}g \u00b7 hit ${hitText(p, V)}`, a === p.ln ? 0 : ((a > p.ln) === over ? 1 : -1));
+  }
+  const tn = (ev.home_away || {}).tonight;
+  if (tn) {
+    const T = H.filter(g => g.ha === (tn === 'home' ? 'h' : 'a'));
+    const a = T.length >= 2 ? mean(T.map(g => g.v)) : null;
+    t(`${tn} tonight`, a == null ? '\u2014' : r1(a), T.length >= 2 ? `${T.length}g \u00b7 hit ${hitText(p, T)}` : 'too few games',
+      a == null ? 0 : ((a > p.ln) === over ? 1 : -1));
+  }
+  if (ev.game_total != null) {
+    const lg = String(p.sp || '').toUpperCase();
+    const norm = {NBA: 225, NHL: 6, NFL: 44, MLB: 8.5}[lg];
+    t('game total', ev.game_total, ev.spread != null ? `spread ${ev.spread > 0 ? '+' : ''}${ev.spread}` : '',
+      norm == null ? 0 : Math.abs(ev.game_total - norm) < norm * 0.03 ? 0 : ((ev.game_total > norm) === over ? 1 : -1));
+  }
+  if (ev.rest_days != null) t('rest', `${ev.rest_days}d`, ev.rest_days === 0 ? 'back-to-back' : 'days off', ev.rest_days === 0 ? (over ? -1 : 1) : 0);
+  const fresh = ev.opp_out_new || [], long = (ev.opp_out || []).filter(n => !fresh.includes(n));
+  const up = tiles.filter(x => x.includes('mtile up')).length, dn = tiles.filter(x => x.includes('mtile dn')).length;
+  const hrow = V.length ? `<div class="mhead" style="margin-top:9px">every saved game vs ${esc(opp)}</div>
+    <div class="vsrow">${V.map(g => `<div class="vsg ${won(p, g.v) ? 'hit' : won(p, g.v) === false ? 'miss' : ''}">
+      <b>${g.v}</b><span>${esc(g.d.slice(5))}${g.ha ? ' ' + (g.ha === 'h' ? 'vs' : '@') : ''}</span>${g.m ? `<span>${Math.round(g.m)}m</span>` : ''}</div>`).join('')}</div>` : '';
+  return `<div class="mbox mscore">
+    <div class="mhead">matchup scorecard \u00b7 ${esc(p.sd)} ${p.ln} \u00b7 <span class="hit">${up} for</span> \u00b7 <span class="miss">${dn} against</span></div>
+    <div class="mtiles">${tiles.join('')}</div>${hrow}
+    ${fresh.length || long.length ? `<div class="mstat" style="margin-top:8px">${esc(opponentLabel(p))} absences:
+      ${fresh.length ? `<b>new</b> ${fresh.map(esc).join(', ')}` : '<span class="dim">no fresh absences</span>'}${
+      long.length ? ` <span class="dim">\u00b7 long-term (already in their recent numbers): ${long.map(esc).join(', ')}</span>` : ''}</div>` : ''}
+    <div class="dim" style="font-size:10.5px;margin-top:6px">Green points toward ${esc(p.sd)}, red against. A neutral tile is within a few percent of normal.</div>
+  </div>`;
+}
+
+/* ================================================================
+   PARLAY GENERATOR
+   Leg chance = the anchored probability (ap) adjusted by how that
+   calibration bucket has actually landed. Same-game pairs carry a
+   measured correlation from the games both players logged; with no
+   shared games it is treated as unmeasured and flagged.
+   ================================================================ */
+function calProb(p){
+  const base = p.ap ?? p.fp ?? p.mp;
+  if (base == null) return null;
+  const b = ((D.calibration || {}).buckets || []).find(x => base * 100 >= x.lo && base * 100 < x.hi);
+  if (!b || b.thin) return base;
+  const w = b.n / (b.n + 500);
+  return Math.min(0.97, Math.max(0.03, base + w * (b.happened - b.said) / 100));
+}
+const CORR = new Map();
+function pairCorr(a, b){
+  if (a.mu !== b.mu) return {r: 0, n: 0, same: false};
+  const k = a.i < b.i ? a.i + ':' + b.i : b.i + ':' + a.i;
+  if (CORR.has(k)) return CORR.get(k);
+  let res = {r: 0, n: 0, same: true};
+  if (a.kd !== 'team' && b.kd !== 'team') {
+    const HA = new Map(hist(a).map(g => [g.d, won(a, g.v)]));
+    const xs = [];
+    for (const g of hist(b)) { const x = HA.get(g.d), y = won(b, g.v); if (x != null && y != null) xs.push([x, y]); }
+    const n = xs.length;
+    if (n >= 6) {
+      const pa = xs.filter(z => z[0]).length / n, pb = xs.filter(z => z[1]).length / n;
+      const pab = xs.filter(z => z[0] && z[1]).length / n;
+      const den = Math.sqrt(pa * (1 - pa) * pb * (1 - pb));
+      const phi = den > 0 ? (pab - pa * pb) / den : 0;
+      res = {r: phi * n / (n + 10), n, same: true};
+    } else res = {r: 0, n, same: true};
+  }
+  CORR.set(k, res);
+  return res;
+}
+function jointProb(legs){
+  let pr = 1;
+  const q = legs.map(calProb);
+  for (const x of q) pr *= x;
+  let ratio = 1, unmeasured = 0, rs = [];
+  for (let i = 0; i < legs.length; i++) for (let j = i + 1; j < legs.length; j++) {
+    const c = pairCorr(legs[i], legs[j]); if (!c.same) continue;
+    if (c.n < 6) { unmeasured++; continue; }
+    const pa = q[i], pb = q[j];
+    let r = 1 + c.r * Math.sqrt(((1 - pa) * (1 - pb)) / (pa * pb));
+    r = Math.min(Math.min(1 / pa, 1 / pb), Math.max(0.3, r));
+    ratio *= r; rs.push(c.r);
+  }
+  return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs};
+}
+const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', minMp: 0.55, minEd: -1,
+  l3: '', minPr: -400, maxPr: 400, grade: '', upcoming: 1, stale: 1, onePl: 1, corr: 'diff',
+  maxGame: 2, sort: 'prob', minN: 8};
+const GR_ORDER = {A: 4, B: 3, C: 2, D: 1};
+function legPool(F){
+  const today = new Date().toLocaleDateString('en-CA');   // local date, not UTC
+  return PROPS.filter(p => {
+    if (p.mp == null || p.pr == null || p.ln == null || p.data_error) return false;
+    if (F.upcoming && p.gd && p.gd < today) return false;
+    if (!F.stale && (p.elig === false || ageClass(p.at) === 'old')) return false;
+    if (F.kind && p.kd !== F.kind) return false;
+    if (F.sp.size && !F.sp.has(String(p.sp).toUpperCase())) return false;
+    if (F.mk.size && !F.mk.has(p.mk)) return false;
+    if (F.side && p.sd !== F.side) return false;
+    if (p.mp < F.minMp) return false;
+    if (F.minEd > -1 && (p.ed == null || p.ed < F.minEd)) return false;
+    if (p.pr < F.minPr || p.pr > F.maxPr) return false;
+    if (F.grade && (GR_ORDER[p.gr] || 0) < GR_ORDER[F.grade]) return false;
+    if (p.kd !== 'team' && (p.n || 0) < F.minN) return false;
+    if (F.l3 && p.kd !== 'team') {
+      const v = recentVals(p).slice(0, 3); if (v.length < 3) return false;
+      const h = v.filter(x => won(p, x)).length;
+      if (F.l3 === 'avg' && !won(p, mean(v))) return false;
+      if (F.l3 === '3' && h < 3) return false;
+      if (F.l3 === '2' && h < 2) return false;
+    }
+    return calProb(p) != null;
+  });
+}
+function legScore(p, sort){
+  return sort === 'edge' ? (p.ed ?? 0) : sort === 'pay' ? calProb(p) * dec(p.pr) : calProb(p);
+}
+function generateParlays(F, want = 8){
+  const K = Math.max(2, Math.min(6, F.legs));
+  const pool = legPool(F).sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, 48);
+  const score = legs => {
+    const j = jointProb(legs), d = legs.reduce((a, p) => a * dec(p.pr), 1);
+    return {legs, j, d, ev: j.est * d - 1,
+      key: F.sort === 'edge' ? legs.reduce((a, p) => a + (p.ed ?? 0), 0) : F.sort === 'pay' ? j.est * d : j.est};
+  };
+  const ok = (legs, p) => {
+    if (F.onePl && legs.some(x => x.pl === p.pl)) return false;
+    if (legs.some(x => x.pl === p.pl && x.mk === p.mk)) return false;
+    const same = legs.filter(x => x.mu === p.mu);
+    if (F.corr === 'diff' && same.length) return false;
+    if (same.length + 1 > F.maxGame) return false;
+    for (const x of same) {
+      const c = pairCorr(x, p);
+      if (F.corr === 'pos' && !(c.n >= 6 && c.r > 0.05)) return false;
+      if (F.corr === 'noneg' && c.n >= 6 && c.r < -0.05) return false;
+    }
+    return true;
+  };
+  let beams = pool.map(p => [p]);
+  for (let k = 2; k <= K; k++) {
+    const nxt = [];
+    for (const b of beams) {
+      const last = pool.indexOf(b[b.length - 1]);
+      for (let j = last + 1; j < pool.length; j++) if (ok(b, pool[j])) nxt.push(b.concat(pool[j]));
+    }
+    beams = nxt.map(score).sort((a, b) => b.key - a.key).slice(0, 250).map(x => x.legs);
+    if (!beams.length) break;
+  }
+  const res = beams.filter(b => b.length === K).map(score).sort((a, b) => b.key - a.key);
+  const out = [];
+  for (const r of res) {
+    if (out.some(o => o.legs.filter(l => r.legs.includes(l)).length > Math.max(1, K - 2))) continue;
+    out.push(r); if (out.length >= want) break;
+  }
+  return {out, pool: pool.length};
+}
+const pc = v => v == null ? '\u2014' : (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%';
+function parlayCard(r, tag){
+  const sgp = new Set(r.legs.map(p => p.mu)).size < r.legs.length;
+  const stale = r.legs.filter(p => p.elig === false || ageClass(p.at) === 'old').length;
+  const be = 1 / r.d, shade = r.legs.reduce((a, p) => a * Math.max(0.01, calProb(p) - 0.05), 1);
+  const gap = r.j.est - be;
+  const ids = r.legs.map(p => p.i).join(',');
+  return `<div class="pcard">
+    <div class="pchead">${tag ? `<span class="ptag">${esc(tag)}</span>` : ''}
+      <span class="pcp"><b>${pc(r.j.est)}</b><small>est. hit</small></span>
+      <span class="pcp"><b>${am(r.d)}</b><small>${sgp ? 'naive price' : 'combined'}</small></span>
+      <span class="pcp ${gap > 0 ? 'hit' : 'miss'}"><b>${gap > 0 ? '+' : ''}${(100 * gap).toFixed(1)}</b><small>vs break-even</small></span>
+    </div>
+    <ol class="plegs">${r.legs.map(p => `<li><span class="sp sp-${esc(String(p.sp).toUpperCase())}">${esc(String(p.sp).toUpperCase())}</span>
+      <b>${esc(p.pl)}</b> ${esc(p.sd)} ${spreadSign(p, p.ln)} ${esc((p.mk || '').replace(/_/g, ' '))}
+      <span class="dim">${p.pr > 0 ? '+' : ''}${p.pr} \u00b7 model ${pc(p.mp)} \u00b7 cal ${pc(calProb(p))}${
+        recentVals(p).length >= 3 ? ` \u00b7 L3 ${recentVals(p).slice(0, 3).filter(x => won(p, x)).length}/3` : ''}</span></li>`).join('')}</ol>
+    <div class="pfoot">independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
+      \u00b7 if each leg is 5 pts worse: ${pc(shade)} \u00b7 break-even ${pc(be)}${
+      sgp ? ' \u00b7 same game: the book will price this lower than shown' : ''}${
+      r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
+      stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
+      <button class="h2go" data-padd="${ids}">Add to slip</button></div>
+  </div>`;
+}
+let REC_DONE = 0;
+function drawParlays(){
+  const el = $('parlayout'); if (!el || !D) return;
+  const F = PF;
+  const sports = [...new Set(PROPS.map(p => String(p.sp).toUpperCase()))].sort();
+  const mks = [...new Set(PROPS.filter(p => !F.kind || p.kd === F.kind).map(p => p.mk))].sort();
+  const ch = (k, v, lab, on) => `<button class="chip" data-pf="${k}|${v}" aria-pressed="${on ? 'true' : 'false'}">${lab}</button>`;
+  const row = (lab, html) => `<div class="pfrow"><span class="cfl">${lab}</span><div class="chips">${html}</div></div>`;
+  $('parlayfil').innerHTML = [
+    row('legs', [2, 3, 4, 5, 6].map(n => ch('legs', n, n, F.legs === n)).join('')),
+    row('sport', ch('sp', '', 'All', !F.sp.size) + sports.map(s => ch('sp', s, s, F.sp.has(s))).join('')),
+    row('type', ch('kind', 'player', 'Player', F.kind === 'player') + ch('kind', 'team', 'Team', F.kind === 'team') + ch('kind', '', 'Both', !F.kind)),
+    row('props', ch('mk', '', 'All', !F.mk.size) + mks.map(m => ch('mk', m, esc(m.replace(/_/g, ' ')), F.mk.has(m))).join('')),
+    row('side', ch('side', '', 'Any', !F.side) + ch('side', 'Over', 'Over', F.side === 'Over') + ch('side', 'Under', 'Under', F.side === 'Under')),
+    row('model \u2265', [0.5, 0.55, 0.6, 0.65, 0.7].map(v => ch('minMp', v, Math.round(v * 100) + '%', F.minMp === v)).join('')),
+    row('edge \u2265', [[-1, 'Any'], [0, '0'], [0.02, '2 pts'], [0.04, '4 pts']].map(([v, l]) => ch('minEd', v, l, F.minEd === v)).join('')),
+    row('last 3', [['', 'Any'], ['avg', 'Avg beats line'], ['2', '2 of 3'], ['3', '3 of 3']].map(([v, l]) => ch('l3', v, l, F.l3 === v)).join('')),
+    row('leg odds', [['-400|400', 'Any'], ['-200|400', '\u2265 -200'], ['-150|400', '\u2265 -150'], ['-130|200', '-130 to +200']]
+      .map(([v, l]) => ch('odds', v, l, `${F.minPr}|${F.maxPr}` === v)).join('')),
+    row('grade', [['', 'Any'], ['C', 'C+'], ['B', 'B+']].map(([v, l]) => ch('grade', v, l, F.grade === v)).join('')),
+    row('correlation', [['diff', 'Different games'], ['any', 'Allow same game'], ['noneg', 'Avoid negative'], ['pos', 'Positive only']]
+      .map(([v, l]) => ch('corr', v, l, F.corr === v)).join('')),
+    row('per game', [1, 2, 3].map(n => ch('maxGame', n, `max ${n}`, F.maxGame === n)).join('')),
+    row('rank by', [['prob', 'Hit chance'], ['pay', 'Value (chance \u00d7 payout)'], ['edge', 'Model edge']].map(([v, l]) => ch('sort', v, l, F.sort === v)).join('')),
+    row('also', ch('upcoming', 1, 'Upcoming games only', F.upcoming) + ch('stale', 1, 'Include old prices', F.stale) + ch('onePl', 1, 'One leg per player', F.onePl)),
+  ].join('');
+  const {out, pool} = generateParlays(F, 8);
+  // Recommended: fixed recipes, always on model probability.
+  const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: '', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400});
+  const rec = REC_DONE ? [] : [
+    ['Safest 2-leg', Object.assign({}, base, {legs: 2, minMp: 0.6})],
+    ['Best 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55})],
+    ['Form + model 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, l3: '2'})],
+    ['Value 4-leg', Object.assign({}, base, {legs: 4, minMp: 0.55, sort: 'pay'})],
+  ].map(([t, f]) => [t, generateParlays(f, 1).out[0]]).filter(x => x[1]);
+  const seen = new Set(), recs = rec.filter(([t, r]) => { const k = r.legs.map(p => p.i).sort().join(); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (!REC_DONE) { REC_DONE = 1;
+    $('cParlays') && ($('cParlays').textContent = recs.length || '');
+    $('parlayrec').innerHTML = `<h3 class="ph">Recommended <span class="dim">model ≥ 55%, one leg per game</span></h3>
+    ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
+  el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool</span></h3>
+    ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. Loosen the model threshold, the odds range or the correlation rule.</div>`}`;
+}
+function pfClick(t){
+  const [k, v] = t.dataset.pf.split('|').length > 2 ? [t.dataset.pf.split('|')[0], t.dataset.pf.split('|').slice(1).join('|')] : t.dataset.pf.split('|');
+  if (k === 'sp' || k === 'mk') { if (!v) PF[k].clear(); else PF[k].has(v) ? PF[k].delete(v) : PF[k].add(v); }
+  else if (k === 'odds') { const [a, b] = v.split('|'); PF.minPr = +a; PF.maxPr = +b; }
+  else if (k === 'upcoming' || k === 'stale' || k === 'onePl') PF[k] = PF[k] ? 0 : 1;
+  else if (['legs', 'minMp', 'minEd', 'maxGame'].includes(k)) PF[k] = +v;
+  else { PF[k] = v; if (k === 'kind') PF.mk.clear(); }
+  drawParlays();
+}
+function paddClick(t){
+  for (const id of t.dataset.padd.split(',').map(Number)) { const p = PROPS.find(x => x.i === id); if (p) SEL.set(id, p); }
+  document.querySelectorAll('[data-sel]').forEach(b => { const on = SEL.has(+b.dataset.sel);
+    b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '\u2713' : '+'; });
+  parlay();
+  t.textContent = 'Added \u2713';
+}
 
 /* ---------- tracker ----------
 
@@ -3424,6 +4081,7 @@ function drawTrack(){
 function parlay(){
   const legs = [...SEL.values()];
   $('tray').hidden = legs.length === 0;
+  typeof window !== 'undefined' && window.__totop && requestAnimationFrame(window.__totop);
   if (!legs.length) return;
   $('pFan').innerHTML = fanaticsSlip(legs);
   if (legs.some(p => p.kd === 'team' &&
@@ -4091,7 +4749,7 @@ document.addEventListener('click', e => {
     if (SEC[curShown] && !SEC[to]) SEC[to] = SEC[curShown];
     // Keep the card where it is on screen while its contents change.
     const row = sw.closest('.row'), y0 = row ? row.getBoundingClientRect().top : null;
-    draw();
+    redrawRow(sw) || draw();
     const again = document.querySelector(`[data-swap="${from}:${to}"]`);
     const r2 = again && again.closest('.row');
     if (r2 && y0 != null) window.scrollBy(0, r2.getBoundingClientRect().top - y0);
@@ -4103,7 +4761,7 @@ document.addEventListener('click', e => {
     // Keep the box under the thumb while every defence box redraws.
     const y0 = dn.getBoundingClientRect().top;
     const idx = [...document.querySelectorAll('[data-defn]')].indexOf(dn);
-    if (dn.closest('#askout')) drawAsk(); else if (dn.closest('#tab-trending')) drawTrending(); else draw();
+    if (dn.closest('#askout')) drawAsk(); else if (dn.closest('#tab-trending')) drawTrending(); else redrawRow(dn) || draw();
     const again = document.querySelectorAll('[data-defn]')[idx];
     if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0);
     return;
@@ -4113,7 +4771,7 @@ document.addEventListener('click', e => {
     const [i, k] = sf.dataset.simf.split('|');
     SIMF[i] = k;
     const y0 = sf.getBoundingClientRect().top;
-    draw();
+    redrawRow(sf) || draw();
     const again = document.querySelector(`[data-simf="${i}|${k}"]`);
     if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0);
     return;
@@ -4122,19 +4780,19 @@ document.addEventListener('click', e => {
   if (sn) {
     const [i, k] = sn.dataset.shotn.split(':').map(Number);
     SHOTN[i] = k;
-    return draw();
+    return holdPlace(sn, `[data-shotn="${i}:${k}"]`, () => redrawRow(sn) || draw());
   }
   const sc = e.target.closest('[data-sec]');
   if (sc) {
     const [i, k] = sc.dataset.sec.split(':');
     SEC[i] = k;
-    draw();
+    holdPlace(sc, `[data-sec="${i}:${k}"]`, () => redrawRow(sc) || draw());
     return;
   }
   const g = e.target.closest('[data-trow]');
   if (g) { const k = g.dataset.trow;
     OPENT.has(k) ? OPENT.delete(k) : OPENT.add(k);
-    k.startsWith('sim') ? draw() : drawTrending(); }
+    k.startsWith('sim') ? (redrawRow(g) || draw()) : drawTrending(); }
 });
 
 /* ---------- record ---------- */
@@ -4155,7 +4813,7 @@ function drawCalibration(){
       <td>${b.said}%</td>
       <td class="${b.ok ? '' : 'miss'}">${b.happened}%</td>
       <td class="dim">${b.ci_low}\u2013${b.ci_high}%</td>
-      <td class="${Math.abs(off) < 3 ? '' : off > 0 ? 'hit' : 'miss'}">${
+      <td class="${b.ok ? 'hit' : 'miss'}" title="${b.ok ? 'inside the interval' : 'outside the interval'}">${
         off > 0 ? '+' : ''}${off.toFixed(1)}</td></tr>`;
   }).join('');
   // The spread is the finding, not a footnote. The anchor shrinks
@@ -4177,8 +4835,8 @@ function drawCalibration(){
         : `Brier ${c.brier} is WORSE than ${c.brier_baseline}, which is what
            always saying the base rate would score. The probabilities are
            not adding information.`);
-  el.innerHTML = `<div class="tscroll"><table>
-      <thead><tr><th>Said</th><th>n</th><th>Mean</th><th>Happened</th>
+  el.innerHTML = `<div class="tscroll"><table class="calt">
+      <thead><tr><th>Range</th><th>n</th><th>Said</th><th>Happened</th>
         <th>95% CI</th><th>Off by</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
     <div class="callout" style="margin-top:9px">${verdict}
@@ -5429,7 +6087,21 @@ function drawRecord(){
 }
 
 /* ---------- wiring ---------- */
+const TAB_DRAW = {
+  board: [], parlays: ['drawParlays'], trending: ['drawTrending'], games: ['drawGames'],
+  stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
+  'drawLeafValue', 'drawMvm'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
+};
+const TAB_DONE = new Set(['board']);
+function ensureTab(name){
+  if (TAB_DONE.has(name) || !D) return;
+  TAB_DONE.add(name);
+  for (const f of TAB_DRAW[name] || []) {
+    try { window[f] && window[f](); } catch (err) { console.error(f, err); }
+  }
+}
 function showTab(name){
+  ensureTab(name);
   for (const t of document.querySelectorAll('nav.tabs button[data-tab]')) {
     t.setAttribute('aria-selected', String(t.dataset.tab === name));
     const el = $('tab-' + t.dataset.tab);
@@ -5460,11 +6132,22 @@ document.addEventListener('click', e => {
     }
     return;
   }
+  const cf = e.target.closest('[data-chf]');
+  if (cf) { chfClick(cf); return; }
+  const pf = e.target.closest('[data-pf]');
+  if (pf) { pfClick(pf); return; }
+  const pa = e.target.closest('[data-padd]');
+  if (pa) { paddClick(pa); return; }
+  const mo = e.target.closest('[data-more]');
+  if (mo) { moreRows(); return; }
   const o = e.target.closest('[data-open]');
   if (o) { const i = +o.dataset.open;
+           const wasHero = i === HEROID;
            OPEN.has(i) ? OPEN.delete(i) : OPEN.add(i);
-           draw();
-           if (i === HEROID) $('rows').scrollIntoView(
+           // Only this row changes. Rebuilding the board on every
+           // open was the single biggest source of lag.
+           if (wasHero || !redrawRow(o)) draw();
+           if (wasHero) $('rows').scrollIntoView(
              {block:'start', behavior:'smooth'});
            return; }
   const s = e.target.closest('[data-sel]');
@@ -5523,8 +6206,10 @@ $('trkcopy').onclick = async () => {
   setTimeout(() => { b.textContent = 'copy'; }, 1600);
 };
 
-$('q').addEventListener('input', draw);
-$('askq').addEventListener('input', drawAsk);
+// Debounced: a redraw per keystroke on a long board made typing lag.
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+$('q').addEventListener('input', debounce(draw, 140));
+$('askq').addEventListener('input', debounce(drawAsk, 160));
 $('bank').addEventListener('input', drawStakes);
 // Tapping a game filters the board to it.
 document.addEventListener('click', e => {
@@ -5542,6 +6227,22 @@ document.addEventListener('click', e => {
   window.scrollTo(0,0);
 });
 $('qclear').onclick = () => { $('q').value = ''; draw(); $('q').focus(); };
+
+/* Back to top: shows once you are well down the page, sits above the
+   parlay tray when the tray is open. One passive, rAF-throttled
+   listener -- a scroll handler doing layout work per event is the
+   kind of thing that makes a page feel choppy. */
+(() => {
+  const b = $('totop'); let tick = false;
+  const upd = () => { tick = false;
+    b.classList.toggle('show', window.scrollY > 900);
+    const t = $('tray'), on = t && !t.hidden;
+    document.body.classList.toggle('trayon', !!on);
+    if (on) document.body.style.setProperty('--trayh', t.offsetHeight + 'px'); };
+  window.addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(upd); } }, {passive: true});
+  b.onclick = () => window.scrollTo({top: 0, behavior: 'smooth'});
+  window.__totop = upd;
+})();
 $('pClear').onclick = () => { SEL.clear(); draw(); parlay(); };
 
 // The board is published gzipped: plain, a full slate is over the
@@ -5657,10 +6358,16 @@ function expandShared(data) {
   $('boardmeta').innerHTML =
     `${b.slate_size ?? 0} evaluated`;
   TRKOK = trkLoad();
-  drawFilters(); draw(); drawGames(); drawStakes(); drawTrack();
-  drawTrending(); drawRecord(); drawCalibration();
-  drawTierOutcomes(); drawLeafValue(); drawMvm(); drawAsk();
-  drawHealth();
+  // The board first, everything else when the browser is idle. All
+  // nine panels used to render before the first paint, which is the
+  // long blank pause on open. A tab opened before its turn renders
+  // on the spot (showTab).
+  drawFilters(); draw();
+  const q = Object.keys(TAB_DRAW).filter(k => k !== 'board');
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 30));
+  const next = () => { const k = q.shift(); if (!k) return;
+                       ensureTab(k); idle(next); };
+  idle(next);
 })();
 </script>
 
