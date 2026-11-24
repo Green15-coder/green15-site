@@ -574,6 +574,16 @@ tr.simclose td{font-weight:600}
 .secnav{display:block;position:sticky;top:var(--stick,0);z-index:3;
   background:var(--bg);padding:7px 0 6px;margin:0 -2px}
 .secrow{display:flex;gap:4px}
+.lvp{font-family:var(--m);font-size:11.5px}
+.lvp.up,.trklive .up{color:var(--over)} .lvp.dn{color:var(--under)}
+.trklive{font-size:12px;margin:2px 0 3px}
+.lvdot{color:var(--under)}
+.lvon{color:var(--under);font-weight:600}
+.livet td,.livet th{white-space:nowrap}
+.livet .lvnm{text-align:left;white-space:normal;min-width:118px}
+.livet tr.lvmine td{background:var(--clover-soft)}
+.lvtag{font-size:10.5px;margin-top:2px}
+#livegames{margin-bottom:6px}
 .detail>*,.secnav{min-width:0}
 .secnav{max-width:100%}
 .pswitch{max-width:100%}
@@ -913,6 +923,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 
 <!-- ───────────────────────── TODAY ──────────────────────── -->
 <div id="tab-games" hidden>
+  <section id="livegames" hidden></section>
   <section>
     <h2>Tonight's slate</h2>
     <p class="traynote" id="slatenote"></p>
@@ -3359,6 +3370,35 @@ function redrawRow(el){
   row.outerHTML = rowHtml(p0);
   return true;
 }
+/* Switching sections (Why, Games, Matchup...). The section bar pins
+   under the header while you read a long section; holding the pinned
+   button in place after the swap left the page scrolled past the end
+   of the new, shorter section -- the card looked closed and the next
+   props showed instead. Now the new section always opens from its top,
+   right under the header, and the card stays on screen. */
+function stickTop(){
+  const d = document.querySelector('.dock'), t = document.querySelector('nav.tabs');
+  return Math.max(0, d ? d.getBoundingClientRect().bottom : 0, t ? t.getBoundingClientRect().bottom : 0);
+}
+function setStick(){
+  document.documentElement.style.setProperty('--stick', Math.round(stickTop()) + 'px');
+}
+function secSwitch(sc, i, k){
+  const rowEl = sc.closest('.row[data-ri]'), ri = rowEl && rowEl.dataset.ri;
+  const y0 = sc.getBoundingClientRect().top;
+  redrawRow(sc) || draw();
+  const row = ri != null ? document.querySelector(`#rows .row[data-ri="${ri}"]`) : null;
+  const nav = row && row.querySelector('.secnav');
+  if (!nav) return;
+  const pos = nav.style.position; nav.style.position = 'static';
+  const natural = nav.getBoundingClientRect().top;
+  nav.style.position = pos;
+  const top = stickTop();
+  // Bar was pinned (reading deep in a section) or would land off
+  // screen: put the start of the new section right under the header.
+  if (natural < top || y0 <= top + 2) window.scrollBy(0, natural - top);
+  else window.scrollBy(0, natural - y0);
+}
 /* Keep the control under the thumb while its row re-renders. */
 function holdPlace(el, sel, fn){
   const y0 = el.getBoundingClientRect().top;
@@ -4187,6 +4227,7 @@ function drawTrack(){
       data-trkview="${k}">${l} <span>${n}</span></button>`).join('');
 
   const list = TRKVIEW === 'all' ? all : all.filter(e => e.st === TRKVIEW);
+  let needLive = 0;
   $('trknone').hidden = list.length > 0;
   if (!list.length) {
     $('trknone').textContent = all.length
@@ -4195,10 +4236,12 @@ function drawTrack(){
     $('trkrows').innerHTML = '';
   } else {
     $('trkrows').innerHTML = list.map(e => {
-      const beat = trkBeat(e);
+      const beat = trkBeat(e), lv = trkLive(e);
+      if (lv && lv.need) needLive = 1;
       return `<div class="trkrow">
         <div>
-          <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}</div>
+          <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}</div>${
+          lv ? `<div class="trklive">${lv.g.st === 'in' ? '<b class="lvdot">live</b> ' : ''}${lv.html}</div>` : ''}
           <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}
             · ${sico(e.sp)}${esc(e.sp)}${e.mu ? ' · ' + esc(e.mu) : ''}
             · ${esc(e.day || 'undated')}<br>
@@ -4232,6 +4275,7 @@ function drawTrack(){
     }).join('');
   }
 
+  if (needLive) trkLiveFetch().then(n => { if (n) drawTrack(); });
   const filled = all.filter(e => e.fpr != null);
   const staked = all.reduce((a, e) => a + (e.stk || 0), 0);
   const beats = filled.map(trkBeat).filter(v => v != null);
@@ -4425,6 +4469,7 @@ function fanaticsSlip(legs){
 
 /* ---------- today / slate ---------- */
 function drawGames(){
+  drawLive();
   // Only games that have not started, in start order.
   const live = new Map(gamesOnBoard().map((g, i) => [g.mu, i]));
   const all = D.games || [];
@@ -5008,7 +5053,7 @@ document.addEventListener('click', e => {
   if (sc) {
     const [i, k] = sc.dataset.sec.split(':');
     SEC[i] = k;
-    holdPlace(sc, `[data-sec="${i}:${k}"]`, () => redrawRow(sc) || draw());
+    secSwitch(sc, i, k);
     return;
   }
   const g = e.target.closest('[data-trow]');
@@ -6698,7 +6743,8 @@ async function readScoreboards(){
         if (!h || !a) continue;
         const st = ((e.status || {}).type || {});
         const info = {ct: Date.parse(e.date), st: st.state || null, det: st.shortDetail || '',
-          ab: `${a.team.abbreviation} @ ${h.team.abbreviation}`};
+          ab: `${a.team.abbreviation} @ ${h.team.abbreviation}`, id: e.id || null,
+          as: a.score ?? null, hs: h.score ?? null};
         for (const k of gKeys(sp, a.team.displayName, h.team.displayName)) GAMES.set(k, info);
       }
     } catch (err) { /* offline or blocked: start times from the run still apply */ }
@@ -6706,6 +6752,244 @@ async function readScoreboards(){
   await Promise.all(jobs);
   if (ok) CLOCK_AT = Date.now();
   return ok;
+}
+/* ================================================================
+   LIVE BOX SCORES
+   Free: ESPN's public game summary (the same source as the game
+   clock, no odds credits). Read only for games that have started,
+   cached 45s while live and kept once final. Keys are folded into the
+   same names the saved box scores use (D.box.keys), so a market reads
+   its live number with the same BOX_MK mapping as the history.
+   ================================================================ */
+const LIVEBOX = new Map();   // event id -> {at, final, box}
+const LIVEOPEN = new Set();  // expanded game keys on the Today tab
+const LIVE_TTL = 45000;
+function liveKeys(group, k){
+  const g = String(group || '').toLowerCase();
+  const parts = String(k).split(/[-/]/).map(x => x.toLowerCase());
+  if (g === 'passing') return parts.map(x => x === 'interceptions' ? 'interceptionsthrown'
+    : x === 'sacks' ? 'sackstaken' : x === 'sackyardslost' ? '_sackyds' : x);
+  if (g === 'kicking') return parts.map(x => x === 'fieldgoalsmade' ? 'fieldgoalsmade'
+    : x === 'fieldgoalsattempted' ? 'fieldgoalattempts' : x === 'extrapointsmade' ? 'extrapointsmade'
+    : x === 'totalkickingpoints' ? 'totalkickingpoints' : '_k' + x);
+  if (g === 'kickreturns') return parts.map(x => x === 'kickreturnyards' ? 'kickreturnyards' : '_kr' + x);
+  if (g === 'puntreturns') return parts.map(x => x === 'puntreturnyards' ? 'puntreturnyards' : '_pr' + x);
+  if (g === 'punting') return parts.map(x => '_p' + x);
+  if (g === 'goalies' || g === 'goalkeepers') return parts.map(x => x === 'savepercentage' ? 'savepct' : x);
+  return parts;
+}
+function liveNum(v){
+  if (v == null || v === '' || v === '--') return null;
+  const s = String(v).trim();
+  if (/^\d+:\d{2}$/.test(s)) { const [m, sec] = s.split(':').map(Number); return Math.round((m + sec / 60) * 10) / 10; }
+  const n = parseFloat(s.replace(/^\+/, ''));
+  return Number.isFinite(n) ? n : null;
+}
+function parseLiveBox(j, sp){
+  const teams = [];
+  for (const t of ((j.boxscore || {}).players || [])) {
+    const byName = new Map();
+    for (const g of t.statistics || []) {
+      const keys = g.keys || [];
+      for (const a of g.athletes || []) {
+        const nm = (a.athlete || {}).displayName || '';
+        if (!nm) continue;
+        let r = byName.get(nm);
+        if (!r) { r = {name: nm, pos: (((a.athlete || {}).position) || {}).abbreviation || '',
+                       starter: !!a.starter, dnp: !!a.didNotPlay, why: a.reason || '', v: {}};
+                  byName.set(nm, r); }
+        (a.stats || []).forEach((val, ix) => {
+          const ks = liveKeys(g.name, keys[ix] || ''), vs = String(val).split(/[-/]/);
+          ks.forEach((k, m) => { const n = liveNum(ks.length > 1 ? vs[m] : val); if (n != null && r.v[k] == null) r.v[k] = n; });
+        });
+        if (a.starter) r.starter = true;
+        if (a.didNotPlay === false) r.dnp = false;
+      }
+    }
+    const players = [...byName.values()];
+    if (String(sp).toUpperCase() === 'NHL') for (const r of players)
+      if (r.v.goals != null || r.v.assists != null) r.v._points = (r.v.goals || 0) + (r.v.assists || 0);
+    teams.push({ab: (t.team || {}).abbreviation || '', name: (t.team || {}).displayName || '', players});
+  }
+  const comp = (((j.header || {}).competitions) || [])[0] || {};
+  const st = ((comp.status || {}).type) || {};
+  return {teams, state: st.state || null, det: st.shortDetail || '',
+    score: (comp.competitors || []).map(c => ({ab: ((c.team || {}).abbreviation) || '', ha: c.homeAway, s: c.score}))
+      .sort((a, b) => (a.ha === 'away' ? 0 : 1) - (b.ha === 'away' ? 0 : 1))};
+}
+async function getLiveBox(sp, id, force){
+  if (!id || !ESPN_PATH[sp]) return null;
+  const c = LIVEBOX.get(id);
+  if (c && (c.final || (!force && Date.now() - c.at < LIVE_TTL))) return c.box;
+  try {
+    const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${ESPN_PATH[sp]}/summary?event=${id}`, {cache: 'no-store'});
+    if (!r.ok) return c ? c.box : null;
+    const box = parseLiveBox(await r.json(), sp);
+    LIVEBOX.set(id, {at: Date.now(), final: box.state === 'post', box});
+    return box;
+  } catch (err) { return c ? c.box : null; }
+}
+function livePlayer(box, name){
+  if (!box) return null;
+  const want = normName(name);
+  for (const t of box.teams) for (const r of t.players) if (normName(r.name) === want) return {team: t, r};
+  // "Jr."/"III" and nicknames: last name plus first initial.
+  const parts = String(name || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, '').trim().split(/\s+/);
+  const last = parts.pop() || '', fi = (parts[0] || '')[0] || '';
+  for (const t of box.teams) for (const r of t.players) {
+    const q = r.name.toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, '').trim().split(/\s+/);
+    if (q[q.length - 1] === last && (q[0] || '')[0] === fi) return {team: t, r};
+  }
+  return null;
+}
+/* A prop's live number, or null when the box has no such column. */
+function liveStat(r, mk){
+  const ks = BOX_MK[String(mk || '').replace(/^player_/, '')];
+  if (!r || !ks) return null;
+  const have = ks.filter(k => r.v[k] != null);
+  if (!have.length) return r.dnp ? 0 : null;
+  return have.reduce((a, k) => a + r.v[k], 0);
+}
+/* "14 of 20.5 · needs 7" style progress for one prop. */
+function liveProgress(cur, sd, ln, done){
+  if (cur == null || ln == null) return '';
+  const over = /^over$/i.test(sd || ''), under = /^under$/i.test(sd || '');
+  if (!over && !under) return `<b>${cur}</b>`;
+  const need = Math.max(0, Math.floor(ln) + 1 - cur);
+  let cls = '', tag = '';
+  if (over) { if (cur > ln) { cls = 'up'; tag = 'cleared'; } else { cls = done ? 'dn' : ''; tag = done ? 'missed' : `needs ${need}`; } }
+  else { if (cur > ln) { cls = 'dn'; tag = 'over the line'; } else { cls = done ? 'up' : ''; tag = done ? 'stayed under' : `${Math.round((ln - cur) * 10) / 10} to spare`; } }
+  return `<span class="lvp ${cls}"><b>${cur}</b> of ${ln} · ${tag}</span>`;
+}
+/* Every game on this slate that has started, with its scoreboard. */
+function liveGames(){
+  const seen = new Map();
+  for (const p of ALLP) {
+    if (seen.has(p.mu)) continue;
+    const g = gameInfo(p);
+    if (!g || !g.id || (g.st !== 'in' && g.st !== 'post')) continue;
+    seen.set(p.mu, {mu: p.mu, sp: String(p.sp || '').toUpperCase(), g});
+  }
+  return [...seen.values()].sort((a, b) => (a.g.st === 'in' ? 0 : 1) - (b.g.st === 'in' ? 0 : 1) || a.g.ct - b.g.ct);
+}
+function liveBoxTable(sp, t, mark){
+  const B = (D && D.box) || {}, keys = (B.keys || {})[sp] || [], labs = (B.cols || {})[sp] || [];
+  const played = t.players.filter(r => !r.dnp && Object.keys(r.v).length);
+  const cols = keys.map((k, j) => [k, labs[j]]).filter(([k]) => k[0] !== '_' || k === '_points')
+    .filter(([k]) => played.some(r => r.v[k] != null));
+  if (!played.length) return `<div class="dim">No player stats yet for ${esc(t.ab)}.</div>`;
+  const ord = played.slice().sort((a, b) => (b.starter - a.starter));
+  const out = t.players.filter(r => r.dnp);
+  return `<div class="tscroll"><table class="boxt livet"><thead><tr><th>${esc(t.ab)}</th>${
+      cols.map(([, l]) => `<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${
+      ord.map(r => { const m = mark.get(normName(r.name));
+        return `<tr class="${m ? 'lvmine' : ''}"><td class="lvnm">${esc(r.name)}${r.pos ? ` <span class="dim">${esc(r.pos)}</span>` : ''}${
+          m ? `<div class="lvtag">${m}</div>` : ''}</td>${
+          cols.map(([k]) => `<td>${r.v[k] ?? ''}</td>`).join('')}</tr>`; }).join('')}</tbody></table></div>${
+      out.length ? `<div class="dim" style="font-size:11px">Did not play: ${out.map(r => esc(r.name)).join(', ')}</div>` : ''}`;
+}
+/* Props from this slate (tracked first, then the slip) whose player is
+   in this box: shown beside his line so the live number is in context. */
+function liveMarks(lg, box){
+  const mark = new Map();
+  const add = (name, txt) => { const k = normName(name); mark.set(k, (mark.get(k) ? mark.get(k) + '<br>' : '') + txt); };
+  for (const e of TRK.values()) {
+    if (e.mu !== lg.mu || !e.pl || TEAM_MKS.has(e.mk)) continue;
+    const hit = livePlayer(box, e.pl); if (!hit) continue;
+    add(hit.r.name, `${esc(e.sd)} ${e.ln} ${esc((e.mk || '').replace(/_/g, ' '))} · ${liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post')}`);
+  }
+  return mark;
+}
+function liveTeamLine(box, lg){
+  const sc = box && box.score && box.score.length ? box.score
+    : [{ab: (lg.g.ab || '').split(' @ ')[0], s: lg.g.as}, {ab: (lg.g.ab || '').split(' @ ')[1], s: lg.g.hs}];
+  return sc.map(c => `${esc(c.ab || '')} <b>${c.s ?? '-'}</b>`).join(' · ');
+}
+async function drawLive(force){
+  const el = $('livegames'); if (!el) return;
+  const gs = liveGames();
+  el.hidden = !gs.length;
+  if (!gs.length) { el.innerHTML = ''; return; }
+  const open = gs.filter(lg => LIVEOPEN.has(lg.mu));
+  await Promise.all(open.map(lg => getLiveBox(lg.sp, lg.g.id, force)));
+  const body = gs.map(lg => {
+    const isOpen = LIVEOPEN.has(lg.mu), c = LIVEBOX.get(lg.g.id), box = c && c.box;
+    const st = box ? box.det : lg.g.det;
+    return `<div class="row lvrow"><button class="rowhead gamehead" data-live="${esc(lg.mu)}" aria-expanded="${isOpen}">
+        <div class="pick"><span class="nm">${esc(lg.g.ab || lg.mu)}</span>
+          <span class="sub">${sico(lg.sp)}${esc(lg.sp)} · ${liveTeamLine(box, lg)}</span></div>
+        <span class="px ${lg.g.st === 'in' ? 'lvon' : 'dim'}" style="font-size:10.5px">${esc(st || (lg.g.st === 'in' ? 'live' : 'final'))}</span>
+        <span class="add">${isOpen ? '\u2212' : '+'}</span></button>
+      ${isOpen ? `<div class="detail">${box ? box.teams.map(t => liveBoxTable(lg.sp, t, liveMarks(lg, box))).join('')
+          : '<div class="dim">Box score unavailable right now. Try again in a minute.</div>'}
+        <div class="dim" style="font-size:11px">ESPN live box${c ? ` · read ${new Date(c.at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}` : ''}${
+          box && box.state === 'in' ? ' · updates every minute while open' : ''}. Your tracked props in this game are highlighted with their progress. Settlement still comes from the grader.</div></div>` : ''}
+    </div>`;
+  }).join('');
+  const nLive = gs.filter(x => x.g.st === 'in').length;
+  el.innerHTML = `<h2>Live and final</h2><p class="traynote">${nLive} in progress, ${gs.length - nLive} final. Tap a game for the full box score. Free to read, no odds credits.</p>${body}`;
+}
+if (typeof document !== 'undefined') document.addEventListener('click', e => {
+  const b = e.target.closest('[data-live]'); if (!b) return;
+  const k = b.dataset.live;
+  LIVEOPEN.has(k) ? LIVEOPEN.delete(k) : LIVEOPEN.add(k);
+  const y0 = b.getBoundingClientRect().top;
+  drawLive().then(() => { const again = document.querySelector(`[data-live="${CSS.escape(k)}"]`);
+    if (again) window.scrollBy(0, again.getBoundingClientRect().top - y0); });
+});
+/* Tracked props whose game has started: live number beside the pick. */
+function trkLive(e){
+  const g = gameInfo({sp: e.sp, mu: e.mu});
+  if (!g || !g.id || (g.st !== 'in' && g.st !== 'post')) return null;
+  const c = LIVEBOX.get(g.id), box = c && c.box;
+  if (!box) return {g, html: `<span class="trksub">${esc(g.det || 'live')} · loading box</span>`, need: true};
+  if (TEAM_MKS.has(e.mk)) return {g, html: `<span class="trksub">${esc(box.det)} · ${liveTeamLine(box, {g})}</span>${teamLive(e, box)}`};
+  const hit = livePlayer(box, e.pl);
+  return {g, html: `<span class="trksub">${esc(box.det)} · </span>${hit
+    ? liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post') : '<span class="trksub">not in the box yet</span>'}`};
+}
+/* Team props: the score against the line. Total = both scores; spread
+   and moneyline need the side, matched by nickname to the matchup. */
+function teamLive(e, box){
+  const sc = box.score || [], a = sc.find(c => c.ha === 'away'), h = sc.find(c => c.ha === 'home');
+  if (!a || !h || a.s == null || h.s == null) return '';
+  const as = +a.s, hs = +h.s, done = box.state === 'post';
+  const mk = String(e.mk || '');
+  if (/total/.test(mk)) return ' · ' + liveProgress(as + hs, e.sd, e.ln, done);
+  const {away, home} = matchSides(e), who = nick(e.sd && !/^(over|under)$/i.test(e.sd) ? e.sd : e.pl);
+  const side = who === nick(away) ? 'a' : who === nick(home) ? 'h' : null;
+  if (!side) return '';
+  const m = side === 'a' ? as - hs : hs - as;
+  if (/spread|puck/.test(mk) && e.ln != null) {
+    const v = m + e.ln, cls = v > 0 ? 'up' : v < 0 ? 'dn' : '';
+    return ` · <span class="lvp ${cls}">${m > 0 ? 'up' : m < 0 ? 'down' : 'tied'} ${Math.abs(m)} · ${
+      v > 0 ? (done ? 'covered' : 'covering') : v < 0 ? (done ? 'did not cover' : 'not covering') : 'push'}</span>`;
+  }
+  if (/moneyline/.test(mk)) return ` · <span class="lvp ${m > 0 ? 'up' : m < 0 ? 'dn' : ''}">${
+    m > 0 ? (done ? 'won' : 'leading') : m < 0 ? (done ? 'lost' : 'trailing') : 'tied'}</span>`;
+  return '';
+}
+let LIVE_TRK_BUSY = 0;
+async function trkLiveFetch(force){
+  if (LIVE_TRK_BUSY) return; LIVE_TRK_BUSY = 1;
+  try {
+    const want = new Map();
+    for (const e of TRK.values()) { const g = gameInfo({sp: e.sp, mu: e.mu});
+      if (g && g.id && (g.st === 'in' || g.st === 'post')) want.set(g.id, String(e.sp || '').toUpperCase()); }
+    if (!want.size) return 0;
+    await Promise.all([...want].map(([id, sp]) => getLiveBox(sp, id, force)));
+    return want.size;
+  } finally { LIVE_TRK_BUSY = 0; }
+}
+function tabOn(name){ const el = $('tab-' + name); return el && !el.hidden; }
+async function liveTick(){
+  if (document.hidden || !D) return;
+  const games = tabOn('games') && liveGames().some(lg => LIVEOPEN.has(lg.mu) && lg.g.st === 'in');
+  const trk = tabOn('track') && [...TRK.values()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
+  if (!games && !trk) return;
+  await readScoreboards();
+  if (games) await drawLive(true);
+  if (trk && await trkLiveFetch(true)) drawTrack();
 }
 function vetBoard(all){
   ALLP = all;
@@ -6736,7 +7020,7 @@ function reclock(force){
   for (const v of [...F.game]) if (!PROPS.some(p => p.mu === v)) F.game.delete(v);
   for (const v of [...PF.games]) if (!PROPS.some(p => p.mu === v)) PF.games.delete(v);
   REC_DONE = 0;
-  TAB_DONE.delete('parlays'); TAB_DONE.delete('games');
+  TAB_DONE.delete('parlays'); TAB_DONE.delete('games'); TAB_DONE.delete('track');
   const cur = (document.querySelector('nav.tabs button[aria-selected="true"]') || {}).dataset;
   drawFilters();
   draw();
@@ -6848,6 +7132,8 @@ function clockNote(){
   // The game clock: read ESPN once the board is up, then every three
   // minutes while the page is open and visible. Free -- no odds call.
   $('refresh').onclick = e => refreshBoard(e.currentTarget);
+  setInterval(liveTick, 60000);
+  setStick(); addEventListener('resize', setStick); addEventListener('orientationchange', () => setTimeout(setStick, 300));
   readScoreboards().then(ok => { if (ok) reclock(); });
   setInterval(() => { if (!document.hidden) readScoreboards().then(ok => { if (ok) reclock(); }); }, 180000);
   document.addEventListener('visibilitychange', () => {
