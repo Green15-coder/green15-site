@@ -593,6 +593,13 @@ tr.simclose td{font-weight:600}
   max-width:860px;width:100%;margin:0 auto;box-sizing:border-box}
 .sheetbody .detail{border-left:0;padding-left:0;margin-left:0}
 .sheetbody .secnav{top:0}
+.trkalert{display:flex;gap:8px;align-items:flex-start;margin:6px 0 10px;font-size:11.5px}
+.trkalert .chip{flex:0 0 auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:90;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast div{background:var(--ink,#111);color:var(--paper,#fff);padding:9px 14px;border-radius:10px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.pwarn{margin-top:8px;padding:8px 10px;border-left:3px solid var(--warn,#c90);background:var(--paper-2,rgba(0,0,0,.03));font-size:12px;line-height:1.4}
+.pwarn div+div{margin-top:5px}
+.heronone .h2sub{margin-top:4px}
 html.sheeton #totop,html.sheeton .tray{visibility:hidden}
 .lvp{font-family:var(--m);font-size:11.5px}
 .lvp.up,.trklive .up{color:var(--over)} .lvp.dn{color:var(--under)}
@@ -1089,6 +1096,14 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     <div id="tierout"></div>
   </section>
   <section>
+    <div class="hrow"><h2>Team markets</h2></div>
+    <p class="traynote">Game totals, spreads and moneylines graded on their
+    own, the side the engine took against the side it passed. Units are at
+    the logged price, one unit a bet. Only rows from the current team model
+    count; older rows are listed as a number, not mixed in.</p>
+    <div id="teamrec"></div>
+  </section>
+  <section>
     <div class="hrow"><h2>What is each leaf worth?</h2></div>
     <p class="traynote">The Clover score gives all fifteen leaves one point
     each, which assumes they are equally informative. Nothing has ever
@@ -1170,6 +1185,10 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     onto last night's decision would make every past call look as if it
     had been made with information it did not have.</p>
     <div class="chips" id="trkviews"></div>
+    <div class="trkalert"><button class="chip" id="trkalert" aria-pressed="false">Alerts off</button>
+      <span class="dim" id="trkalertnote">Turn on to be told when a tracked prop hits or is lost.
+      Free: it reads the same ESPN box score as the live view. Works while the app is open;
+      on iPhone, system alerts need the app added to the Home Screen.</span></div>
     <div id="trkrows"></div>
     <div class="empty" id="trknone" hidden></div>
     <div class="callout" id="trksum"></div>
@@ -1379,6 +1398,21 @@ function boardWhy(){
 }
 
 let HEROID = null;
+function heroNone(){
+  // Nothing clears the bar. Say so, and name the nearest miss and
+  // what holds it back, instead of leaving a blank space that reads
+  // like the page did not load.
+  const near = PROPS.filter(p => p.kd !== 'team' && !p.nores)
+                      .sort((a, b) => (b.sc || 0) - (a.sc || 0))[0];
+  return !PROPS.length ? '' : `<div class="hero2 heronone">
+      <div class="h2lab">no prop clears the bar today</div>
+      ${near ? `<div class="h2sub">Closest: <b>${esc(near.pl)} ${esc(near.sd)} ${near.ln ?? ''}</b>
+        \u00b7 ${esc((near.mk || '').replace(/_/g, ' '))}${(near.pend || []).length
+          ? ` \u00b7 held back by ${esc(near.pend.join(', '))}` : ''}</div>
+      <div class="h2foot"><span>a pass is a result too</span>
+        <button class="h2go" data-open="${near.i}">See why</button></div>` : ''}
+    </div>`;
+}
 function drawHero(){
   const el = $('hero');
   HEROID = null;
@@ -1395,7 +1429,7 @@ function drawHero(){
                                 || (b.sc || 0) - (a.sc || 0))[0];
   // Its case opens in the prop sheet like any row, so the hero stays
   // put while the card is open.
-  if (!top) { el.innerHTML = ''; return; }
+  if (!top) { el.innerHTML = heroNone(); return; }
   HEROID = top.i;
   const sp = (top.sp || '').toUpperCase();
   el.innerHTML = `<div class="hero2" data-sp="${esc(sp)}">
@@ -2560,10 +2594,13 @@ function teamBox(p){
         \u2013 ${esc(mg.away_team || 'away')} ${n1(mg.away_proj)}
         \u00b7 \u00b1${n1(p.ev.margin.sd ?? mg.sd)} game to game</span></div>
       <div class="mnote">${[
-        mg.home_field_modelled === false ? 'No home-field term is modelled.' : '',
+        mg.home_field_modelled && mg.home_edge
+          ? `Includes a measured home edge of ${(mg.home_edge.edge > 0 ? '+' : '') + (+mg.home_edge.edge).toFixed(1)} for ${esc(mg.home_team || 'home')} (league ${(mg.home_edge.raw > 0 ? '+' : '') + (+mg.home_edge.raw).toFixed(1)} \u00b1${(+mg.home_edge.se).toFixed(1)} over ${mg.home_edge.n} finals, shrunk for noise).`
+          : mg.home_field_modelled === false ? 'No home-field term is modelled.' : '',
         mg.sd_assumes_independence ? 'The spread treats the two scores as '
           + 'independent. Their covariance is not measured, so this '
-          + 'probability remains approximate.' : '',
+          + 'probability remains approximate.'
+          : mg.score_corr && mg.score_corr.n ? `The two scores move together at ${(mg.score_corr.rho > 0 ? '+' : '') + (+mg.score_corr.rho).toFixed(2)} over ${mg.score_corr.n} finals; that is in the spread.` : '',
         p.mkk === 'moneyline' && p.ties === false ? 'Ties are not modelled, '
           + 'which overstates both sides in a league that has them.' : '',
         p.push ? 'This is a whole number \u2014 the margin can land on it '
@@ -3862,12 +3899,75 @@ function calProb(p){
   return Math.min(0.97, Math.max(0.03, base + w * (b.happened - b.said) / 100));
 }
 const CORR = new Map();
+/* A team leg's result in each of one team's past finals, read at
+   TONIGHT's line: date -> true / false / null (push or no score).
+   `ab` can be either side of the game; a spread or moneyline flips
+   the margin when the rows belong to the other team. */
+function teamLegSeries(p, ab){
+  const lg = String(p.sp || '').toUpperCase(), out = new Map();
+  const rows = ((D && D.tbox) || {})[`${lg}|${ab}`] || [];
+  const mk = p.mkk || p.mk || '', sel = teamAbbr(p.sp, p.sd);
+  for (const [d, , , f, a, m] of rows) {
+    let v = null;
+    if (/total/.test(mk)) {
+      if (f != null && a != null && p.ln != null) {
+        const t = f + a; v = t === p.ln ? null : (t > p.ln) === (p.sd !== 'Under');
+      }
+    } else if (m != null && sel) {
+      const mm = sel === ab ? m : -m;
+      if (/moneyline/.test(mk)) v = mm === 0 ? null : mm > 0;
+      else if (p.ln != null) { const c = mm + p.ln; v = c === 0 ? null : c > 0; }
+    }
+    out.set(d, v);
+  }
+  return out;
+}
+/* The player's own team tonight: the side of the matchup that is not
+   his opponent. */
+function playerSideAbbr(p){
+  const {away, home} = matchSides(p), o = oppTeam(p);
+  const a = teamAbbr(p.sp, away), h = teamAbbr(p.sp, home);
+  return !o || !a || !h ? null : o === a ? h : o === h ? a : null;
+}
+function phiOf(xs){
+  const n = xs.length;
+  if (n < 6) return {r: 0, n, same: true};
+  const pa = xs.filter(z => z[0]).length / n, pb = xs.filter(z => z[1]).length / n;
+  const pab = xs.filter(z => z[0] && z[1]).length / n;
+  const den = Math.sqrt(pa * (1 - pa) * pb * (1 - pb));
+  const phi = den > 0 ? (pab - pa * pb) / den : 0;
+  return {r: phi * n / (n + 10), n, same: true};
+}
 function pairCorr(a, b){
   if (a.mu !== b.mu) return {r: 0, n: 0, same: false};
   const k = a.i < b.i ? a.i + ':' + b.i : b.i + ':' + a.i;
   if (CORR.has(k)) return CORR.get(k);
   let res = {r: 0, n: 0, same: true};
-  if (a.kd !== 'team' && b.kd !== 'team') {
+  if (a.kd === 'team' || b.kd === 'team') {
+    // Team legs are measured on one team's past finals at tonight's
+    // lines: a player leg on HIS team's games, two team legs on the
+    // backed side's games (or the home side's, for two totals).
+    const [t, o] = a.kd === 'team' ? [a, b] : [b, a];
+    const xs = [];
+    if (o.kd !== 'team') {
+      const ab = playerSideAbbr(o);
+      if (ab) {
+        const S = teamLegSeries(t, ab);
+        for (const g of hist(o)) {
+          const x = won(o, g.v), y = S.get(g.d);
+          if (x != null && y != null) xs.push([x, y]);
+        }
+      }
+    } else {
+      const ab = [t, o].map(q => /total/.test(q.mkk || q.mk || '') ? null : teamAbbr(q.sp, q.sd)).find(Boolean)
+        || teamAbbr(t.sp, matchSides(t).home);
+      if (ab) {
+        const S1 = teamLegSeries(t, ab), S2 = teamLegSeries(o, ab);
+        for (const [d, x] of S1) { const y = S2.get(d); if (x != null && y != null) xs.push([x, y]); }
+      }
+    }
+    res = phiOf(xs);
+  } else {
     const HA = new Map(hist(a).map(g => [g.d, won(a, g.v)]));
     const xs = [];
     for (const g of hist(b)) { const x = HA.get(g.d), y = won(b, g.v); if (x != null && y != null) xs.push([x, y]); }
@@ -3887,7 +3987,7 @@ function jointProb(legs){
   let pr = 1;
   const q = legs.map(calProb);
   for (const x of q) pr *= x;
-  let ratio = 1, unmeasured = 0, rs = [];
+  let ratio = 1, unmeasured = 0, rs = [], warn = [];
   for (let i = 0; i < legs.length; i++) for (let j = i + 1; j < legs.length; j++) {
     const c = pairCorr(legs[i], legs[j]); if (!c.same) continue;
     if (c.n < 6) { unmeasured++; continue; }
@@ -3895,8 +3995,11 @@ function jointProb(legs){
     let r = 1 + c.r * Math.sqrt(((1 - pa) * (1 - pb)) / (pa * pb));
     r = Math.min(Math.min(1 / pa, 1 / pb), Math.max(0.3, r));
     ratio *= r; rs.push(c.r);
+    // Pairs that clearly move together (or against each other) are
+    // named on the card, not only folded into the estimate.
+    if (Math.abs(c.r) >= 0.25) warn.push({a: legs[i], b: legs[j], r: c.r, n: c.n});
   }
-  return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs};
+  return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs, warn};
 }
 // Same-game legs allowed by default, up to three per game.
 const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', minMp: 0.55, minEd: -1,
@@ -4045,6 +4148,13 @@ function parlayCard(r, tag){
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
       stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
       <button class="h2go" data-padd="${ids}">Add to slip</button></div>
+    ${(r.j.warn || []).length ? `<div class="pwarn">${r.j.warn.map(w => {
+      const nm = q => q.kd === 'team' ? (/total/.test(q.mkk || q.mk || '') ? `game ${esc(q.sd)} ${q.ln}` : `${esc(q.sd)}${q.mkk === 'moneyline' ? ' ML' : ' ' + spreadSign(q, q.ln)}`) : `${esc(String(q.pl).split(' ').slice(-1)[0])} ${esc(q.sd)} ${q.ln}`;
+      return `<div>${w.r > 0 ? '<b>Move together</b>' : '<b>Pull apart</b>'}: ${nm(w.a)} + ${nm(w.b)}
+        (${(w.r > 0 ? '+' : '') + w.r.toFixed(2)} over ${w.n} shared games). ${w.r > 0
+          ? 'One hitting makes the other likelier, so this is closer to one bet than two; books price that in.'
+          : 'One hitting makes the other less likely, which is why the estimate is below the naive product.'}</div>`;
+    }).join('')}</div>` : ''}
   </div>`;
 }
 let REC_DONE = 0;
@@ -4330,6 +4440,7 @@ function trkBox(p){
 }
 
 function drawTrack(){
+  alertBtn();
   const all = [...TRK.values()].sort((a, b) =>
     String(b.day || '').localeCompare(String(a.day || ''))
     || String(b.at || '').localeCompare(String(a.at || '')));
@@ -5229,6 +5340,37 @@ function drawCalibration(){
         no probability and are excluded.</span>` : ''}</div>`;
 }
 
+function drawTeamRecord(){
+  const tr = D.team_record, el = $('teamrec');
+  if (!el) return;
+  if (!tr || !(tr.rows || []).length) {
+    el.innerHTML = `<div class="empty">No graded team market from the current model yet.</div>`;
+    return;
+  }
+  const MK = {game_total: 'Game total', spread: 'Spread', moneyline: 'Moneyline'};
+  const wl = x => x ? `${x.w}\u2013${x.l}` : '\u2014';
+  const pc = x => x ? `${(100 * x.rate).toFixed(0)}%` : '';
+  const un = x => x && x.units != null
+    ? `<span class="${x.units >= 0 ? 'hit' : 'miss'}">${x.units > 0 ? '+' : ''}${x.units.toFixed(1)}u</span>` : '\u2014';
+  const rows = tr.rows.map(r => `<tr><td><b>${esc(r.sp)}</b> ${esc(MK[r.mk] || r.mk)}</td>
+      <td class="v">${wl(r.bet)} <span class="dim">${pc(r.bet)}</span></td>
+      <td class="v">${un(r.bet)}</td>
+      <td class="dim">${wl(r.pass)} ${pc(r.pass)}</td></tr>`).join('');
+  const b = tr.bets;
+  // Says what the record says, in words, once a market has 30 bets:
+  // below that a hot or cold run is mostly noise.
+  const loud = tr.rows.filter(r => r.bet && r.bet.n >= 30 && (r.bet.ci_high < 0.5 || r.bet.ci_low > 0.5));
+  el.innerHTML = `<div class="tscroll"><table>
+    <thead><tr><th>Market</th><th>Bets</th><th>Units</th><th>Passes</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="callout" style="margin-top:9px">${b ? `All team bets: <b>${wl(b)}</b> (${pc(b)}),
+      ${b.units != null ? `${b.units > 0 ? '+' : ''}${b.units.toFixed(1)} units` : 'units unknown'}.` : ''}
+      ${loud.map(r => ` <b>${esc(r.sp)} ${esc((MK[r.mk] || r.mk).toLowerCase())}</b> bets have
+        ${r.bet.ci_high < 0.5 ? 'lost' : 'won'} more than chance allows over ${r.bet.n}
+        (95% range ${(100 * r.bet.ci_low).toFixed(0)}\u2013${(100 * r.bet.ci_high).toFixed(0)}%).`).join('')}
+      ${tr.legacy ? `<br><span class="unv">${tr.legacy} older team rows predate the current
+        model and are not counted.</span>` : ''}</div>`;
+}
 function drawTierOutcomes(){
   const to = D.tier_outcomes || {}, t = to.tiers || {};
   const order = ['Legendary','Elite','Strong','Playable','Fringe','Weak']
@@ -6475,7 +6617,7 @@ function drawRecord(){
 const TAB_DRAW = {
   board: [], parlays: ['drawParlays'], trending: ['drawTrending'], games: ['drawGames'],
   stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
-  'drawLeafValue', 'drawMvm'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
+  'drawLeafValue', 'drawMvm', 'drawTeamRecord'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
 };
 const TAB_DONE = new Set(['board']);
 function ensureTab(name){
@@ -7094,6 +7236,85 @@ function teamLive(e, box){
     m > 0 ? (done ? 'won' : 'leading') : m < 0 ? (done ? 'lost' : 'trailing') : 'tied'}</span>`;
   return '';
 }
+/* A tracked prop's settled state from the live box, or null while it
+   is still open. An Over that clears is won the moment it clears; an
+   Under that goes over is lost the moment it does. A spread or a
+   moneyline is only settled at the final -- a lead is not a result. */
+function trkSettle(e){
+  const g = gameInfo({sp: e.sp, mu: e.mu});
+  if (!g || !g.id) return null;
+  const c = LIVEBOX.get(g.id), box = c && c.box;
+  if (!box) return null;
+  const done = box.state === 'post', mk = String(e.mk || ''), over = /^over$/i.test(e.sd || '');
+  const ou = cur => cur == null || e.ln == null ? null
+    : over ? (cur > e.ln ? 'hit' : done ? (cur === e.ln ? 'push' : 'lost') : null)
+           : (cur > e.ln ? 'lost' : done ? (cur === e.ln ? 'push' : 'hit') : null);
+  if (TEAM_MKS.has(e.mk)) {
+    const sc = box.score || [], a = sc.find(x => x.ha === 'away'), h = sc.find(x => x.ha === 'home');
+    if (!a || !h || a.s == null || h.s == null) return null;
+    if (/total/.test(mk)) return ou(+a.s + +h.s);
+    if (!done) return null;
+    const {away, home} = matchSides(e), who = nick(e.sd);
+    const side = who === nick(away) ? 'a' : who === nick(home) ? 'h' : null;
+    if (!side) return null;
+    const m = side === 'a' ? a.s - h.s : h.s - a.s;
+    if (/moneyline/.test(mk)) return m > 0 ? 'hit' : m < 0 ? 'lost' : 'push';
+    if (e.ln == null) return null;
+    const v = m + e.ln; return v > 0 ? 'hit' : v < 0 ? 'lost' : 'push';
+  }
+  const r = livePlayer(box, e.pl);
+  return r ? ou(liveStat(r.r, e.mk)) : null;
+}
+let ALERTS = (() => { try { return localStorage.getItem('g15alerts') === '1'; } catch (_) { return false; } })();
+const ALERTED = (() => { try { return new Set(JSON.parse(localStorage.getItem('g15alerted') || '[]')); } catch (_) { return new Set(); } })();
+function alertBtn(){
+  const b = $('trkalert'); if (!b) return;
+  b.setAttribute('aria-pressed', String(ALERTS)); b.classList.toggle('on', ALERTS);
+  b.textContent = ALERTS ? 'Alerts on' : 'Alerts off';
+}
+function toast(msg){
+  let t = $('g15toast');
+  if (!t) { t = document.createElement('div'); t.id = 'g15toast'; t.className = 'toast';
+            t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  const d = document.createElement('div'); d.textContent = msg; t.appendChild(d);
+  setTimeout(() => d.remove(), 9000);
+}
+function checkAlerts(){
+  if (!ALERTS) return;
+  let fresh = 0;
+  for (const [k, e] of TRK) {
+    const st = trkSettle(e);
+    if (!st || ALERTED.has(k)) continue;
+    ALERTED.add(k); fresh++;
+    const mk = String(e.mk || '');
+    const what = (TEAM_MKS.has(e.mk) && !/total/.test(mk)
+      ? `${e.sd} ${/moneyline/.test(mk) ? 'to win' : (e.ln > 0 ? '+' : '') + (e.ln ?? '')}`
+      : `${e.pl} ${e.sd || ''} ${e.ln ?? ''}${TEAM_MKS.has(e.mk) ? '' : ' ' + mk.replace(/_/g, ' ')}`)
+      .replace(/\s+/g, ' ').trim();
+    const msg = st === 'hit' ? `Hit: ${what}` : st === 'lost' ? `Lost: ${what}` : `Push: ${what}`;
+    toast(msg);
+    try { navigator.vibrate && navigator.vibrate(st === 'hit' ? [80, 60, 80] : 200); } catch (_) {}
+    try { if (window.Notification && Notification.permission === 'granted')
+      new Notification('Green15', {body: msg, tag: k}); } catch (_) {}
+  }
+  if (fresh) {
+    try { localStorage.setItem('g15alerted', JSON.stringify([...ALERTED].slice(-300))); } catch (_) {}
+    if (tabOn('track')) drawTrack();
+  }
+}
+if (typeof document !== 'undefined') document.addEventListener('click', async ev => {
+  if (!ev.target.closest || !ev.target.closest('#trkalert')) return;
+  ALERTS = !ALERTS;
+  try { localStorage.setItem('g15alerts', ALERTS ? '1' : '0'); } catch (_) {}
+  // Already-settled props are marked as seen when alerts go on, so
+  // turning them on does not fire a burst for last night's results.
+  if (ALERTS) for (const [k, e] of TRK) if (trkSettle(e)) ALERTED.add(k);
+  if (ALERTS && window.Notification && Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch (_) {}
+  }
+  alertBtn();
+  if (ALERTS) liveTick();
+});
 let LIVE_TRK_BUSY = 0;
 async function trkLiveFetch(force){
   if (LIVE_TRK_BUSY) return; LIVE_TRK_BUSY = 1;
@@ -7110,11 +7331,14 @@ function tabOn(name){ const el = $('tab-' + name); return el && !el.hidden; }
 async function liveTick(){
   if (document.hidden || !D) return;
   const games = tabOn('games') && liveGames().some(lg => LIVEOPEN.has(lg.mu) && lg.g.st === 'in');
-  const trk = tabOn('track') && [...TRK.values()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
+  const inPlay = [...TRK.values()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
+  // With alerts on, tracked games are read on every tick wherever the
+  // reader is in the app, not only on the Tracked tab.
+  const trk = (tabOn('track') || ALERTS) && inPlay;
   if (!games && !trk) return;
   await readScoreboards();
   if (games) await drawLive(true);
-  if (trk && await trkLiveFetch(true)) drawTrack();
+  if (trk && await trkLiveFetch(true)) { if (tabOn('track')) drawTrack(); checkAlerts(); }
 }
 function vetBoard(all){
   ALLP = all;
