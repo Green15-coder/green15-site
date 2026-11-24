@@ -523,6 +523,10 @@ tr.bestw td{font-weight:700}
 tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 .lvv span{font-weight:650;margin-right:5px}
 .unv{color:var(--mark)}
+.pendrow{font-size:.78rem;color:var(--mark);padding:2px 14px 6px}
+.outnow{color:var(--under);font-weight:600}
+.trtag{font-family:var(--m);font-size:.9em;font-weight:600;white-space:nowrap}
+.trtag.tru{color:var(--over)}.trtag.trd{color:var(--under)}
 .tgl{grid-column:1/-1;margin-top:6px;font-family:var(--m);font-size:10px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
   text-decoration:underline;text-underline-offset:3px}
@@ -880,6 +884,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   </div>
   <div id="boardwhy"></div>
   <p class="eyebrow" id="topnote" hidden></p>
+  <p class="eyebrow" id="finnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
 </div>
@@ -1159,7 +1164,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 <script>
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
 const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
-           trk:new Set(), mk:new Set(), odds:new Set()};
+           trk:new Set(), mk:new Set(), odds:new Set(), trend:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -1227,10 +1232,17 @@ const priceBand = pr => {
 };
 
 const FILTERS = [
-  ['Sport','sport',['NBA','NHL','NFL']],
-  ['Tier','tier',['Legendary','Elite','Strong','Playable','Fringe','Weak']],
+  /* Offered only when the board has a row for them. A chip for a
+     sport or tier with nothing in it selects an empty board. */
+  ['Sport','sport', () => ['NBA','NHL','NFL','MLB'].filter(lg =>
+    PROPS.some(p => String(p.sp || '').toUpperCase() === lg))],
+  ['Tier','tier', () => ['Legendary','Elite','Strong','Playable','Fringe','Weak'].filter(t =>
+    PROPS.some(p => p.ti === t))],
   ['Side','side',['Over','Under']],
   ['Bar','bar',['researched','8+ games','edge 2%+','no red leaf']],
+  /* His last three in THIS market against his saved games before
+     them, at the Trending tab's threshold. */
+  ['Trend','trend',['trending up','trending down','trend backs the pick','on Trending tab']],
   /* Reads the tracker, which is per-browser and not in the data file.
      It lives in the same registry as the rest so there is one place a
      filter is declared and one place it is matched. */
@@ -1323,7 +1335,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
-    && !F.trk.size && !F.mk.size && !F.odds.size
+    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size
     && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
@@ -1359,7 +1371,7 @@ function drawHero(){
 // Every group is a drop-down with its own reset, so the filter bar is
 // one row of buttons instead of five rows of chips to scroll past.
 const CLEAR_LABEL = {sport: 'all sports', tier: 'all tiers', side: 'both sides',
-  bar: 'no minimum', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
+  bar: 'no minimum', trend: 'any trend', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
 
 /* Board order. The evidence score is the default because it is what
    the tiers are built on; model probability, edge and price are a
@@ -1370,8 +1382,59 @@ const SORTS = [
   ['mp', 'Model probability'],
   ['ed', 'Edge'],
   ['l3', 'Last 3 vs line'],
+  ['tr', 'Most trending'],
   ['pr', 'Price (plus money first)'],
 ];
+/* TREND OF THIS PROP'S OWN STAT.
+   His last three saved games in this market against every saved game
+   before them -- the same comparison the Trending tab makes, on the
+   number the bet is about rather than a related stat. Needs three
+   recent games and five before them; anything thinner is no trend,
+   not a small one.
+
+   Ranked by how far the three-game average sits from his normal in
+   units of his own game-to-game spread (z), not by percentage: one
+   goal on a 0.1 baseline is +900%, and a percentage built on a
+   near-zero base would bury every real move under goal scorers. A
+   prop is "trending" when it clears the Trending tab's percentage
+   AND sits 1.5 spreads from normal -- a run three typical games
+   rarely produce by chance. */
+const TRC = new Map();
+function propTrend(p){
+  if (TRC.has(p.i)) return TRC.get(p.i);
+  let t = null;
+  if (p.kd !== 'team') {
+    const h = hist(p).filter(g => g.v != null);         // newest first
+    const rec = h.slice(0, 3), base = h.slice(3);
+    if (rec.length === 3 && base.length >= 5) {
+      const r = mean(rec.map(g => g.v)), b = mean(base.map(g => g.v));
+      const sd = Math.sqrt(base.reduce((a, g) => a + (g.v - b) ** 2, 0) / (base.length - 1));
+      const z = sd > 0 ? (r - b) / (sd / Math.sqrt(3)) : (r === b ? 0 : null);
+      if (z != null) {
+        const pct = b > 0 ? 100 * (r - b) / b : null;
+        t = {pct, z, r, b, n: base.length,
+             backs: r === b ? null : (r > b) === (p.sd !== 'Under')};
+      }
+    }
+  }
+  TRC.set(p.i, t);
+  return t;
+}
+const trMin = () => ((D && D.trending) || {}).min_pct ?? 15;
+const TR_Z = 1.5;
+/* +1 trending up, -1 trending down, 0 not trending. */
+function trendDir(p){
+  const t = propTrend(p);
+  if (!t || Math.abs(t.z) < TR_Z) return 0;
+  if (t.pct != null && Math.abs(t.pct) < trMin()) return 0;
+  return t.r > t.b ? 1 : -1;
+}
+function trendTag(p){
+  const t = propTrend(p), d = trendDir(p);
+  if (!d) return '';
+  return `<span class="trtag ${t.backs ? 'tru' : 'trd'}" title="last 3 averaged ${r1(t.r)} against ${r1(t.b)} over his ${t.n} saved games before them (${t.z > 0 ? '+' : ''}${t.z.toFixed(1)} of his usual spreads)">${
+    d > 0 ? '\u25B2' : '\u25BC'} L3 ${r1(t.r)} vs ${r1(t.b)}</span>`;
+}
 function l3Room(p){
   const a = recentAvg(p, 3);
   if (a == null || p.ln == null) return -Infinity;
@@ -1384,6 +1447,7 @@ function sortRows(a, b){
     : SORT === 'ed' ? (b.ed ?? -9) - (a.ed ?? -9)
     : SORT === 'pr' ? (b.pr ?? -1e9) - (a.pr ?? -1e9)
     : SORT === 'l3' ? (l3Room(b) - l3Room(a)) || 0
+    : SORT === 'tr' ? (Math.abs((propTrend(b) || {}).z ?? -1) - Math.abs((propTrend(a) || {}).z ?? -1)) || 0
     : 0;
   return by || (b.sc||0)-(a.sc||0) || (b.ed||0)-(a.ed||0);
 }
@@ -1442,6 +1506,15 @@ document.addEventListener('click', e => {
   document.querySelectorAll('#filters details.fdd[open]').forEach(d => d.open = false);
 });
 
+let TRSET = null;
+function onTrendingTab(p){
+  if (!TRSET) {
+    const t = (D && D.trending) || {}, min = t.min_pct ?? 15;
+    TRSET = new Set((t.players || []).filter(r => (r.moves || []).some(m => m.pct != null && Math.abs(m.pct) >= min))
+      .map(r => String(r.sport || '').toUpperCase() + '|' + normName(r.player)));
+  }
+  return TRSET.has(String(p.sp || '').toUpperCase() + '|' + normName(p.pl));
+}
 function matches(p){
   const q = ($('q').value || '').trim().toLowerCase();
   if (q && !(`${p.pl} ${p.mk} ${p.mu||''}`.toLowerCase().includes(q))) return false;
@@ -1455,6 +1528,15 @@ function matches(p){
     let hit = false;
     for (const v of F.trk) if (st && st === TRK_FILTER[v]) hit = true;
     if (!hit) return false;
+  }
+  if (F.trend.size) {
+    const t = propTrend(p), d = trendDir(p);
+    for (const v of F.trend) {
+      if (v === 'trending up' && d !== 1) return false;
+      if (v === 'trending down' && d !== -1) return false;
+      if (v === 'trend backs the pick' && !(d && t.backs)) return false;
+      if (v === 'on Trending tab' && !onTrendingTab(p)) return false;
+    }
   }
   for (const b of F.bar) {
     // A row whose research never arrived has leaves graded on
@@ -3099,6 +3181,13 @@ function draw(){
   // as "usable but mediocre" is how something you cannot bet ends
   // up at the top of the board.
   $('npend').textContent = PROPS.filter(p => p.elig === false).length;
+  const fn = $('finnote');
+  if (fn) {
+    fn.hidden = !FINAL.length;
+    fn.textContent = FINAL.length
+      ? `${FINAL.length.toLocaleString()} prop${FINAL.length === 1 ? '' : 's'} from games already final are off the board — they settle when the grader runs.`
+      : '';
+  }
   const nteam = PROPS.filter(p => p.kd === 'team').length;
   $('nteam').textContent = nteam;
   // Hidden entirely until the engine produces one, rather than
@@ -3201,7 +3290,9 @@ function rowHtml(p0){
           <span class="nm">${headline(p)}</span>
           <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
             ${vs(p)}
-            · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}</span>
+            · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}${
+            (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
+            p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}</span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
@@ -3217,6 +3308,7 @@ function rowHtml(p0){
       ${recentStrip(p)}
       ${p.kd !== 'team' ? archChips(p) : ''}
       ${srail(p)}
+      ${p.evx ? `<div class="pendrow">${esc(p.evx)}</div>` : ''}
       ${p.elig === false && (p.pend||[]).length
         ? `<div class="pendrow">${esc(p.pend.join(' \u00b7 '))}</div>` : ''}
       ${open ? detail(p, p0) : ''}</div>`;
@@ -3515,6 +3607,21 @@ function circumstanceHist(p){
 /* ================================================================
    MATCHUP SCORECARD -- every factor, pointed at THIS bet's side.
    ================================================================ */
+const LGTOT = {};
+function leagueTotal(lg){
+  if (lg in LGTOT) return LGTOT[lg];
+  const seen = new Set(), xs = [];
+  for (const [k, rows] of Object.entries(D.tbox || {})) {
+    if (!k.startsWith(lg + '|')) continue;
+    const me = k.split('|')[1];
+    for (const r of rows) {
+      if (r[3] == null || r[4] == null) continue;
+      const g = r[0] + '|' + [me, r[1]].sort().join('-');
+      if (seen.has(g)) continue; seen.add(g); xs.push(+r[3] + +r[4]);
+    }
+  }
+  return (LGTOT[lg] = xs.length >= 20 ? {v: medianOf(xs), n: xs.length} : null);
+}
 function matchupScore(p){
   if (p.kd === 'team') return '';
   const ev = p.ev || {}, H = hist(p), opp = oppTeam(p), over = p.sd !== 'Under';
@@ -3546,9 +3653,12 @@ function matchupScore(p){
   }
   if (ev.game_total != null) {
     const lg = String(p.sp || '').toUpperCase();
-    const norm = {NBA: 225, NHL: 6, NFL: 44, MLB: 8.5}[lg];
-    t('game total', ev.game_total, ev.spread != null ? `spread ${ev.spread > 0 ? '+' : ''}${ev.spread}` : '',
-      norm == null ? 0 : Math.abs(ev.game_total - norm) < norm * 0.03 ? 0 : ((ev.game_total > norm) === over ? 1 : -1));
+    // "Normal" is the median combined score of this league's saved
+    // games, not a typed-in number.
+    const norm = leagueTotal(lg);
+    t('game total', ev.game_total, (ev.spread != null ? `spread ${ev.spread > 0 ? '+' : ''}${ev.spread}` : '')
+      + (norm ? ` \u00b7 median ${r1(norm.v)} in ${norm.n}` : ''),
+      norm == null ? 0 : Math.abs(ev.game_total - norm.v) < norm.v * 0.03 ? 0 : ((ev.game_total > norm.v) === over ? 1 : -1));
   }
   if (ev.rest_days != null) t('rest', `${ev.rest_days}d`, ev.rest_days === 0 ? 'back-to-back' : 'days off', ev.rest_days === 0 ? (over ? -1 : 1) : 0);
   const fresh = ev.opp_out_new || [], long = (ev.opp_out || []).filter(n => !fresh.includes(n));
@@ -3623,10 +3733,13 @@ const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', min
   maxGame: 2, sort: 'prob', minN: 8};
 const GR_ORDER = {A: 4, B: 3, C: 2, D: 1};
 function legPool(F){
-  const today = new Date().toLocaleDateString('en-CA');   // local date, not UTC
   return PROPS.filter(p => {
     if (p.mp == null || p.pr == null || p.ln == null || p.data_error) return false;
-    if (F.upcoming && p.gd && p.gd < today) return false;
+    // Finished games never reach PROPS; this is the belt to that brace.
+    if (F.upcoming && gameFinal(p)) return false;
+    // Listed Out / Doubtful after the price was taken: the leg is
+    // likely void or dead, not a probability.
+    if (p.outNow) return false;
     if (!F.stale && (p.elig === false || ageClass(p.at) === 'old')) return false;
     if (F.kind && p.kd !== F.kind) return false;
     if (F.sp.size && !F.sp.has(String(p.sp).toUpperCase())) return false;
@@ -3651,8 +3764,10 @@ function legScore(p, sort){
   return sort === 'edge' ? (p.ed ?? 0) : sort === 'pay' ? calProb(p) * dec(p.pr) : calProb(p);
 }
 function generateParlays(F, want = 8){
-  const K = Math.max(2, Math.min(6, F.legs));
-  const pool = legPool(F).sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, 48);
+  const K = Math.max(2, Math.min(10, F.legs));
+  // Wider pool for long tickets: ten legs from different games needs
+  // ten games represented, and the top 48 legs can come from a few.
+  const pool = legPool(F).sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, Math.max(48, 8 * K));
   const score = legs => {
     const j = jointProb(legs), d = legs.reduce((a, p) => a * dec(p.pr), 1);
     return {legs, j, d, ev: j.est * d - 1,
@@ -3689,11 +3804,19 @@ function generateParlays(F, want = 8){
   }
   return {out, pool: pool.length};
 }
-const pc = v => v == null ? '\u2014' : (100 * v).toFixed(v < 0.1 ? 1 : 0) + '%';
+const pc = v => v == null ? '\u2014' : (100 * v).toFixed(v < 0.01 ? 2 : v < 0.1 ? 1 : 0) + '%';
+/* Largest measured said-vs-happened gap, in points, or null when the
+   Record tab has no calibration to read. */
+function calGap(){
+  const g = (((D.calibration || {}).buckets) || []).filter(b => !b.thin && b.said != null && b.happened != null)
+    .map(b => Math.abs(b.said - b.happened));
+  return g.length ? Math.max(...g) : null;
+}
 function parlayCard(r, tag){
   const sgp = new Set(r.legs.map(p => p.mu)).size < r.legs.length;
   const stale = r.legs.filter(p => p.elig === false || ageClass(p.at) === 'old').length;
-  const be = 1 / r.d, shade = r.legs.reduce((a, p) => a * Math.max(0.01, calProb(p) - 0.05), 1);
+  const cg = calGap();
+  const be = 1 / r.d, shade = cg == null ? null : r.legs.reduce((a, p) => a * Math.max(0.01, calProb(p) - cg / 100), 1);
   const gap = r.j.est - be;
   const ids = r.legs.map(p => p.i).join(',');
   return `<div class="pcard">
@@ -3707,7 +3830,7 @@ function parlayCard(r, tag){
       <span class="dim">${p.pr > 0 ? '+' : ''}${p.pr} \u00b7 model ${pc(p.mp)} \u00b7 cal ${pc(calProb(p))}${
         recentVals(p).length >= 3 ? ` \u00b7 L3 ${recentVals(p).slice(0, 3).filter(x => won(p, x)).length}/3` : ''}</span></li>`).join('')}</ol>
     <div class="pfoot">independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
-      \u00b7 if each leg is 5 pts worse: ${pc(shade)} \u00b7 break-even ${pc(be)}${
+      ${shade == null ? '' : `\u00b7 if each leg is ${cg.toFixed(1)} pts worse (largest measured miss): ${pc(shade)} `}\u00b7 break-even ${pc(be)}${
       sgp ? ' \u00b7 same game: the book will price this lower than shown' : ''}${
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
       stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
@@ -3723,7 +3846,7 @@ function drawParlays(){
   const ch = (k, v, lab, on) => `<button class="chip" data-pf="${k}|${v}" aria-pressed="${on ? 'true' : 'false'}">${lab}</button>`;
   const row = (lab, html) => `<div class="pfrow"><span class="cfl">${lab}</span><div class="chips">${html}</div></div>`;
   $('parlayfil').innerHTML = [
-    row('legs', [2, 3, 4, 5, 6].map(n => ch('legs', n, n, F.legs === n)).join('')),
+    row('legs', [2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => ch('legs', n, n, F.legs === n)).join('')),
     row('sport', ch('sp', '', 'All', !F.sp.size) + sports.map(s => ch('sp', s, s, F.sp.has(s))).join('')),
     row('type', ch('kind', 'player', 'Player', F.kind === 'player') + ch('kind', 'team', 'Team', F.kind === 'team') + ch('kind', '', 'Both', !F.kind)),
     row('props', ch('mk', '', 'All', !F.mk.size) + mks.map(m => ch('mk', m, esc(m.replace(/_/g, ' ')), F.mk.has(m))).join('')),
@@ -3755,7 +3878,11 @@ function drawParlays(){
     $('parlayrec').innerHTML = `<h3 class="ph">Recommended <span class="dim">model ≥ 55%, one leg per game</span></h3>
     ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
   el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool</span></h3>
-    ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. Loosen the model threshold, the odds range or the correlation rule.</div>`}`;
+    ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. ${(() => {
+      const ng = new Set(legPool(F).map(p => p.mu)).size;
+      return F.corr === 'diff' && ng < F.legs
+        ? `The legs that pass come from ${ng} game${ng === 1 ? '' : 's'}, and "different games" needs ${F.legs}. Allow same-game legs or widen the sport or prop filter.`
+        : 'Loosen the model threshold, the odds range or the correlation rule.'; })()}</div>`}`;
 }
 function pfClick(t){
   const [k, v] = t.dataset.pf.split('|').length > 2 ? [t.dataset.pf.split('|')[0], t.dataset.pf.split('|').slice(1).join('|')] : t.dataset.pf.split('|');
@@ -4107,9 +4234,21 @@ function parlay(){
   const d = legs.reduce((a,p) => a * dec(p.pr), 1);
   // Joint probability assuming independence. Flagged below, because
   // legs from one game are not independent and this overstates them.
-  const joint = legs.reduce((a,p) => a * (p.mp ?? 0.5), 1);
+  //
+  // Calibrated per-leg chances, the same ones the parlay builder
+  // uses. The raw model probability was shown before, and a leg with
+  // none counted as a coin flip -- 50% that nothing measured.
+  const q = legs.map(calProb);
+  const known = q.every(x => x != null);
+  const joint = known ? q.reduce((a, x) => a * x, 1) : null;
   const be = 1/d;
-  if (sameGame) {
+  if (!sameGame && !known) {
+    $('pOdds').style.fontSize = '';
+    $('pOdds').textContent = am(d);
+    $('pProb').textContent = 'not estimated';
+    $('pProb').style.fontSize = '14px';
+    $('pBE').textContent = `${(100*be).toFixed(1)}%`;
+  } else if (sameGame) {
     $('pOdds').textContent = 'not verified';
     $('pOdds').style.fontSize = '14px';
     $('pProb').textContent = 'not estimated';
@@ -4126,8 +4265,17 @@ function parlay(){
     `<span>${esc(p.pl)} ${esc(p.sd)} ${p.ln ?? ''}</span>`).join('');
 
   // The hold: what the book keeps once every leg's vig compounds.
-  const fairD = legs.reduce((a,p) => a * (1/(p.fp ?? 0.5)), 1);
-  const hold = (1 - d/fairD) * 100;
+  // No-vig chance per leg; a leg without one leaves the hold unstated
+  // rather than assumed.
+  const fairOK = legs.every(p => p.fp != null && p.fp > 0);
+  const fairD = fairOK ? legs.reduce((a,p) => a * (1/p.fp), 1) : null;
+  const hold = fairOK ? (1 - d/fairD) * 100 : null;
+  const legHold = fairOK ? 100 * legs.reduce((a, p) => a + (1/dec(p.pr) - p.fp), 0) / legs.length : null;
+  // The shade is the largest gap the Record tab measured between what
+  // was said and what happened, not a number picked to look modest.
+  const gaps = (((D.calibration || {}).buckets) || []).filter(b => !b.thin && b.said != null && b.happened != null)
+    .map(b => Math.abs(b.said - b.happened));
+  const gap = gaps.length ? Math.max(...gaps) : null;
   // No expected-value figure is shown, deliberately.
   //
   // EV from these probabilities would read "+212% per unit" on a
@@ -4140,7 +4288,7 @@ function parlay(){
   // What is shown instead is the sensitivity: the same ticket if every
   // leg is overconfident by five points, which is smaller than the
   // error actually measured.
-  const shaded = legs.reduce((a,p) => a * Math.max(0.01, (p.mp ?? 0.5) - 0.05), 1);
+  const shaded = known && gap != null ? q.reduce((a, x) => a * Math.max(0.01, x - gap / 100), 1) : null;
 
   let note = sameGame
     ? `<b>Combined price not verified.</b> These legs share a game, so a
@@ -4148,24 +4296,31 @@ function parlay(){
        the individual prices. Multiplying them would overstate both the
        payout and the chance of cashing. Enter the book's actual combined
        number to evaluate this ticket.`
-    : `The book keeps <b>${hold.toFixed(1)}%</b> of this ticket once each
-       leg's margin compounds — one leg is around 4.5%. You need
-       <b>${(100*be).toFixed(1)}%</b> to break even.`;
-  if (!sameGame) note += `<br><br>If every leg is overconfident by five points — less than
-    this model's measured error — the ${(100*joint).toFixed(1)}% above becomes
-    <b>${(100*shaded).toFixed(1)}%</b>. Error compounds once per leg, which is
-    why parlay probabilities are the least trustworthy number here.`;
+    : !known
+    ? `<b>Chance not estimated.</b> At least one leg has no calibrated
+       probability, and it is not filled in as a coin flip. You need
+       <b>${(100*be).toFixed(1)}%</b> to break even.`
+    : (hold != null
+      ? `The book keeps <b>${hold.toFixed(1)}%</b> of this ticket once each
+         leg's margin compounds — each leg's price sits ${legHold.toFixed(1)} points above its no-vig chance on average. `
+      : `The hold is not stated: a leg has no no-vig price. `)
+      + `You need <b>${(100*be).toFixed(1)}%</b> to break even.`;
+  if (!sameGame && known && shaded != null) note += `<br><br>If every leg is overconfident by
+    ${gap.toFixed(1)} points — the largest gap the Record tab measured — the
+    ${(100*joint).toFixed(1)}% above becomes <b>${(100*shaded).toFixed(1)}%</b>.
+    Error compounds once per leg, which is why parlay probabilities are the
+    least trustworthy number here.`;
 
 
   const n = legs.length;
   let cls = 'traynote';
   if (n >= 4) {
     cls = 'traynote warn';
-    note += `<br><br><b>${n} legs.</b> Your ledger is <b>0–38</b> on tickets of
-      eight or more, and that was arithmetic, not luck: at a true 60% per leg
-      an eight-leg ticket cashes 1.7% of the time. The clearest case in your
-      own data is two slips from one day off the same pool — a 3-leg went
-      3-for-3 and paid +383, a 9-leg went 6-for-9 and paid nothing.`;
+    // Arithmetic only. The ticket history this used to quote is not in
+    // the data this page carries, so it is not repeated as fact here.
+    note += `<br><br><b>${n} legs.</b> Every leg must hit: at a true 60% per leg
+      a ${n}-leg ticket cashes ${(100 * Math.pow(0.6, n)).toFixed(1)}% of the time,
+      and at 55% it is ${(100 * Math.pow(0.55, n)).toFixed(1)}%.`;
   }
   $('pNote').className = cls;
   $('pNote').innerHTML = note;
@@ -6298,6 +6453,108 @@ function expandShared(data) {
   return data;
 }
 
+/* ================================================================
+   GAME STATE AND RESEARCH INTEGRITY
+   Two things the board used to state without checking:
+
+   1. That a prop is still live. game_date is the UTC date of the
+      tip, and the board kept a full extra day, so last night's
+      finished games sat on tonight's board, in Top 15 and in the
+      parlay pool. A game is FINAL here when the saved box scores
+      already hold it (either team, either of the two dates a UTC
+      date can mean in Central), or when it is more than 32 hours
+      past the start of its UTC date.
+
+   2. That the research belongs to this game. It was keyed by
+      player and market only, so a later run's block -- his NEXT
+      game -- was attached to older props: the wrong opponent's
+      head-to-head, and the game itself charted as recent form.
+      Rows dated on or after the game are dropped, and opponent
+      splits whose meetings were against someone else are removed
+      rather than shown.
+   ================================================================ */
+function sideAbbr(sp, name){
+  const a = teamAbbr(sp, name); if (a) return a;
+  const nick = teamNorm(name || '').split(' ').pop();
+  if (!nick) return null;
+  const hits = Object.entries(((D && D.team_names) || {})[String(sp || '').toUpperCase()] || {})
+    .filter(([, nm]) => teamNorm(nm).split(' ').pop() === nick);
+  return hits.length === 1 ? hits[0][0] : null;
+}
+function gameSides(p){
+  const mt = (p.ev || {}).matchup_teams;
+  const {away, home} = matchSides(p);
+  let a = sideAbbr(p.sp, away), h = sideAbbr(p.sp, home);
+  if (mt && typeof mt === 'object') for (const [ab, nm] of Object.entries(mt)) {
+    if (teamNorm(nm) === teamNorm(away)) a = a || ab;
+    if (teamNorm(nm) === teamNorm(home)) h = h || ab;
+  }
+  return a && h ? [a, h] : null;
+}
+const addDays = (d, k) => new Date(Date.parse(d + 'T00:00:00Z') + k * 864e5).toISOString().slice(0, 10);
+/* The date of this prop's game in the saved box scores, or null. */
+function finalDate(p){
+  if (!p.gd) return null;
+  const sides = gameSides(p);
+  if (!sides) return null;
+  const lg = String(p.sp || '').toUpperCase(), T = D.tbox || {};
+  const want = new Set([p.gd, addDays(p.gd, -1)]);
+  for (const [me, op] of [sides, [sides[1], sides[0]]])
+    for (const r of (T[`${lg}|${me}`] || []))
+      if (want.has(r[0]) && r[1] === op) return r[0];
+  if (p.kd !== 'team') for (const r of boxRows(p.sp, p.pl))
+    if (want.has(r[0]) && sides.includes(r[2])) return r[0];
+  return null;
+}
+function gameFinal(p){
+  if (p.fin !== undefined) return p.fin;
+  if (finalDate(p)) return (p.fin = true);
+  return (p.fin = !!(p.gd && Date.now() > Date.parse(p.gd + 'T00:00:00Z') + 32 * 36e5));
+}
+const OPP_FIELDS = ['h2h', 'vs_opp', 'vs_opp_n', 'pos_vs_opp', 'opp_log', 'def_rank',
+  'def_rank_pos', 'opp_allowed', 'similar', 'opp_out', 'opp_out_new'];
+function checkResearch(p){
+  if (p.kd === 'team' || !p.ev || !p.gd) return;
+  const ev = p.ev, fd = finalDate(p);
+  // A log that holds the game itself, or anything after it, was built
+  // for a later game.
+  const floor = fd || p.gd;
+  const rec = ev.recent || [];
+  const late = rec.filter(r => String(r.d || '') >= floor).length;
+  // Meetings that were not against tonight's opponent.
+  const op = oppTeam(p), rows = boxRows(p.sp, p.pl);
+  const oppOn = d => { const r = rows.find(x => x[0] === d); return r ? r[2] : null; };
+  const dates = [...((ev.h2h || {}).games || []).map(g => g.date), ...(ev.vs_opp || []).map(g => g.d)]
+    .filter(Boolean);
+  const wrong = op ? dates.filter(d => { const o = oppOn(d); return o && o !== op; }).length : 0;
+  if (!late && !wrong) return;
+  const nev = {...ev};
+  if (late) nev.recent = rec.filter(r => String(r.d || '') < floor);
+  if (late || wrong) for (const k of OPP_FIELDS) delete nev[k];
+  p.ev = nev;
+  p.evx = late
+    ? `research attached to this prop was built after its game (${late} later game${late === 1 ? '' : 's'} in the log) \u2014 opponent splits removed, form cut to games before it`
+    : `opponent splits attached to this prop were against a different team \u2014 removed`;
+}
+/* A player listed Out / Doubtful / IR on the newest injury report. */
+function listedOut(p){
+  if (p.kd === 'team') return null;
+  const lg = String(p.sp || '').toUpperCase(), me = normName(p.pl);
+  const r = (((D.injuries || {})[lg] || {}).rows || []).find(x => x.name && normName(x.name) === me);
+  return r && OUT_RX.test(String(r.status || '')) ? r.status : null;
+}
+function vetBoard(all){
+  const live = [], fin = [];
+  for (const p of all) {
+    checkResearch(p);
+    p.outNow = listedOut(p);
+    (gameFinal(p) ? fin : live).push(p);
+  }
+  FINAL = fin;
+  return live;
+}
+let FINAL = [];
+
 (async () => {
   try {
     D = await loadData();
@@ -6307,7 +6564,7 @@ function expandShared(data) {
     return;
   }
   const b = D.board || {};
-  PROPS = b.props || [];
+  PROPS = vetBoard(b.props || []);
   // The DATA's age, not the page's. A rebuild without a fresh
   // slate moves generated_at and leaves every price where it was,
   // and "updated just now" above a seven-hour-old board is the
