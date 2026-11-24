@@ -100,6 +100,8 @@ details.fdd>summary::after{content:' \25BE';opacity:.6}
 details.fdd[open]>summary{border-color:var(--ink)}
 details.fdd .fcnt{display:inline-block;min-width:16px;padding:0 4px;border-radius:999px;
   background:var(--clover);color:var(--on-clover);font-size:10px;text-align:center}
+details.fdd .fmenu .fnote{flex-basis:100%;font-size:11.5px;line-height:1.45;color:var(--ink-2);margin-top:4px}
+details.fdd .fmenu .fnote b{color:var(--ink)}
 details.fdd .fmenu{position:absolute;left:0;right:0;z-index:30;margin-top:6px;display:flex;flex-wrap:wrap;
   gap:6px;padding:10px;background:var(--card);border:1px solid var(--rule);border-radius:10px;
   box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:50vh;overflow:auto}
@@ -547,6 +549,17 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
   margin-top:4px;line-height:1.55}
 .nopct{grid-column:1/-1;font-family:var(--m);font-size:10.5px;
   color:var(--mark);margin-top:3px}
+.reqbox .reqhead{font-size:14px;margin:0 0 4px}
+.reqbox .reqgrp{font-family:var(--m);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);margin:10px 0 3px;padding-top:7px;border-top:1px solid var(--rule)}
+.reqbox .reqline{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;
+  padding:2px 0;align-items:baseline}
+.reqbox .reqline span{color:var(--ink-2)}
+.reqbox .reqline b{font-family:var(--m);font-variant-numeric:tabular-nums;text-align:right}
+.reqbox .reqline b.hit{color:var(--over)} .reqbox .reqline b.miss{color:var(--under)}
+.reqbox .reqstrip{margin:2px 0 6px}
+.reqbox .vsg.push{border-bottom-color:var(--ink-2)}
+.reqbox .reqnote{font-size:11.5px;color:var(--ink-2);margin-top:3px;line-height:1.45}
 .simbox{padding:11px 12px;border-radius:11px;background:var(--card);
   border:1px solid var(--rule)}
 .simbox h4{font-family:var(--m);font-size:9px;letter-spacing:.14em;
@@ -1232,7 +1245,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
 const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
            trk:new Set(), mk:new Set(), odds:new Set(), trend:new Set(),
-           game:new Set(), start:new Set()};
+           game:new Set(), start:new Set(), def:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -1327,6 +1340,15 @@ const FILTERS = [
     const have = new Set(PROPS.map(p => priceBand(p.pr)).filter(Boolean));
     return PRICE_BANDS.map(([l]) => l).filter(l => have.has(l));
   }],
+  /* The defence he faces tonight. "Soft / neutral / tough for this
+     bet" is the Matchup Grade leaf on the card, which is already
+     side-aware: a generous defence helps an Over and hurts an Under.
+     The two rank bands are side-blind -- where the opponent sits on
+     what it concedes in this stat (to his position when there is a
+     position split), 1 = concedes least. A row with no ranked or
+     graded defence is a pass under this filter, never a guess. */
+  ['Defense','def', () => DEF_OPTS.filter(o =>
+    PROPS.some(p => defTags(p).has(o)))],
   /* Several prop types at once -- points AND rebounds AND assists --
      not one at a time. Built from the markets actually on this board,
      most common first, so a chip can never select nothing. Chips in
@@ -1338,6 +1360,48 @@ const FILTERS = [
     return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b));
   }],
 ];
+const DEF_OPTS = ['soft for this bet', 'neutral', 'tough for this bet',
+  'concedes most (bottom third)', 'concedes least (top third)'];
+const DEFC = new Map();
+function defTags(p){
+  if (DEFC.has(p.i)) return DEFC.get(p.i);
+  const t = new Set();
+  if (p.kd !== 'team') {
+    const lf = (p.lv || []).find(l => l[3] === 'matchup');
+    const st = lf && lf[4] !== false ? lf[1] : null;
+    if (st === 'green') t.add('soft for this bet');
+    else if (st === 'yellow') t.add('neutral');
+    else if (st === 'red') t.add('tough for this bet');
+    const ev = p.ev || {}, dr = ev.def_rank_pos || ev.def_rank;
+    if (dr && dr.rank && dr.of >= 6) {
+      if (dr.rank > dr.of * 2 / 3) t.add('concedes most (bottom third)');
+      else if (dr.rank <= dr.of / 3) t.add('concedes least (top third)');
+    }
+  }
+  DEFC.set(p.i, t);
+  return t;
+}
+/* WHAT THIS FILTER HAS BEEN WORTH. Read off the leaf-value table the
+   Record tab is built from, so the menu can never claim more than
+   the graded history shows. "Priced" is what the no-vig prices of
+   those same picks implied; the gap between the two is the part the
+   books had not already charged for. */
+function defNote(){
+  const lv = (D && D.leaf_value) || {};
+  const pick = t => ((t && t.leaves) || []).find(x => x.id === 'matchup');
+  const line = (lab, m) => {
+    if (!m || !m.enough || m.exp_green == null || m.exp_red == null) return '';
+    const g = m.green_rate - m.exp_green, r = m.red_rate - m.exp_red;
+    const f = v => `${v > 0 ? '+' : ''}${v.toFixed(1)}`;
+    return `<div><b>${esc(lab)}</b> soft for the bet hit ${m.green_rate}% vs ${m.exp_green}% priced (${f(g)}, ${m.green_n}) \u00b7 tough hit ${m.red_rate}% vs ${m.exp_red}% priced (${f(r)}, ${m.red_n})</div>`;
+  };
+  const sp = [...new Set(PROPS.map(p => String(p.sp || '').toUpperCase()))];
+  const rows = [line('All sports', pick(lv))]
+    .concat(sp.map(x => line(x, pick((lv.sports || {})[x])))).filter(Boolean);
+  if (!rows.length) return '';
+  return `<div class="fnote">Graded record of the Matchup Grade, in points of hit rate.
+    A soft matchup is usually already in the price; a negative number means the books over-charged for it.${rows.join('')}</div>`;
+}
 const mkLabel = m => String(m || '').replace(/^3-pointers_made$/, 'threes')
   .replace(/^pra$/, 'pts + reb + ast')
   .replace(/^points_rebounds$/, 'pts + reb')
@@ -1423,7 +1487,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
-    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size
+    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size && !F.def.size
     && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
@@ -1458,7 +1522,8 @@ function drawHero(){
 // Every group is a drop-down with its own reset, so the filter bar is
 // one row of buttons instead of five rows of chips to scroll past.
 const CLEAR_LABEL = {sport: 'all sports', tier: 'all tiers', side: 'both sides',
-  bar: 'no minimum', trend: 'any trend', game: 'all games', start: 'any start', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
+  bar: 'no minimum', trend: 'any trend', game: 'all games', start: 'any start', trk: 'tracked or not', mk: 'all props', odds: 'any price',
+  def: 'any defense'};
 
 /* Board order. The evidence score is the default because it is what
    the tiers are built on; model probability, edge and price are a
@@ -1558,7 +1623,8 @@ function drawFilters(){
       `<button class="chip" data-k="${key}" data-v="${esc(v)}"
         aria-pressed="${F[key].has(v)}">${esc(key === 'mk' ? mkLabel(v) : key === 'game' ? gameLabel(v) : v)}</button>`).join('')
       + `<button class="chip fclr" data-clear="${key}"
-        ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key] || 'clear'}</button></div></details>`;
+        ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key] || 'clear'}</button>${
+        key === 'def' ? defNote() : ''}</div></details>`;
   }).join('');
   $('bsort').onchange = e => { SORT = e.target.value; draw(); };
   // One menu open at a time; a tap on the menu's own heading closes it.
@@ -1612,6 +1678,10 @@ function matches(p){
   if (F.odds.size  && !F.odds.has(priceBand(p.pr))) return false;
   if (F.game.size  && !F.game.has(p.mu)) return false;
   if (F.start.size && !F.start.has(startTxt(p) || 'time unknown')) return false;
+  if (F.def.size) {
+    const t = defTags(p);
+    if (![...F.def].some(v => t.has(v))) return false;
+  }
   if (F.trk.size) {
     const st = trkState(p);
     let hit = false;
@@ -2338,32 +2408,173 @@ function oppRow(p, rec){
       decisions faster than any season average.</div>` : ''}</div>`;
 }
 
-/* What the line asks for, in the market's own units. "Over in six
-   of eight" says how often a number has been beaten; it says nothing
-   about how hard the number is. */
+/* WHAT THIS LINE REQUIRES.
+
+   What the line asks for, in the market's own units. "Over in six of
+   eight" says how often a number has been beaten; it says nothing
+   about how hard the number is. Five questions, each answered with
+   arithmetic on games already played -- no projection, no fitted
+   probability:
+
+     1. the number:     what the side needs (an Under needs AT MOST)
+     2. the rate:       production per chance the line demands, against
+                        the rate he has managed -- coloured for THIS
+                        side. The first version coloured "his rate
+                        beats the demand" green on an Under too, where
+                        it is the bad news.
+     3. the chances:    at his own rate, how many chances clear the
+                        number -- the break-even opportunity -- and the
+                        cushion his recent chances leave over it
+     4. game by game:   how many of the games behind the averages
+                        actually cleared tonight's number, split by
+                        whether he got the break-even chances. That
+                        split says whether the bet is about getting
+                        the minutes or about converting them.
+     5. the price:      the hit rate the price needs to break even,
+                        next to the rate those games produced, sample
+                        size stated. Nine games is an anecdote and the
+                        panel says so.
+
+   Team markets get the same five on the team's own finals: the margin
+   a spread needs, the combined score a total needs, the win a
+   moneyline needs, counted over each side's last ten. */
+const priceBE = pr => pr == null || !Number.isFinite(+pr) ? null
+  : (+pr > 0 ? 100 / (+pr + 100) : Math.abs(+pr) / (Math.abs(+pr) + 100));
+const pct0 = v => v == null ? '\u2014' : `${Math.round(100 * v)}%`;
+const smallN = n => n < 15 ? ` <span class="unv">\u00b7 ${n} games is a small sample</span>` : '';
+/* Win, loss or push for one past result against tonight's line. */
+function reqOutcome(over, ln, v){
+  if (v == null || ln == null) return null;
+  if (v === ln) return 'push';
+  return (over ? v > ln : v < ln) ? 'hit' : 'miss';
+}
+function reqPriceRow(p, wins, decided){
+  const be = priceBE(p.pr);
+  if (be == null || !decided) return '';
+  const rate = wins / decided;
+  return `<div class="reqline"><span>price ${p.pr > 0 ? '+' : ''}${p.pr} breaks even at</span>
+      <b>${pct0(be)}${p.fp != null ? ` <span class="dim">(no-vig ${pct0(p.fp)})</span>` : ''}</b></div>
+    <div class="reqline"><span>these games cleared it</span>
+      <b class="${rate >= be ? 'hit' : 'miss'}">${wins} of ${decided} \u00b7 ${pct0(rate)}</b></div>`;
+}
+function reqStrip(cells){
+  return `<div class="vsrow reqstrip">${cells.map(c => `<div class="vsg ${c.o || ''}" title="${esc(c.t || '')}">
+    <b>${c.v}</b><span>${esc(c.a)}</span>${c.b ? `<span>${esc(c.b)}</span>` : ''}</div>`).join('')}</div>`;
+}
 function reqBox(p){
+  if (p.kd === 'team') return teamReqBox(p);
   const r = p.req;
   if (!r || !r.need || badOppBase(p)) return '';
-  const pct = v => v == null ? '\u2014' : v.toFixed(2);
-  const easier = r.required_at_recent != null
-    && r.required_at_recent < r.actual_rate;
-  return `<div class="reqbox"><h4>what this line requires</h4>
-    <div class="reqline"><span>${esc(p.sd)} ${p.ln} needs</span>
-      <b>${r.need}${r.whole_line ? ' (exactly ' + p.ln + ' pushes)' : ''}</b></div>
-    <div class="reqline"><span>his ${esc(r.unit)}, last ${r.n}</span>
-      <b>${r.chances}</b></div>
-    <div class="reqline"><span>rate that demands</span>
-      <b>${pct(r.required_rate)} per ${esc(r.unit)}</b></div>
-    <div class="reqline"><span>rate he has managed</span>
-      <b class="${r.actual_rate >= r.required_rate ? 'hit' : 'miss'}">${
-        pct(r.actual_rate)}</b></div>
-    <div class="reqline"><span>at his recent ${r.chances_recent} ${esc(r.unit)}</span>
-      <b class="${easier ? 'hit' : 'miss'}">${pct(r.required_at_recent)} needed</b></div>
+  const over = r.over != null ? !!r.over : p.sd !== 'Under';
+  const f2 = v => v == null ? '\u2014' : v.toFixed(2);
+  const f1 = v => v == null ? '\u2014' : (Math.round(v * 10) / 10).toString();
+  // An Over wants his rate ABOVE the demand; an Under wants it below.
+  const good = (have, need) => have == null || need == null ? '' :
+    (over ? have >= need : have <= need) ? 'hit' : 'miss';
+  const room = r.required_at_recent == null ? '' : good(r.actual_rate, r.required_at_recent);
+  // Break-even chances: what his own rate needs to reach the number.
+  const be = r.actual_rate > 0 ? r.need / r.actual_rate : null;
+  const cushion = (c) => be == null || c == null ? null : (over ? c - be : be - c);
+  const cu = cushion(r.chances), cuR = cushion(r.chances_recent);
+  const sgn = v => v == null ? '\u2014' : Math.abs(v) < 0.05 ? '\u00b10' : `${v > 0 ? '+' : ''}${f1(v)}`;
+  const unit = esc(r.unit);
+  // "per attempt", not "per attempts".
+  const per = esc(String(r.unit || '').replace(/s$/i, ''));
+  // Game by game, on the same rows the averages came from.
+  const rows = (((p.op || {}).rows) || []).filter(x => x.opportunity && x.v != null).slice(0, r.n || 10);
+  const cells = rows.map(x => ({v: x.v, o: reqOutcome(over, p.ln, x.v),
+    a: String(x.date || '').slice(5), b: `${f1(x.opportunity)} ${String(r.unit || '').toLowerCase()}`,
+    t: `${x.v} on ${f1(x.opportunity)} ${r.unit} (${f2(x.v / x.opportunity)} per)`}));
+  const dec = cells.filter(c => c.o === 'hit' || c.o === 'miss');
+  const wins = dec.filter(c => c.o === 'hit').length;
+  let split = '';
+  if (be != null && rows.length >= 4) {
+    const hi = rows.filter(x => x.opportunity >= be), lo = rows.filter(x => x.opportunity < be);
+    const w = xs => xs.filter(x => reqOutcome(over, p.ln, x.v) === 'hit').length;
+    split = `<div class="reqline"><span>with ${f1(be)}+ ${unit}</span>
+        <b>${hi.length ? `${w(hi)} of ${hi.length}` : 'none'}</b></div>
+      <div class="reqline"><span>with fewer</span>
+        <b>${lo.length ? `${w(lo)} of ${lo.length}` : 'none'}</b></div>`;
+  }
+  const conv = rows.filter(x => over ? x.v / x.opportunity >= r.required_rate
+                                     : x.v / x.opportunity <= r.required_rate).length;
+  return `<div class="reqbox simbox"><h4>what this line requires</h4>
+    <div class="reqhead">${esc(p.sd)} ${p.ln} needs <b>${r.whole_line ? (over ? (p.ln + 1) + '+' : (p.ln - 1) + ' or fewer')
+      : (over ? f1(r.need) + '+' : f1(r.need) + ' or fewer')}</b>${
+      r.whole_line ? ` <span class="dim">\u00b7 exactly ${p.ln} pushes</span>` : ''}</div>
+    <div class="reqgrp">the rate</div>
+    <div class="reqline"><span>the line demands</span><b>${f2(r.required_rate)} per ${per}</b></div>
+    <div class="reqline"><span>he has managed (last ${r.n})</span><b class="${good(r.actual_rate, r.required_rate)}">${f2(r.actual_rate)}</b></div>
+    <div class="reqline"><span>games ${over ? 'at or above' : 'at or below'} that rate</span><b>${conv} of ${rows.length}</b></div>
+    <div class="reqgrp">the chances</div>
+    <div class="reqline"><span>at his rate, the number takes</span><b>${be == null ? 'no production in the sample' : `${f1(be)} ${unit}`}</b></div>
+    <div class="reqline"><span>he has averaged</span><b class="${cu == null ? '' : cu >= 0 ? 'hit' : 'miss'}">${f1(r.chances)} \u00b7 ${sgn(cu)}</b></div>
+    <div class="reqline"><span>his last 3 averaged</span><b class="${cuR == null ? '' : cuR >= 0 ? 'hit' : 'miss'}">${f1(r.chances_recent)} \u00b7 ${sgn(cuR)}</b></div>
+    <div class="reqline"><span>rate needed at the last-3 ${unit}</span><b class="${room}">${f2(r.required_at_recent)}</b></div>
+    ${cells.length ? `<div class="reqgrp">game by game vs ${p.ln}</div>${reqStrip(cells)}${split}` : ''}
+    ${dec.length ? `<div class="reqgrp">the price</div>${reqPriceRow(p, wins, dec.length)}<div class="reqnote">${
+      dec.length < 15 ? `${dec.length} games is a small sample; read this as a range, not a rate.` : ''}</div>` : ''}
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">The
-      ${esc(r.unit)} figure is an ASSUMPTION — tonight's is not known in
-      advance. Arithmetic on measured games only: no projection and no
-      probability here.</span></div></div>`;
+      ${unit} figure is an ASSUMPTION \u2014 tonight's is not known in
+      advance. ${over ? 'An Over is green when his numbers clear the demand.'
+        : 'An Under is green when his numbers stay BELOW the demand.'} Arithmetic on measured games only:
+      no projection and no probability here.</span></div></div>`;
 }
+/* The team version, on each side's own finals (newest first:
+   date, opponent, home/away, for, against, margin). */
+function teamReqBox(p){
+  if (p.data_error) return '';
+  const lg = String(p.sp || '').toUpperCase(), T = (D && D.tbox) || {};
+  const {away, home} = matchSides(p);
+  const A = teamAbbr(lg, away), H = teamAbbr(lg, home);
+  if (!A || !H) return '';
+  const last = ab => (T[`${lg}|${ab}`] || []).filter(x => x[3] != null && x[4] != null).slice(0, 10);
+  const RA = last(A), RH = last(H);
+  if (RA.length < 4 || RH.length < 4) return '';
+  const mk = String(p.mkk || p.mk || ''), f1 = v => v == null ? '\u2014' : (Math.round(v * 10) / 10).toString();
+  const strip = (ab, rows, val, out) => `<div class="reqgrp">${esc(ab)} last ${rows.length}</div>` + reqStrip(rows.map(x => ({
+    v: val(x), o: out(x), a: `${x[2] === 'home' ? 'vs' : '@'} ${x[1]}`, b: String(x[0]).slice(5)})));
+  let head = '', body = '', wins = 0, dec = 0, side = null;
+  const tally = o => { if (o === 'hit' || o === 'miss') { dec++; if (o === 'hit') wins++; } return o; };
+  if (/total/.test(mk) && !/team_total/.test(mk)) {
+    const over = p.sd !== 'Under';
+    const sum = x => x[3] + x[4];
+    head = `${esc(p.sd)} ${p.ln} needs the two teams to combine for <b>${over ? (Number.isInteger(p.ln) ? p.ln + 1 : Math.ceil(p.ln)) + '+' : (Number.isInteger(p.ln) ? p.ln - 1 : Math.floor(p.ln)) + ' or fewer'}</b>`;
+    const avg = rows => rows.reduce((a, x) => a + sum(x), 0) / rows.length;
+    body = `<div class="reqline"><span>${esc(A)} games have combined for</span><b>${f1(avg(RA))}</b></div>
+      <div class="reqline"><span>${esc(H)} games have combined for</span><b>${f1(avg(RH))}</b></div>`
+      + strip(A, RA, sum, x => tally(reqOutcome(over, p.ln, sum(x))))
+      + strip(H, RH, sum, x => tally(reqOutcome(over, p.ln, sum(x))));
+  } else if (/spread|moneyline|^ml$/.test(mk)) {
+    const mine = teamAbbr(lg, p.sd);
+    if (!mine || (mine !== A && mine !== H)) return '';
+    const theirs = mine === A ? H : A, RM = mine === A ? RA : RH, RT = mine === A ? RH : RA;
+    side = mine;
+    const ml = /moneyline|^ml$/.test(mk), ln = ml ? 0 : +p.ln;
+    // A spread is hit when margin + line > 0 -- the grader's rule.
+    const cover = m => m + ln === 0 ? 'push' : m + ln > 0 ? 'hit' : 'miss';
+    const need = ml ? 'to win' : ln > 0 ? (Number.isInteger(ln) ? `to lose by fewer than ${ln}, or win` : `to lose by ${Math.floor(ln)} or fewer, or win`)
+      : `to win by ${Number.isInteger(-ln) ? -ln + 1 : Math.ceil(-ln)} or more`;
+    head = `${esc(p.sd)} ${ml ? 'moneyline' : (ln > 0 ? '+' : '') + ln} needs <b>${esc(mine)} ${need}</b>`;
+    const avgM = rows => rows.reduce((a, x) => a + x[5], 0) / rows.length;
+    const RMm = RM.filter(x => x[5] != null), RTm = RT.filter(x => x[5] != null);
+    body = `<div class="reqline"><span>${esc(mine)} average margin</span><b>${RMm.length ? sgnT(avgM(RMm)) : '\u2014'}</b></div>
+      <div class="reqline"><span>${esc(theirs)} average margin</span><b>${RTm.length ? sgnT(avgM(RTm)) : '\u2014'}</b></div>`
+      + strip(mine, RMm, x => sgnT(x[5]), x => tally(cover(x[5])))
+      // The other side's finals, flipped: would THEY have let this
+      // number through? Counted in the same tally -- it is the same
+      // question asked of the other half of the matchup.
+      + strip(theirs, RTm, x => sgnT(x[5]), x => tally(cover(-x[5])));
+  } else return '';
+  const be = priceBE(p.pr);
+  return `<div class="reqbox simbox"><h4>what this line requires</h4>
+    <div class="reqhead">${head}</div>${body}
+    ${dec ? `<div class="reqgrp">the price</div>${reqPriceRow(p, wins, dec)}
+      <div class="reqnote">Counted over ${esc(A)}'s last ${RA.length} and ${esc(H)}'s last ${RH.length} finals${side ? `; the other side's games are flipped \u2014 would they have let this number through` : ''}. Opponents differ game to game and none of this is adjusted for them.${dec < 15 ? ` ${dec} games is a small sample.` : ''}</div>` : ''}
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">Arithmetic on
+      past finals only: no projection and no probability here.</span></div></div>`;
+}
+const sgnT = v => v == null ? '\u2014' : `${v > 0 ? '+' : ''}${Math.round(v * 10) / 10}`;
 
 /* Expected value at the posted price. DISPLAYED, NOT RANKED ON. */
 function evBox(p){
@@ -5609,9 +5820,16 @@ function drawLeafValue(){
   const rp = root.rules_partial;
   const partial = rp && (rp.restarted || []).length
     ? `<div class="callout" style="margin:0 0 10px">
-       <b>${esc(rp.restarted.join(' and '))} ${
-       rp.restarted.length === 1 ? 'was' : 'were'} redefined in v${
-       root.rules_version}</b> and count only picks scored from then on.
+       <b>${(() => {
+         const by = {};
+         rp.restarted.forEach(l => {
+           const v = (rp.since || {})[l] || root.rules_version;
+           (by[v] = by[v] || []).push(l);
+         });
+         return Object.keys(by).sort((a, b) => a - b).map(v =>
+           `${esc(by[v].join(' and '))} ${by[v].length === 1 ? 'was' : 'were'} redefined in v${v}`
+         ).join('; ');
+       })()}</b> and count only picks scored from then on.
        Every other leaf still reads the ${rp.n.toLocaleString()} v${
        rp.from} picks, because its definition has not changed.</div>` : '';
 
