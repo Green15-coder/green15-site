@@ -174,6 +174,12 @@ header{display:flex;align-items:baseline;gap:10px;padding:10px 0 7px}
 header h1{margin:0;font-family:var(--d);font-weight:900;letter-spacing:-.03em;
   font-size:clamp(20px,5.6vw,27px);line-height:1}
 #stamp.stale{color:var(--hold)}
+.refbtn{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;
+  border-radius:999px;width:30px;height:30px;font-size:16px;line-height:1;cursor:pointer}
+.refbtn.busy{animation:spin 1s linear infinite;opacity:.6}
+@keyframes spin{to{transform:rotate(360deg)}}
+.clock{font-family:var(--m);font-size:.9em;white-space:nowrap}
+.clock.soon{color:var(--hold);font-weight:600}
 .live{display:flex;align-items:center;gap:5px;font-family:var(--m);
   font-size:10px;color:var(--ink-2);white-space:nowrap;
   margin-left:2px;overflow:hidden;text-overflow:ellipsis}
@@ -840,7 +846,8 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 <div class="dock">
   <header>
     <h1>Green15</h1>
-    <div class="live"><i class="dot"></i><span id="stamp">loading…</span></div>
+    <div class="live"><i class="dot"></i><span id="stamp">loading…</span>
+      <button id="refresh" class="refbtn" type="button" title="Check which games have started and whether a newer board is published. Free: no odds credits." aria-label="Refresh board">&#8635;</button></div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -1164,7 +1171,8 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 <script>
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
 const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
-           trk:new Set(), mk:new Set(), odds:new Set(), trend:new Set()};
+           trk:new Set(), mk:new Set(), odds:new Set(), trend:new Set(),
+           game:new Set(), start:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -1236,6 +1244,11 @@ const FILTERS = [
      sport or tier with nothing in it selects an empty board. */
   ['Sport','sport', () => ['NBA','NHL','NFL','MLB'].filter(lg =>
     PROPS.some(p => String(p.sp || '').toUpperCase() === lg))],
+  /* One chip per game still on the board, in start order, labelled
+     with its start time. */
+  ['Game','game', () => gamesOnBoard().map(g => g.mu)],
+  /* Start slots, earliest first. */
+  ['Starts','start', () => startSlots()],
   ['Tier','tier', () => ['Legendary','Elite','Strong','Playable','Fringe','Weak'].filter(t =>
     PROPS.some(p => p.ti === t))],
   ['Side','side',['Over','Under']],
@@ -1335,7 +1348,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
-    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size
+    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size
     && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
@@ -1371,7 +1384,7 @@ function drawHero(){
 // Every group is a drop-down with its own reset, so the filter bar is
 // one row of buttons instead of five rows of chips to scroll past.
 const CLEAR_LABEL = {sport: 'all sports', tier: 'all tiers', side: 'both sides',
-  bar: 'no minimum', trend: 'any trend', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
+  bar: 'no minimum', trend: 'any trend', game: 'all games', start: 'any start', trk: 'tracked or not', mk: 'all props', odds: 'any price'};
 
 /* Board order. The evidence score is the default because it is what
    the tiers are built on; model probability, edge and price are a
@@ -1469,7 +1482,7 @@ function drawFilters(){
       <summary class="chip fsum" data-sum="${key}">${fddSummary(label, key)}</summary>
       <div class="fmenu">` + list.map(v =>
       `<button class="chip" data-k="${key}" data-v="${esc(v)}"
-        aria-pressed="${F[key].has(v)}">${esc(key === 'mk' ? mkLabel(v) : v)}</button>`).join('')
+        aria-pressed="${F[key].has(v)}">${esc(key === 'mk' ? mkLabel(v) : key === 'game' ? gameLabel(v) : v)}</button>`).join('')
       + `<button class="chip fclr" data-clear="${key}"
         ${F[key].size ? '' : 'hidden'}>${CLEAR_LABEL[key] || 'clear'}</button></div></details>`;
   }).join('');
@@ -1523,6 +1536,8 @@ function matches(p){
   if (F.side.size  && !F.side.has(p.sd))  return false;
   if (F.mk.size    && !F.mk.has(p.mk))    return false;
   if (F.odds.size  && !F.odds.has(priceBand(p.pr))) return false;
+  if (F.game.size  && !F.game.has(p.mu)) return false;
+  if (F.start.size && !F.start.has(startTxt(p) || 'time unknown')) return false;
   if (F.trk.size) {
     const st = trkState(p);
     let hit = false;
@@ -3182,11 +3197,9 @@ function draw(){
   // up at the top of the board.
   $('npend').textContent = PROPS.filter(p => p.elig === false).length;
   const fn = $('finnote');
-  if (fn) {
-    fn.hidden = !FINAL.length;
-    fn.textContent = FINAL.length
-      ? `${FINAL.length.toLocaleString()} prop${FINAL.length === 1 ? '' : 's'} from games already final are off the board — they settle when the grader runs.`
-      : '';
+  if (fn && !fn.dataset.sticky) {
+    const t = clockNote();
+    fn.hidden = !t; fn.textContent = t;
   }
   const nteam = PROPS.filter(p => p.kd === 'team').length;
   $('nteam').textContent = nteam;
@@ -3289,7 +3302,7 @@ function rowHtml(p0){
         <button class="pick" data-open="${p.i}" aria-expanded="${open}">
           <span class="nm">${headline(p)}</span>
           <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
-            ${vs(p)}
+            ${vs(p)}${startTxt(p) ? ` · ${clockHtml(p)}` : ''}
             · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}${
             (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
             p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}</span>
@@ -3728,15 +3741,24 @@ function jointProb(legs){
   }
   return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs};
 }
+// Same-game legs allowed by default, up to three per game.
 const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', minMp: 0.55, minEd: -1,
-  l3: '', minPr: -400, maxPr: 400, grade: '', upcoming: 1, stale: 1, onePl: 1, corr: 'diff',
-  maxGame: 2, sort: 'prob', minN: 8};
+  l3: '', minPr: -400, maxPr: 400, grade: '', upcoming: 1, stale: 1, onePl: 1, corr: 'any',
+  maxGame: 3, sort: 'prob', minN: 8, games: new Set(), starts: new Set(), within: 0,
+  lock: 0, oneGame: 0};
 const GR_ORDER = {A: 4, B: 3, C: 2, D: 1};
 function legPool(F){
   return PROPS.filter(p => {
     if (p.mp == null || p.pr == null || p.ln == null || p.data_error) return false;
-    // Finished games never reach PROPS; this is the belt to that brace.
-    if (F.upcoming && gameFinal(p)) return false;
+    // Started and finished games never reach PROPS; this is the belt
+    // to that brace, for a game that tipped since the last clock check.
+    if (F.upcoming && (gameFinal(p) || startedNow(p))) return false;
+    if (F.games && F.games.size && !F.games.has(p.mu)) return false;
+    if (F.starts && F.starts.size && !F.starts.has(startTxt(p) || 'time unknown')) return false;
+    if (F.within) {
+      const g = gameInfo(p);
+      if (!g || !g.ct || g.ct - Date.now() > F.within * 36e5) return false;
+    }
     // Listed Out / Doubtful after the price was taken: the leg is
     // likely void or dead, not a probability.
     if (p.outNow) return false;
@@ -3763,11 +3785,31 @@ function legPool(F){
 function legScore(p, sort){
   return sort === 'edge' ? (p.ed ?? 0) : sort === 'pay' ? calProb(p) * dec(p.pr) : calProb(p);
 }
+/* Legs from the slip that every generated ticket must include. */
+function lockedLegs(F){
+  return F.lock ? [...SEL.values()].filter(p => PROPS.includes(p)) : [];
+}
 function generateParlays(F, want = 8){
   const K = Math.max(2, Math.min(10, F.legs));
+  // One game only: build inside each game separately, so a game's own
+  // best legs are not crowded out of the pool by other games.
+  if (F.oneGame) {
+    const all = legPool(F), lock = lockedLegs(F);
+    const games = lock.length ? [lock[0].mu] : [...new Set(all.map(p => p.mu))];
+    let res = [], pooled = 0;
+    for (const mu of games) {
+      const g = generateParlays({...F, oneGame: 0, games: new Set([mu]), maxGame: Math.max(F.maxGame, K),
+                                 corr: F.corr === 'diff' ? 'any' : F.corr}, want);
+      res = res.concat(g.out); pooled += g.pool;
+    }
+    res.sort((a, b) => b.key - a.key);
+    return {out: res.slice(0, want), pool: pooled};
+  }
+  const lock = lockedLegs(F);
   // Wider pool for long tickets: ten legs from different games needs
   // ten games represented, and the top 48 legs can come from a few.
-  const pool = legPool(F).sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, Math.max(48, 8 * K));
+  const pool = legPool(F).filter(p => !lock.includes(p))
+    .sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, Math.max(48, 8 * K));
   const score = legs => {
     const j = jointProb(legs), d = legs.reduce((a, p) => a * dec(p.pr), 1);
     return {legs, j, d, ev: j.est * d - 1,
@@ -3786,8 +3828,12 @@ function generateParlays(F, want = 8){
     }
     return true;
   };
-  let beams = pool.map(p => [p]);
-  for (let k = 2; k <= K; k++) {
+  if (lock.length >= K) {
+    const r = score(lock.slice(0, K));
+    return {out: [r], pool: pool.length};
+  }
+  let beams = lock.length ? [lock.slice()] : pool.map(p => [p]);
+  for (let k = lock.length ? lock.length + 1 : 2; k <= K; k++) {
     const nxt = [];
     for (const b of beams) {
       const last = pool.indexOf(b[b.length - 1]);
@@ -3797,9 +3843,10 @@ function generateParlays(F, want = 8){
     if (!beams.length) break;
   }
   const res = beams.filter(b => b.length === K).map(score).sort((a, b) => b.key - a.key);
-  const out = [];
+  const out = [], free = K - lock.length;
   for (const r of res) {
-    if (out.some(o => o.legs.filter(l => r.legs.includes(l)).length > Math.max(1, K - 2))) continue;
+    // Variety among the legs the builder chose, not the locked ones.
+    if (out.some(o => o.legs.filter(l => !lock.includes(l) && r.legs.includes(l)).length > Math.max(1, free - 2))) continue;
     out.push(r); if (out.length >= want) break;
   }
   return {out, pool: pool.length};
@@ -3819,15 +3866,21 @@ function parlayCard(r, tag){
   const be = 1 / r.d, shade = cg == null ? null : r.legs.reduce((a, p) => a * Math.max(0.01, calProb(p) - cg / 100), 1);
   const gap = r.j.est - be;
   const ids = r.legs.map(p => p.i).join(',');
+  const cts = r.legs.map(p => (gameInfo(p) || {}).ct).filter(Boolean);
+  const first = cts.length ? Math.min(...cts) : null;
+  const firstTxt = first ? new Date(first).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
+  const lockN = PF.lock ? r.legs.filter(p => SEL.has(p.i)).length : 0;
   return `<div class="pcard">
     <div class="pchead">${tag ? `<span class="ptag">${esc(tag)}</span>` : ''}
       <span class="pcp"><b>${pc(r.j.est)}</b><small>est. hit</small></span>
       <span class="pcp"><b>${am(r.d)}</b><small>${sgp ? 'naive price' : 'combined'}</small></span>
       <span class="pcp ${gap > 0 ? 'hit' : 'miss'}"><b>${gap > 0 ? '+' : ''}${(100 * gap).toFixed(1)}</b><small>vs break-even</small></span>
+      ${firstTxt ? `<span class="pcp"><b>${esc(firstTxt)}</b><small>first start</small></span>` : ''}
     </div>
     <ol class="plegs">${r.legs.map(p => `<li><span class="sp sp-${esc(String(p.sp).toUpperCase())}">${esc(String(p.sp).toUpperCase())}</span>
-      <b>${esc(p.pl)}</b> ${esc(p.sd)} ${spreadSign(p, p.ln)} ${esc((p.mk || '').replace(/_/g, ' '))}
-      <span class="dim">${p.pr > 0 ? '+' : ''}${p.pr} \u00b7 model ${pc(p.mp)} \u00b7 cal ${pc(calProb(p))}${
+      <b>${esc(p.pl)}</b> ${esc(p.sd)} ${spreadSign(p, p.ln)} ${esc((p.mk || '').replace(/_/g, ' '))}${
+        lockN && SEL.has(p.i) ? ' <span class="ptag">locked</span>' : ''}
+      <span class="dim">${esc(gameLabel(p.mu))} \u00b7 ${p.pr > 0 ? '+' : ''}${p.pr} \u00b7 model ${pc(p.mp)} \u00b7 cal ${pc(calProb(p))}${
         recentVals(p).length >= 3 ? ` \u00b7 L3 ${recentVals(p).slice(0, 3).filter(x => won(p, x)).length}/3` : ''}</span></li>`).join('')}</ol>
     <div class="pfoot">independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
       ${shade == null ? '' : `\u00b7 if each leg is ${cg.toFixed(1)} pts worse (largest measured miss): ${pc(shade)} `}\u00b7 break-even ${pc(be)}${
@@ -3848,6 +3901,11 @@ function drawParlays(){
   $('parlayfil').innerHTML = [
     row('legs', [2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => ch('legs', n, n, F.legs === n)).join('')),
     row('sport', ch('sp', '', 'All', !F.sp.size) + sports.map(s => ch('sp', s, s, F.sp.has(s))).join('')),
+    row('game', ch('games', '', 'All', !F.games.size) + gamesOnBoard()
+      .filter(g => !F.sp.size || PROPS.some(p => p.mu === g.mu && F.sp.has(String(p.sp).toUpperCase())))
+      .map(g => ch('games', g.mu, esc(gameLabel(g.mu)), F.games.has(g.mu))).join('')),
+    row('starts', ch('starts', '', 'Any', !F.starts.size) + startSlots().map(t => ch('starts', t, esc(t), F.starts.has(t))).join('')),
+    row('within', [[0, 'Any time'], [1, '1 hr'], [3, '3 hrs'], [6, '6 hrs']].map(([v, l]) => ch('within', v, l, F.within === v)).join('')),
     row('type', ch('kind', 'player', 'Player', F.kind === 'player') + ch('kind', 'team', 'Team', F.kind === 'team') + ch('kind', '', 'Both', !F.kind)),
     row('props', ch('mk', '', 'All', !F.mk.size) + mks.map(m => ch('mk', m, esc(m.replace(/_/g, ' ')), F.mk.has(m))).join('')),
     row('side', ch('side', '', 'Any', !F.side) + ch('side', 'Over', 'Over', F.side === 'Over') + ch('side', 'Under', 'Under', F.side === 'Under')),
@@ -3859,23 +3917,28 @@ function drawParlays(){
     row('grade', [['', 'Any'], ['C', 'C+'], ['B', 'B+']].map(([v, l]) => ch('grade', v, l, F.grade === v)).join('')),
     row('correlation', [['diff', 'Different games'], ['any', 'Allow same game'], ['noneg', 'Avoid negative'], ['pos', 'Positive only']]
       .map(([v, l]) => ch('corr', v, l, F.corr === v)).join('')),
-    row('per game', [1, 2, 3].map(n => ch('maxGame', n, `max ${n}`, F.maxGame === n)).join('')),
+    row('per game', [1, 2, 3, 4, 5].map(n => ch('maxGame', n, `max ${n}`, F.maxGame === n)).join('')),
     row('rank by', [['prob', 'Hit chance'], ['pay', 'Value (chance \u00d7 payout)'], ['edge', 'Model edge']].map(([v, l]) => ch('sort', v, l, F.sort === v)).join('')),
-    row('also', ch('upcoming', 1, 'Upcoming games only', F.upcoming) + ch('stale', 1, 'Include old prices', F.stale) + ch('onePl', 1, 'One leg per player', F.onePl)),
+    row('also', ch('upcoming', 1, 'Not started only', F.upcoming) + ch('stale', 1, 'Include old prices', F.stale) + ch('onePl', 1, 'One leg per player', F.onePl)
+      + ch('oneGame', 1, 'One game only', F.oneGame)
+      + ch('lock', 1, `Build around my slip${SEL.size ? ` (${SEL.size})` : ''}`, F.lock)),
   ].join('');
   const {out, pool} = generateParlays(F, 8);
   // Recommended: fixed recipes, always on model probability.
-  const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: '', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400});
+  const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: '', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400,
+    games: new Set(), starts: new Set(), within: 0, lock: 0, oneGame: 0});
   const rec = REC_DONE ? [] : [
     ['Safest 2-leg', Object.assign({}, base, {legs: 2, minMp: 0.6})],
     ['Best 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55})],
     ['Form + model 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, l3: '2'})],
     ['Value 4-leg', Object.assign({}, base, {legs: 4, minMp: 0.55, sort: 'pay'})],
+    // Three legs from one game, never a measured-negative pair.
+    ['Same-game 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, corr: 'noneg', maxGame: 3, oneGame: 1})],
   ].map(([t, f]) => [t, generateParlays(f, 1).out[0]]).filter(x => x[1]);
   const seen = new Set(), recs = rec.filter(([t, r]) => { const k = r.legs.map(p => p.i).sort().join(); if (seen.has(k)) return false; seen.add(k); return true; });
   if (!REC_DONE) { REC_DONE = 1;
     $('cParlays') && ($('cParlays').textContent = recs.length || '');
-    $('parlayrec').innerHTML = `<h3 class="ph">Recommended <span class="dim">model ≥ 55%, one leg per game</span></h3>
+    $('parlayrec').innerHTML = `<h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 games not started</span></h3>
     ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
   el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool</span></h3>
     ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. ${(() => {
@@ -3886,10 +3949,10 @@ function drawParlays(){
 }
 function pfClick(t){
   const [k, v] = t.dataset.pf.split('|').length > 2 ? [t.dataset.pf.split('|')[0], t.dataset.pf.split('|').slice(1).join('|')] : t.dataset.pf.split('|');
-  if (k === 'sp' || k === 'mk') { if (!v) PF[k].clear(); else PF[k].has(v) ? PF[k].delete(v) : PF[k].add(v); }
+  if (k === 'sp' || k === 'mk' || k === 'games' || k === 'starts') { if (!v) PF[k].clear(); else PF[k].has(v) ? PF[k].delete(v) : PF[k].add(v); }
   else if (k === 'odds') { const [a, b] = v.split('|'); PF.minPr = +a; PF.maxPr = +b; }
-  else if (k === 'upcoming' || k === 'stale' || k === 'onePl') PF[k] = PF[k] ? 0 : 1;
-  else if (['legs', 'minMp', 'minEd', 'maxGame'].includes(k)) PF[k] = +v;
+  else if (k === 'upcoming' || k === 'stale' || k === 'onePl' || k === 'oneGame' || k === 'lock') PF[k] = PF[k] ? 0 : 1;
+  else if (['legs', 'minMp', 'minEd', 'maxGame', 'within'].includes(k)) PF[k] = +v;
   else { PF[k] = v; if (k === 'kind') PF.mk.clear(); }
   drawParlays();
 }
@@ -4362,13 +4425,16 @@ function fanaticsSlip(legs){
 
 /* ---------- today / slate ---------- */
 function drawGames(){
-  const gs = D.games || [];
+  // Only games that have not started, in start order.
+  const live = new Map(gamesOnBoard().map((g, i) => [g.mu, i]));
+  const all = D.games || [];
+  const gs = all.filter(g => live.has(g.matchup)).sort((a, b) => live.get(a.matchup) - live.get(b.matchup));
+  const gone = all.length - gs.length;
   $('cGames').textContent = gs.length;
   $('nogames').hidden = gs.length > 0;
-  $('slatenote').textContent = gs.length
-    ? `${gs.length} games with props on the board, ordered by how many `
-      + `cleared Playable. Tap a game to filter the board to it.`
-    : '';
+  $('slatenote').textContent = (gs.length
+    ? `${gs.length} game${gs.length === 1 ? '' : 's'} not yet started, earliest first. Tap a game to filter the board to it.`
+    : '') + (gone ? ` ${gone} game${gone === 1 ? '' : 's'} on this slate already started or finished.` : '');
   $('gamerows').innerHTML = gs.map(g => {
     const tiers = Object.entries(g.tiers || {})
       .sort((a,b) => b[1]-a[1])
@@ -4378,7 +4444,8 @@ function drawGames(){
         data-game="${esc(g.matchup)}">
       <div class="pick">
         <span class="nm">${esc(g.matchup)}</span>
-        <span class="sub">${esc(g.sport || '')} · ${g.props} props${
+        <span class="sub">${esc(g.sport || '')}${(() => { const p = PROPS.find(x => x.mu === g.matchup);
+          return p && startTxt(p) ? ` · starts ${clockHtml(p)}` : ''; })()} · ${g.props} props${
           g.spread != null ? ` · spread ${g.spread}` : ''}${
           g.total != null ? ` · total ${g.total}` : ''}</span>
         <span class="sub">${esc(tiers)}</span>
@@ -6543,17 +6610,169 @@ function listedOut(p){
   const r = (((D.injuries || {})[lg] || {}).rows || []).find(x => x.name && normName(x.name) === me);
   return r && OUT_RX.test(String(r.status || '')) ? r.status : null;
 }
-function vetBoard(all){
-  const live = [], fin = [];
-  for (const p of all) {
-    checkResearch(p);
-    p.outNow = listedOut(p);
-    (gameFinal(p) ? fin : live).push(p);
+/* ================================================================
+   GAME CLOCK
+   When each game starts and whether it has, so nothing that has
+   already tipped off is offered as available. Two sources:
+     - the start time the run recorded (p.ct, from the odds feed),
+     - ESPN's public scoreboard, read live from this page. It is free
+       and keyless, costs no odds credits, and also says whether a
+       game is in progress or final.
+   A game counts as STARTED when ESPN says in progress or final, or
+   its start time has passed. With neither source a prop stays on the
+   board unless the game is already in the box scores.
+   ================================================================ */
+const ESPN_PATH = {NBA: 'basketball/nba', NHL: 'hockey/nhl', NFL: 'football/nfl', MLB: 'baseball/mlb'};
+const GAMES = new Map();     // sport|away|home -> {ct, st, det, ab}
+let CLOCK_AT = null;
+const nick = n => teamNorm(String(n || '').trim().split(/\s+/).pop());
+const gKeys = (sp, away, home) => [`${sp}|${teamNorm(away)}|${teamNorm(home)}`, `${sp}|~${nick(away)}|~${nick(home)}`];
+function gameInfo(p){
+  const {away, home} = matchSides(p), sp = String(p.sp || '').toUpperCase();
+  for (const k of gKeys(sp, away, home)) { const g = GAMES.get(k); if (g) return g; }
+  const ct = p.ct ? Date.parse(p.ct) : NaN;
+  return Number.isFinite(ct) ? {ct, st: null, det: '', ab: null} : null;
+}
+function startedNow(p){
+  const g = gameInfo(p);
+  if (!g) return false;
+  if (g.st === 'in' || g.st === 'post') return true;
+  return !!(g.ct && Date.now() >= g.ct);
+}
+const sameDay = (a, b) => a.toDateString() === b.toDateString();
+function startTxt(p){
+  const g = gameInfo(p); if (!g || !g.ct) return '';
+  const d = new Date(g.ct), now = new Date();
+  const t = d.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+  return sameDay(d, now) ? t : `${d.toLocaleDateString([], {weekday: 'short'})} ${t}`;
+}
+function clockHtml(p){
+  const g = gameInfo(p); if (!g || !g.ct) return '';
+  const mins = (g.ct - Date.now()) / 6e4;
+  const soon = mins > 0 && mins <= 60;
+  return `<span class="clock ${soon ? 'soon' : ''}" title="${soon ? 'starts in ' + Math.round(mins) + ' min' : 'start time'}">${
+    esc(startTxt(p))}${soon ? ` \u00b7 ${Math.round(mins)}m` : ''}</span>`;
+}
+function gameLabel(mu){
+  const p = PROPS.find(x => x.mu === mu) || ALLP.find(x => x.mu === mu);
+  if (!p) return mu;
+  const g = gameInfo(p), sides = gameSides(p);
+  const name = (g && g.ab) || (sides ? `${sides[0]} @ ${sides[1]}` : mu);
+  const t = startTxt(p);
+  return t ? `${name} \u00b7 ${t}` : name;
+}
+function gamesOnBoard(){
+  const seen = new Map();
+  for (const p of PROPS) if (p.mu && !seen.has(p.mu)) seen.set(p.mu, p);
+  return [...seen.values()].map(p => ({mu: p.mu, ct: (gameInfo(p) || {}).ct || Infinity}))
+    .sort((a, b) => a.ct - b.ct || a.mu.localeCompare(b.mu));
+}
+function startSlots(){
+  const m = new Map();
+  for (const p of PROPS) {
+    const t = startTxt(p) || 'time unknown', g = gameInfo(p);
+    if (!m.has(t)) m.set(t, (g && g.ct) || Infinity);
   }
-  FINAL = fin;
+  return [...m.entries()].sort((a, b) => a[1] - b[1]).map(x => x[0]);
+}
+const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+async function readScoreboards(){
+  const want = new Map();     // sport -> Set(yyyymmdd)
+  const today = new Date(), loc = d => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  for (const p of ALLP) {
+    const sp = String(p.sp || '').toUpperCase(); if (!ESPN_PATH[sp] || !p.gd) continue;
+    if (!want.has(sp)) want.set(sp, new Set([loc(today)]));
+    const g = Date.parse(p.gd + 'T00:00:00Z');
+    want.get(sp).add(ymd(new Date(g))); want.get(sp).add(ymd(new Date(g - 864e5)));
+  }
+  let ok = 0;
+  const jobs = [];
+  for (const [sp, days] of want) for (const d of days) jobs.push((async () => {
+    try {
+      const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${ESPN_PATH[sp]}/scoreboard?dates=${d}`, {cache: 'no-store'});
+      if (!r.ok) return;
+      const j = await r.json(); ok++;
+      for (const e of j.events || []) {
+        const c = ((e.competitions || [])[0] || {}).competitors || [];
+        const h = c.find(x => x.homeAway === 'home'), a = c.find(x => x.homeAway === 'away');
+        if (!h || !a) continue;
+        const st = ((e.status || {}).type || {});
+        const info = {ct: Date.parse(e.date), st: st.state || null, det: st.shortDetail || '',
+          ab: `${a.team.abbreviation} @ ${h.team.abbreviation}`};
+        for (const k of gKeys(sp, a.team.displayName, h.team.displayName)) GAMES.set(k, info);
+      }
+    } catch (err) { /* offline or blocked: start times from the run still apply */ }
+  })());
+  await Promise.all(jobs);
+  if (ok) CLOCK_AT = Date.now();
+  return ok;
+}
+function vetBoard(all){
+  ALLP = all;
+  const live = [], fin = [], gone = [];
+  for (const p of all) {
+    if (!p._vet) { checkResearch(p); p.outNow = listedOut(p); p._vet = 1; }
+    if (gameFinal(p)) fin.push(p);
+    else if (startedNow(p)) gone.push(p);
+    else live.push(p);
+  }
+  FINAL = fin; STARTED = gone;
   return live;
 }
-let FINAL = [];
+let FINAL = [], STARTED = [], ALLP = [];
+/* Re-split the board on the clock and redraw what is on screen. */
+let CLOCK_DRAWN = 0;
+function reclock(force){
+  const before = PROPS.length, old = PROPS;
+  const next = vetBoard(ALLP);
+  // Nothing moved since the last check: leave the screen alone rather
+  // than re-render under the reader's thumb.
+  if (!force && CLOCK_DRAWN && next.length === old.length && next.every((p, i) => p === old[i]))
+    return {hidden: 0, dropped: 0};
+  CLOCK_DRAWN = 1;
+  PROPS = next;
+  let dropped = 0;
+  for (const [i, p] of [...SEL]) if (!PROPS.includes(p)) { SEL.delete(i); dropped++; }
+  for (const v of [...F.game]) if (!PROPS.some(p => p.mu === v)) F.game.delete(v);
+  for (const v of [...PF.games]) if (!PROPS.some(p => p.mu === v)) PF.games.delete(v);
+  REC_DONE = 0;
+  TAB_DONE.delete('parlays'); TAB_DONE.delete('games');
+  const cur = (document.querySelector('nav.tabs button[aria-selected="true"]') || {}).dataset;
+  drawFilters();
+  draw();
+  if (cur && cur.tab && cur.tab !== 'board') ensureTab(cur.tab);
+  parlay();
+  return {hidden: before - PROPS.length, dropped};
+}
+async function refreshBoard(btn){
+  if (btn) btn.classList.add('busy');
+  const msg = [];
+  try {
+    // 1. A newer board published? Reload onto it.
+    try {
+      const nd = await loadData();
+      if (nd && (nd.generated_at || '') !== (D.generated_at || '')) { location.reload(); return; }
+    } catch (e) { msg.push('could not check for a newer board'); }
+    // 2. Which games have started, from ESPN.
+    const ok = await readScoreboards();
+    const r = reclock(true);
+    msg.push(ok ? `game clock checked ${new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}`
+                : 'ESPN unreachable \u2014 using recorded start times');
+    if (r.hidden > 0) msg.push(`${r.hidden} more prop${r.hidden === 1 ? '' : 's'} started and left the board`);
+    if (r.dropped) msg.push(`${r.dropped} slip leg${r.dropped === 1 ? '' : 's'} removed (game started)`);
+    msg.push('no newer board published yet');
+  } finally {
+    if (btn) btn.classList.remove('busy');
+    const fn = $('finnote');
+    if (fn && msg.length) { fn.hidden = false; fn.textContent = [clockNote(), msg.join(' \u00b7 ') + '.'].filter(Boolean).join(' '); }
+  }
+}
+function clockNote(){
+  const a = STARTED.length, b = FINAL.length;
+  if (!a && !b) return '';
+  return `${(a + b).toLocaleString()} prop${a + b === 1 ? '' : 's'} off the board \u2014 ${a ? `${a.toLocaleString()} in games that have started` : ''}${a && b ? ', ' : ''}${b ? `${b.toLocaleString()} from games already final (they settle when the grader runs)` : ''}.`;
+}
+
 
 (async () => {
   try {
@@ -6604,8 +6823,9 @@ let FINAL = [];
      dz.z != null ? `z ${dz.z > 0 ? '+' : ''}${dz.z.toFixed(2)}${
        dz.n_slates ? ' \u00b7 ' + dz.n_slates + ' nights' : ''}` : '',
      dz.gap_points == null ? '' : dz.gap_points > 0 ? 'good' : 'bad'],
-    ['on the board', String(b.slate_size ?? 0),
-     `${b.playable_count ?? 0} playable`],
+    // Live rows only: started and final games are not "on the board".
+    ['on the board', String(PROPS.length),
+     `${PROPS.filter(p => ['Legendary', 'Elite', 'Strong', 'Playable'].includes(p.ti)).length} playable`],
   ].map(([l, v, x, tone]) => `<div class="sv${tone ? ' ' + tone : ''}">
       <div class="sl">${l}</div>
       <div class="sn">${v}</div><div class="sx">${x}</div></div>`).join('');
@@ -6625,6 +6845,15 @@ let FINAL = [];
   const next = () => { const k = q.shift(); if (!k) return;
                        ensureTab(k); idle(next); };
   idle(next);
+  // The game clock: read ESPN once the board is up, then every three
+  // minutes while the page is open and visible. Free -- no odds call.
+  $('refresh').onclick = e => refreshBoard(e.currentTarget);
+  readScoreboards().then(ok => { if (ok) reclock(); });
+  setInterval(() => { if (!document.hidden) readScoreboards().then(ok => { if (ok) reclock(); }); }, 180000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && (!CLOCK_AT || Date.now() - CLOCK_AT > 60000))
+      readScoreboards().then(ok => { if (ok) reclock(); });
+  });
 })();
 </script>
 
