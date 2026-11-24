@@ -531,6 +531,7 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 .unv{color:var(--mark)}
 .pendrow{font-size:.78rem;color:var(--mark);padding:2px 14px 6px}
 .outnow{color:var(--under);font-weight:600}
+.coldtag{color:var(--under);font-weight:600;border:1px solid currentColor;border-radius:4px;padding:0 4px;font-size:.88em}
 .trtag{font-family:var(--m);font-size:.9em;font-weight:600;white-space:nowrap}
 .trtag.tru{color:var(--over)}.trtag.trd{color:var(--under)}
 .tgl{grid-column:1/-1;margin-top:6px;font-family:var(--m);font-size:10px;
@@ -599,6 +600,7 @@ tr.simclose td{font-weight:600}
 .toast div{background:var(--ink,#111);color:var(--paper,#fff);padding:9px 14px;border-radius:10px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
 .pwarn{margin-top:8px;padding:8px 10px;border-left:3px solid var(--warn,#c90);background:var(--paper-2,rgba(0,0,0,.03));font-size:12px;line-height:1.4}
 .pwarn div+div{margin-top:5px}
+.pshuf{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px}
 .heronone .h2sub{margin-top:4px}
 html.sheeton #totop,html.sheeton .tray{visibility:hidden}
 .lvp{font-family:var(--m);font-size:11.5px}
@@ -2449,7 +2451,9 @@ function card(p){
   const tiles = `<div class="tiles">
     <div class="tile"><div class="tl">${team && ['spread','moneyline'].includes(p.mkk) ? 'home margin' : 'projection'}</div>
       <div class="tv">${p.pj != null ? p.pj.toFixed(1) : '—'}</div>
-      <div class="tn">${p.sv != null ? '±' + p.sv.toFixed(1) + ' sd' : '&nbsp;'}</div></div>
+      <div class="tn"${p.svw != null ? ` title="Model sd ±${p.sv.toFixed(1)} held ${Math.round(100 * p.svc)}% of the last ${p.svn} results; ±${p.svw.toFixed(1)} held 68%"` : ''}>${p.svw != null
+        ? '±' + p.svw.toFixed(1) + ' · 2 in 3'
+        : p.sv != null ? '±' + p.sv.toFixed(1) + ' sd' : '&nbsp;'}</div></div>
     <div class="tile"><div class="tl">line</div>
       <div class="tv">${line == null ? '—' : spreadSign(p, line)}</div>
       <div class="tn">${p.pr != null ? (p.pr > 0 ? '+' : '') + p.pr : '&nbsp;'}</div></div>
@@ -2500,6 +2504,7 @@ function card(p){
       ? `This projection sits ${Math.abs(p.dz).toFixed(1)} SDs off the line — past the point the engine trusts its own number. Weighted back toward the market.` : '',
     thinNote(p),
     stale ? `Price read ${ageText(p.at)} — re-check before betting.` : '',
+    coldOf(p) ? `<b>Cold market</b>: ${coldText(coldOf(p))}` : '',
   ].filter(Boolean);
   // The tags under the sentence are not decoration: the sentence is
   // composed from these leaves' own inputs, so a red leaf under a
@@ -3390,7 +3395,8 @@ function rowHtml(p0){
             ${vs(p)}${startTxt(p) ? ` · ${clockHtml(p)}` : ''}
             · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}${
             (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
-            p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}</span>
+            p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}${
+            coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}</span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
@@ -4049,7 +4055,27 @@ function legScore(p, sort){
 function lockedLegs(F){
   return F.lock ? [...SEL.values()].filter(p => PROPS.includes(p)) : [];
 }
-function generateParlays(F, want = 8){
+/* VARIETY. The beam search is deterministic, so the same two or three
+   highest-probability legs headed every card and every recipe. Three
+   rules now spread the board without touching any probability shown:
+     1. EXPOSURE CAP -- a chosen leg appears on at most two cards per
+        list (relaxed only if the list would otherwise come up short).
+     2. RECIPES DO NOT SHARE -- each recommended recipe is built
+        without the legs earlier recipes already used, when it can be.
+     3. SHUFFLE -- the button reruns the search with the legs just shown
+        set back and a small seeded jitter on the ORDER. The numbers on
+        each card are still that ticket's own; only which tickets are
+        tried first changes. */
+let PSEED = 0;
+const PAVOID = new Set();
+function pjit(p){
+  if (!PSEED) return 1;
+  let h = (p.i * 2654435761 + PSEED * 40503) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0;
+  return 1 + ((h % 1000) / 1000 - 0.5) * 0.08;
+}
+const pfac = p => pjit(p) * (PAVOID.has(p.i) ? 0.85 : 1);
+function generateParlays(F, want = 8, ex = null){
   const K = Math.max(2, Math.min(10, F.legs));
   // One game only: build inside each game separately, so a game's own
   // best legs are not crowded out of the pool by other games.
@@ -4059,21 +4085,28 @@ function generateParlays(F, want = 8){
     let res = [], pooled = 0;
     for (const mu of games) {
       const g = generateParlays({...F, oneGame: 0, games: new Set([mu]), maxGame: Math.max(F.maxGame, K),
-                                 corr: F.corr === 'diff' ? 'any' : F.corr}, want);
+                                 corr: F.corr === 'diff' ? 'any' : F.corr}, want, ex);
       res = res.concat(g.out); pooled += g.pool;
     }
-    res.sort((a, b) => b.key - a.key);
+    res.sort((a, b) => b.rk - a.rk);
     return {out: res.slice(0, want), pool: pooled};
   }
   const lock = lockedLegs(F);
   // Wider pool for long tickets: ten legs from different games needs
   // ten games represented, and the top 48 legs can come from a few.
-  const pool = legPool(F).filter(p => !lock.includes(p))
-    .sort((a, b) => legScore(b, F.sort) - legScore(a, F.sort)).slice(0, Math.max(48, 8 * K));
+  let base = legPool(F).filter(p => !lock.includes(p));
+  if (ex && ex.size) {
+    const kept = base.filter(p => !ex.has(p.i));
+    if (kept.length >= 2 * K) base = kept;
+  }
+  const pool = base
+    .sort((a, b) => legScore(b, F.sort) * pfac(b) - legScore(a, F.sort) * pfac(a)).slice(0, Math.max(48, 8 * K));
   const score = legs => {
     const j = jointProb(legs), d = legs.reduce((a, p) => a * dec(p.pr), 1);
-    return {legs, j, d, ev: j.est * d - 1,
-      key: F.sort === 'edge' ? legs.reduce((a, p) => a + (p.ed ?? 0), 0) : F.sort === 'pay' ? j.est * d : j.est};
+    const key = F.sort === 'edge' ? legs.reduce((a, p) => a + (p.ed ?? 0), 0) : F.sort === 'pay' ? j.est * d : j.est;
+    // rk orders the search; key is what the card reports.
+    const f = legs.reduce((a, p) => a * (lock.includes(p) ? 1 : pfac(p)), 1);
+    return {legs, j, d, ev: j.est * d - 1, key, rk: key >= 0 ? key * f : key / f};
   };
   const ok = (legs, p) => {
     if (F.onePl && legs.some(x => x.pl === p.pl)) return false;
@@ -4099,15 +4132,25 @@ function generateParlays(F, want = 8){
       const last = pool.indexOf(b[b.length - 1]);
       for (let j = last + 1; j < pool.length; j++) if (ok(b, pool[j])) nxt.push(b.concat(pool[j]));
     }
-    beams = nxt.map(score).sort((a, b) => b.key - a.key).slice(0, 250).map(x => x.legs);
+    beams = nxt.map(score).sort((a, b) => b.rk - a.rk).slice(0, 250).map(x => x.legs);
     if (!beams.length) break;
   }
-  const res = beams.filter(b => b.length === K).map(score).sort((a, b) => b.key - a.key);
-  const out = [], free = K - lock.length;
-  for (const r of res) {
-    // Variety among the legs the builder chose, not the locked ones.
-    if (out.some(o => o.legs.filter(l => !lock.includes(l) && r.legs.includes(l)).length > Math.max(1, free - 2))) continue;
-    out.push(r); if (out.length >= want) break;
+  const res = beams.filter(b => b.length === K).map(score).sort((a, b) => b.rk - a.rk);
+  const free = K - lock.length;
+  let out = [];
+  // Variety among the legs the builder chose, not the locked ones:
+  // no two cards share more than half their free legs, and no free leg
+  // sits on more than `cap` cards. Relaxed in steps only to fill.
+  for (const cap of [2, 3, Infinity]) {
+    out = []; const uses = new Map();
+    for (const r of res) {
+      const mine = r.legs.filter(l => !lock.includes(l));
+      if (out.some(o => o.legs.filter(l => !lock.includes(l) && r.legs.includes(l)).length > Math.max(1, Math.floor(free / 2)))) continue;
+      if (mine.some(l => (uses.get(l.i) || 0) >= cap)) continue;
+      out.push(r); mine.forEach(l => uses.set(l.i, (uses.get(l.i) || 0) + 1));
+      if (out.length >= want) break;
+    }
+    if (out.length >= Math.min(want, res.length) || cap === Infinity) break;
   }
   return {out, pool: pool.length};
 }
@@ -4148,6 +4191,8 @@ function parlayCard(r, tag){
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
       stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
       <button class="h2go" data-padd="${ids}">Add to slip</button></div>
+    ${r.legs.some(coldOf) ? `<div class="pwarn">${r.legs.filter(coldOf).map(q =>
+      `<div><b>Cold market</b>: ${esc(q.sd)} ${q.ln} ${esc(q.mu ? gameLabel(q.mu) : '')} \u2014 ${coldText(coldOf(q))}</div>`).join('')}</div>` : ''}
     ${(r.j.warn || []).length ? `<div class="pwarn">${r.j.warn.map(w => {
       const nm = q => q.kd === 'team' ? (/total/.test(q.mkk || q.mk || '') ? `game ${esc(q.sd)} ${q.ln}` : `${esc(q.sd)}${q.mkk === 'moneyline' ? ' ML' : ' ' + spreadSign(q, q.ln)}`) : `${esc(String(q.pl).split(' ').slice(-1)[0])} ${esc(q.sd)} ${q.ln}`;
       return `<div>${w.r > 0 ? '<b>Move together</b>' : '<b>Pull apart</b>'}: ${nm(w.a)} + ${nm(w.b)}
@@ -4194,25 +4239,51 @@ function drawParlays(){
   // Recommended: fixed recipes, always on model probability.
   const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: '', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400,
     games: new Set(), starts: new Set(), within: 0, lock: 0, oneGame: 0});
-  const rec = REC_DONE ? [] : [
+  const recipes = REC_DONE ? [] : [
     ['Safest 2-leg', Object.assign({}, base, {legs: 2, minMp: 0.6})],
     ['Best 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55})],
     ['Form + model 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, l3: '2'})],
     ['Value 4-leg', Object.assign({}, base, {legs: 4, minMp: 0.55, sort: 'pay'})],
     // Three legs from one game, never a measured-negative pair.
     ['Same-game 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, corr: 'noneg', maxGame: 3, oneGame: 1})],
-  ].map(([t, f]) => [t, generateParlays(f, 1).out[0]]).filter(x => x[1]);
+  ];
+  // Each recipe is built without the legs earlier recipes used, when the
+  // pool allows it, so five recipes are not one parlay five times.
+  const used = new Set();
+  const rec = recipes.map(([t, f]) => {
+    const r = generateParlays(f, 1, used).out[0];
+    if (r) r.legs.forEach(p => used.add(p.i));
+    return [t, r];
+  }).filter(x => x[1]);
   const seen = new Set(), recs = rec.filter(([t, r]) => { const k = r.legs.map(p => p.i).sort().join(); if (seen.has(k)) return false; seen.add(k); return true; });
   if (!REC_DONE) { REC_DONE = 1;
     $('cParlays') && ($('cParlays').textContent = recs.length || '');
-    $('parlayrec').innerHTML = `<h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 games not started</span></h3>
+    $('parlayrec').innerHTML = `<div class="pshuf"><button class="h2go" data-pshuf="1">Shuffle \u2014 new mix</button>${
+      PSEED ? `<button class="h2go" data-pshuf="0">Back to best</button><span class="dim">mix ${PSEED}</span>` : ''}</div>
+    <h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 games not started</span></h3>
     ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
-  el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool</span></h3>
+  PSHOWN = new Set([...out, ...recs.map(x => x[1])].flatMap(r => r.legs.map(p => p.i)).concat([...PSHOWN_REC]));
+  if (recs.length) PSHOWN_REC = new Set(recs.flatMap(x => x[1].legs.map(p => p.i)));
+  el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool${PSEED ? ` \u00b7 mix ${PSEED}` : ''}</span></h3>
+    <div class="pshuf"><button class="h2go" data-pshuf="1">Shuffle \u2014 new mix</button></div>
     ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. ${(() => {
       const ng = new Set(legPool(F).map(p => p.mu)).size;
       return F.corr === 'diff' && ng < F.legs
         ? `The legs that pass come from ${ng} game${ng === 1 ? '' : 's'}, and "different games" needs ${F.legs}. Allow same-game legs or widen the sport or prop filter.`
         : 'Loosen the model threshold, the odds range or the correlation rule.'; })()}</div>`}`;
+}
+let PSHOWN = new Set(), PSHOWN_REC = new Set();
+/* New mix: set back what is on screen, reseed, rebuild both lists. When
+   almost the whole pool has been shown, start the rotation over. */
+function pshufClick(t){
+  if (t.dataset.pshuf === '0') { PSEED = 0; PAVOID.clear(); }
+  else {
+    PSHOWN.forEach(i => PAVOID.add(i));
+    const n = legPool(PF).length;
+    if (n && PAVOID.size >= 0.7 * n) { PAVOID.clear(); PSHOWN.forEach(i => PAVOID.add(i)); }
+    PSEED++;
+  }
+  REC_DONE = 0; drawParlays();
 }
 function pfClick(t){
   const [k, v] = t.dataset.pf.split('|').length > 2 ? [t.dataset.pf.split('|')[0], t.dataset.pf.split('|').slice(1).join('|')] : t.dataset.pf.split('|');
@@ -5340,6 +5411,21 @@ function drawCalibration(){
         no probability and are excluded.</span>` : ''}</div>`;
 }
 
+/* A team market whose current-model record cannot pay its own prices
+   even at the top of its 95% range. Built by build_app from the graded
+   ledger; nothing here changes a probability or a ranking. */
+function coldOf(p){
+  if (!p || p.kd !== 'team' || !D || !D.team_record) return null;
+  const sp = String(p.sp || '').toUpperCase();
+  return (D.team_record.cold || []).find(c => c.sp === sp && c.mk === p.mk) || null;
+}
+function coldText(c){
+  const MK = {game_total: 'game totals', spread: 'spreads', moneyline: 'moneylines'};
+  return `the current team model is ${c.w}\u2013${c.l}${c.units != null
+    ? ` (${c.units > 0 ? '+' : ''}${c.units.toFixed(1)}u)` : ''} on ${esc(c.sp)} ${MK[c.mk] || esc(c.mk)}.
+    Even the top of its 95% range (${(100 * c.ci_high).toFixed(0)}%) is below the
+    ${(100 * c.be).toFixed(0)}% these prices need. Treat as a pass until the record recovers.`;
+}
 function drawTeamRecord(){
   const tr = D.team_record, el = $('teamrec');
   if (!el) return;
@@ -5352,7 +5438,8 @@ function drawTeamRecord(){
   const pc = x => x ? `${(100 * x.rate).toFixed(0)}%` : '';
   const un = x => x && x.units != null
     ? `<span class="${x.units >= 0 ? 'hit' : 'miss'}">${x.units > 0 ? '+' : ''}${x.units.toFixed(1)}u</span>` : '\u2014';
-  const rows = tr.rows.map(r => `<tr><td><b>${esc(r.sp)}</b> ${esc(MK[r.mk] || r.mk)}</td>
+  const isCold = r => (tr.cold || []).some(c => c.sp === r.sp && c.mk === r.mk);
+  const rows = tr.rows.map(r => `<tr><td><b>${esc(r.sp)}</b> ${esc(MK[r.mk] || r.mk)}${isCold(r) ? ' <span class="coldtag">cold</span>' : ''}</td>
       <td class="v">${wl(r.bet)} <span class="dim">${pc(r.bet)}</span></td>
       <td class="v">${un(r.bet)}</td>
       <td class="dim">${wl(r.pass)} ${pc(r.pass)}</td></tr>`).join('');
@@ -5368,6 +5455,8 @@ function drawTeamRecord(){
       ${loud.map(r => ` <b>${esc(r.sp)} ${esc((MK[r.mk] || r.mk).toLowerCase())}</b> bets have
         ${r.bet.ci_high < 0.5 ? 'lost' : 'won'} more than chance allows over ${r.bet.n}
         (95% range ${(100 * r.bet.ci_low).toFixed(0)}\u2013${(100 * r.bet.ci_high).toFixed(0)}%).`).join('')}
+      ${tr.revs && Object.keys(tr.revs).length ? `<br><span class="dim">Priced by: ${Object.entries(tr.revs)
+        .map(([k, n]) => `${k === 'untagged' ? 'untagged (before the home-edge change)' : 'revision ' + esc(k)} ${n}`).join(', ')}.</span>` : ''}
       ${tr.legacy ? `<br><span class="unv">${tr.legacy} older team rows predate the current
         model and are not counted.</span>` : ''}</div>`;
 }
@@ -6665,6 +6754,8 @@ document.addEventListener('click', e => {
   if (pf) { pfClick(pf); return; }
   const pa = e.target.closest('[data-padd]');
   if (pa) { paddClick(pa); return; }
+  const ps = e.target.closest('[data-pshuf]');
+  if (ps) { pshufClick(ps); return; }
   const mo = e.target.closest('[data-more]');
   if (mo) { moreRows(); return; }
   const sh = e.target.closest('[data-shut]');
