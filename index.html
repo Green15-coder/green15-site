@@ -577,6 +577,15 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 .simlike{font-size:12.5px;margin:4px 0 6px}
 .simh2h{margin-top:10px;padding-top:8px;border-top:1px solid var(--rule);font-size:12.5px}
 tr.simclose td{font-weight:600}
+/* Circumstance rows that describe TONIGHT's game, and the side of a
+   split tonight falls on. */
+tr.ctxon td{background:var(--clover-soft)}
+tr.ctxon td:first-child{box-shadow:inset 3px 0 0 var(--clover);padding-left:6px}
+.ctxtag{display:block;font-size:10px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--clover);font-weight:700;margin-top:1px}
+mark.ctxside{background:none;color:inherit;border-bottom:2px solid var(--clover);padding:0 1px}
+.ctxsum{font-size:12px;margin:0 0 6px;line-height:1.45}
+.ctxsum b{color:var(--clover)}
 .simn{font-family:var(--m);font-size:19px;font-weight:600}
 .simcrit{font-family:var(--m);font-size:10.5px;color:var(--ink-2);
   margin:2px 0 8px;line-height:1.6}
@@ -2192,6 +2201,31 @@ function simH2H(p){
     <div class="mnote">A different question from the comparable games above: these are
       only the games against this opponent, whatever the circumstances.</div></div>`;
 }
+/* How close a comparable game's opponent is to tonight's, 0 = same.
+   Each criterion's gap divided by its band (allowance 15%, pace 10%),
+   averaged, so a game 14% apart on allowance is nearly at the edge
+   and one 1% apart is nearly identical. Older rows carry only the
+   "why" text, which already prints the gap, so it is read from there. */
+const SIM_BAND = {allowance: 0.15, pace: 0.10};
+function simFit(g, tha){
+  let parts = g.fit_parts;
+  if (!parts) {
+    parts = [];
+    for (const w of (g.why || [])) {
+      const m = /^(allowance|pace)\b.*\((\d+(?:\.\d+)?)% apart\)/.exec(String(w));
+      if (m) parts.push(+m[2] / 100 / SIM_BAND[m[1]]);
+    }
+  }
+  if (!parts.length) return null;
+  let f = parts.reduce((a, b) => a + b, 0) / parts.length;
+  if (tha && g.hax && g.hax !== tha) f += 0.25;
+  return Math.round(f * 1000) / 1000;
+}
+function simFitText(g){
+  if (g.fit == null) return '\u2014';
+  const pct = Math.max(0, Math.round(100 * (1 - Math.min(g.fit, 1))));
+  return `${pct}% match`;
+}
 function similar(p){
   const s = p.sim;
   if (!s || !s.market) return '';
@@ -2206,8 +2240,15 @@ function similar(p){
     (s.criteria||[]).map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`;
   const all = (s.games || []).map(g => Object.assign({}, g, {hax: simHA(p, g)}))
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
-  // Closest three: the games that met the most criteria, newest first.
-  [...all].sort((a, b) => (b.why || []).length - (a.why || []).length
+  // Closest three: the games whose opponent is MOST LIKE TONIGHT'S.
+  // Every listed game passes every criterion, so "most criteria met"
+  // was a tie on every row and the newest three always won -- the
+  // star marked his last three games, whatever they were. Rank on the
+  // actual distance instead: each criterion's gap as a share of its
+  // band, averaged, plus a step when the venue differs from tonight's.
+  const tha = ((p.ev || {}).home_away || {}).tonight;
+  all.forEach(g => { g.fit = simFit(g, tha); });
+  [...all].filter(g => g.fit != null).sort((a, b) => a.fit - b.fit
     || String(b.date).localeCompare(String(a.date))).slice(0, 3).forEach(g => { g.close = true; });
   const f = SIMF[p.i] || 'all';
   const games = f === 'home' ? all.filter(g => g.hax === 'home')
@@ -2245,11 +2286,12 @@ function similar(p){
   const open = OPENT.has('sim' + p.i);
   const tbl = open ? `<div class="tscroll"><table class="gtab"><thead><tr><th>Date</th><th>Opp</th>
     <th>H/A</th><th>Result</th><th>Min</th><th>vs ${ln}</th>
-    <th>Qualified because</th></tr></thead><tbody>${
+    <th>Match</th><th>Qualified because</th></tr></thead><tbody>${
     games.map(g => `<tr class="${g.close ? 'simclose' : ''}"><td>${esc((g.date||'').slice(5))}${g.close ? ' <span class="unv">\u2605</span>' : ''}</td>
       <td>${esc(g.opp)}</td><td>${esc(g.hax || '—')}</td><td class="v">${g.v}</td>
       <td>${g.mins == null ? '—' : g.mins}</td>
       <td class="${g.result}">${g.result}</td>
+      <td>${g.fit == null ? '\u2014' : simFitText(g).replace(' match', '')}</td>
       <td>${esc((g.why||[]).join('; '))}</td></tr>`).join('')}</tbody></table></div>`
     : '';
   return `<div class="simbox">${head}${crit}
@@ -2273,8 +2315,10 @@ function similar(p){
       <span class="unv">Not historical betting results: the line hung on
       those nights is not in this data. ${esc(s.note)}</span></div>
     ${pm}
-    ${all.length >= 3 ? `<div class="mnote">\u2605 closest 3 (most criteria met): ${all.filter(g => g.close)
-      .map(g => `${esc((g.date || '').slice(5))} ${esc(g.opp)} <b>${g.v}</b>`).join(' \u00b7 ')}</div>` : ''}
+    ${all.length >= 3 && all.some(g => g.close) ? `<div class="mnote">\u2605 closest 3 (opponent most like tonight's${
+      tha ? `, ${esc(tha)} preferred` : ''}): ${all.filter(g => g.close)
+      .sort((a, b) => a.fit - b.fit)
+      .map(g => `${esc((g.date || '').slice(5))} ${esc(g.opp)} <b>${g.v}</b> <span class="dim">(${simFitText(g)})</span>`).join(' \u00b7 ')}</div>` : ''}
     <button class="tgl" data-trow="sim${p.i}" style="margin:0">${
       open ? 'hide games' : games.length === 1 ? 'show the game and why it qualified'
         : `show all ${games.length} games and why they qualified`}</button>
@@ -2285,15 +2329,16 @@ function similar(p){
    moves the projection -- it says why the average looks the way it
    does, and whether tonight resembles the games that produced it. */
 function roleBox(p){
-  const r = p.role || {}, wo = p.wo || [];
+  const r = p.role || {}, wo = p.wo || [], tf = tonightFacts(p);
   const rows = [];
-  const d = (a, b) => (a == null || b == null) ? '' :
-    `<span class="${a > b ? 'hit' : a < b ? 'miss' : ''}">${a}</span> vs ${b}`;
+  const d = (a, b, w) => (a == null || b == null) ? '' :
+    `<span class="${a > b ? 'hit' : a < b ? 'miss' : ''}">${ctxMark(a, w === 'a')}</span> vs ${ctxMark(b, w === 'b')}`;
 
   if (r.starting) {
     const l3 = (r.starting.last3 || []).map(x => x ? 'S' : 'b').join(' ');
     rows.push(['starting', `${r.starting.starts} of ${r.starting.n} games`
-      + (l3 ? ` · last 3: ${l3}` : '')]);
+      + (l3 ? ` · last 3: ${l3}` : ''),
+      tf.start === 'S' ? 'likely starts' : tf.start === 'B' ? 'likely bench' : '']);
     // The position the box score listed him at in the games he started.
     const ps = Object.entries(r.starting.positions || {});
     if (ps.length) rows.push(['started at', ps.map(([k, v]) =>
@@ -2301,9 +2346,16 @@ function roleBox(p){
   }
   for (const k of ['start_split', 'close_split', 'blowout_split']) {
     const x = r[k]; if (!x) continue;
+    // Which side tonight falls on, when the card knows it.
+    const w = k === 'start_split' ? (tf.start === 'S' ? 'a' : tf.start === 'B' ? 'b' : null)
+      : k === 'blowout_split' ? (tf.game === 'blowout' ? 'a' : tf.game === 'close' ? 'b' : null)
+      : k === 'close_split' ? (tf.game === 'close' ? 'a' : tf.game === 'blowout' ? 'b' : null)
+      : null;
+    const game = tf.game === 'blowout' ? `blowout risk (spread ${tf.spread})` : `expected close (spread ${tf.spread})`;
+    const on = !w ? '' : k === 'start_split' ? (w === 'a' ? 'likely starts' : 'likely bench') : game;
     rows.push([`${esc(x.a_label)} vs ${esc(x.b_label)}`,
-      `${d(x.a_value, x.b_value)} (${x.a_n}g / ${x.b_n}g)`
-      + (x.a_mins != null ? ` · ${x.a_mins} vs ${x.b_mins} min` : '')]);
+      `${d(x.a_value, x.b_value, w)} (${x.a_n}g / ${x.b_n}g)`
+      + (x.a_mins != null ? ` · ${x.a_mins} vs ${x.b_mins} min` : ''), on]);
   }
   const r1 = v => v == null ? '\u2014' : String(Math.round(v * 10) / 10);
   // Clutch time: last five minutes of the 4th or overtime, score
@@ -2325,15 +2377,23 @@ function roleBox(p){
       r.fouls.five_plus === 1 ? '' : 's'} at 5+ (${r.fouls.n}g)`]);
   // The only place an absence is tied to an outcome, because it is
   // the only one that measured both sides.
-  for (const w of wo) rows.push([`without ${esc(w.mate_name || w.mate)}`,
-    `${d(w.without_mean, w.with_mean)} (${w.without_n}g without / ${w.with_n}g with)`]);
+  const outK = new Set(tf.out.map(m => m.k));
+  for (const w of wo) {
+    const isOut = outK.has(normName(w.mate_name || w.mate || ''));
+    rows.push([`without ${esc(w.mate_name || w.mate)}`,
+      `${d(w.without_mean, w.with_mean, isOut ? 'a' : null)} (${w.without_n}g without / ${w.with_n}g with)`,
+      isOut ? 'out tonight' : '']);
+  }
 
   rows.push(...circumstanceExtra(p));
   rows.unshift(...archBox(p));
   if (!rows.length) return '';
-  return `<div class="simbox"><h4>circumstance</h4>
-    <table class="gtab"><tbody>${rows.map(([a, b]) =>
-      `<tr><td style="white-space:nowrap">${a}</td>
+  // Rows that describe tonight's game first, in their original order.
+  const ord = rows.map((r, i) => [r, i]).sort((x, y) => (!!y[0][2] - !!x[0][2]) || (x[1] - y[1])).map(x => x[0]);
+  return `<div class="simbox"><h4>circumstance</h4>${tonightSummary(p)}
+    <table class="gtab"><tbody>${ord.map(([a, b, on]) =>
+      `<tr class="${on ? 'ctxon' : ''}"><td style="white-space:nowrap">${a}${
+        on ? `<span class="ctxtag">tonight \u00b7 ${esc(on)}</span>` : ''}</td>
        <td class="v" style="text-align:right">${b}</td></tr>`).join('')}
     </tbody></table>
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">Splits of an
@@ -3297,18 +3357,58 @@ function archBox(p){
   return a.map(([l, why, g]) => [`type: ${esc(l)}`, `${esc(why)} <span class="dim">(${g}g)</span>`]);
 }
 
+/* What is TRUE OF TONIGHT, so the circumstance rows that apply can
+   be highlighted. Only facts the card actually has: home/away and
+   rest are known; the start is inferred from his last three games and
+   labelled "likely"; blowout vs close comes from the posted spread
+   (absolute, so it says how lopsided, not who wins). Won/lost is
+   never highlighted -- tonight's result is the thing being predicted. */
+const CTX_BLOWOUT_SPREAD = 10, CTX_CLOSE_SPREAD = 4;
+function tonightFacts(p){
+  const ev = p.ev || {}, r = p.role || {}, H = hist(p);
+  const f = {ha: (ev.home_away || {}).tonight || null, b2b: null, start: null,
+             game: null, spread: ev.spread != null ? +ev.spread : null, out: []};
+  if (ev.back_to_back != null) f.b2b = !!ev.back_to_back;
+  else if (p.gd && H[0] && H[0].d) {
+    const dd = Math.round((Date.parse(p.gd) - Date.parse(H[0].d)) / 864e5);
+    if (isFinite(dd) && dd > 0) f.b2b = dd <= 1;
+  }
+  const l3 = ((r.starting || {}).last3) || [];
+  if (l3.length >= 3 && l3.every(x => x)) f.start = 'S';
+  else if (l3.length >= 3 && l3.every(x => !x)) f.start = 'B';
+  if (f.spread != null && isFinite(f.spread)) {
+    if (f.spread >= CTX_BLOWOUT_SPREAD) f.game = 'blowout';
+    else if (f.spread <= CTX_CLOSE_SPREAD) f.game = 'close';
+  }
+  f.out = outMates(p).filter(m => m.out);
+  return f;
+}
+function tonightSummary(p){
+  if (p.kd === 'team') return '';
+  const f = tonightFacts(p), bits = [];
+  if (f.ha) bits.push(`<b>${esc(f.ha)}</b>`);
+  if (f.b2b != null) bits.push(f.b2b ? '<b>second night of a back-to-back</b>' : '<b>rested</b>');
+  if (f.start) bits.push(f.start === 'S' ? '<b>likely starter</b> (started his last 3)' : '<b>likely off the bench</b> (bench his last 3)');
+  if (f.game) bits.push(`spread ${f.spread} \u2014 <b>${f.game === 'blowout' ? 'blowout risk' : 'expected close'}</b>`);
+  if (f.out.length) bits.push(`<b>without ${f.out.map(m => esc(m.name)).join(', ')}</b>`);
+  return bits.length ? `<div class="ctxsum">Tonight: ${bits.join(' \u00b7 ')}.
+    <span class="dim">Highlighted rows apply to tonight; the underlined number is tonight's side.</span></div>` : '';
+}
+const ctxMark = (txt, on) => on ? `<mark class="ctxside">${txt}</mark>` : txt;
+
 /* Home/away, rest and minutes, from the games on the card. */
 function circumstanceExtra(p){
   const hc = circumstanceHist(p);
   if (hc) return hc;
   const rec = ((p.ev || {}).recent || []).filter(g => g.v != null);
-  const rows = [];
+  const rows = [], tf = tonightFacts(p);
   if (rec.length < 3) return rows;
   const mean = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
   const r1 = v => v == null ? '\u2014' : (Math.round(v * 10) / 10).toString();
   const H = rec.filter(g => g.ha === 'home'), A = rec.filter(g => g.ha === 'away');
   if (H.length >= 2 && A.length >= 2) rows.push(['home vs away',
-    `${r1(mean(H.map(g => g.v)))} vs ${r1(mean(A.map(g => g.v)))} (${H.length}g / ${A.length}g)`]);
+    `${ctxMark(r1(mean(H.map(g => g.v))), tf.ha === 'home')} vs ${ctxMark(r1(mean(A.map(g => g.v))), tf.ha === 'away')} (${H.length}g / ${A.length}g)`,
+    tf.ha]);
   // Rest: days since the game before, newest first.
   const rest = [], b2b = [];
   for (let i = 0; i < rec.length - 1; i++) {
@@ -3317,7 +3417,8 @@ function circumstanceExtra(p){
     ((d0 - d1) / 864e5 <= 1 ? b2b : rest).push(rec[i].v);
   }
   if (b2b.length >= 2 && rest.length >= 2) rows.push(['back-to-back vs rested',
-    `${r1(mean(b2b))} vs ${r1(mean(rest))} (${b2b.length}g / ${rest.length}g)`]);
+    `${ctxMark(r1(mean(b2b)), tf.b2b === true)} vs ${ctxMark(r1(mean(rest)), tf.b2b === false)} (${b2b.length}g / ${rest.length}g)`,
+    tf.b2b == null ? '' : tf.b2b ? 'back-to-back' : 'rested']);
   const mins = rec.map(g => g.m).filter(v => v != null);
   if (mins.length >= 5) {
     const a = mean(mins.slice(0, 3)), b = mean(mins.slice(3));
@@ -3328,7 +3429,7 @@ function circumstanceExtra(p){
   if (p.gd && rec[0] && rec[0].d) {
     const dd = Math.round((Date.parse(p.gd) - Date.parse(rec[0].d)) / 864e5);
     if (isFinite(dd) && dd > 0) rows.push(['rest tonight', `${dd - 1} day${dd - 1 === 1 ? '' : 's'} off${
-      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`]);
+      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`, dd === 1 ? 'back-to-back' : 'rested']);
   }
   return rows;
 }
@@ -3980,23 +4081,28 @@ function chfClick(t){
    combined "without all of them" split, from the saved box scores.
    ================================================================ */
 function circumstanceHist(p){
-  const H = hist(p), rows = [];
+  const H = hist(p), rows = [], tf = tonightFacts(p);
   if (H.length < 3) return null;
-  const sp = (a, b, la, lb) => (a.length >= 2 && b.length >= 2) ? `<span class="${
-    mean(a.map(g => g.v)) > mean(b.map(g => g.v)) ? 'hit' : 'miss'}">${r1(mean(a.map(g => g.v)))}</span> vs ${r1(mean(b.map(g => g.v)))}
+  const sp = (a, b, la, lb, w) => (a.length >= 2 && b.length >= 2) ? `<span class="${
+    mean(a.map(g => g.v)) > mean(b.map(g => g.v)) ? 'hit' : 'miss'}">${ctxMark(r1(mean(a.map(g => g.v))), w === 'a')}</span> vs ${ctxMark(r1(mean(b.map(g => g.v))), w === 'b')}
     <span class="dim">(${a.length}g / ${b.length}g \u00b7 hit ${hitText(p, a)} ${la} / ${hitText(p, b)} ${lb})</span>` : null;
   const ev = p.ev || {}, tn = (ev.home_away || {}).tonight;
   if (tn) {
     const T = H.filter(g => g.ha === (tn === 'home' ? 'h' : 'a'));
-    rows.push(['tonight', `<b>${tn}</b>${T.length ? ` \u2014 ${r1(mean(T.map(g => g.v)))} avg, hit ${hitText(p, T)} in his ${T.length} ${tn} games` : ''}`]);
+    rows.push(['tonight', `<b>${tn}</b>${T.length ? ` \u2014 ${r1(mean(T.map(g => g.v)))} avg, hit ${hitText(p, T)} in his ${T.length} ${tn} games` : ''}`, tn]);
   }
+  const side = (c, a, b) => c === a ? 'a' : c === b ? 'b' : null;
   const x = [
-    ['home vs away', H.filter(g => g.ha === 'h'), H.filter(g => g.ha === 'a'), 'home', 'away'],
-    ['started vs bench', H.filter(g => g.st === true), H.filter(g => g.st === false), 'S', 'B'],
-    ['team won vs lost', H.filter(g => g.mg > 0), H.filter(g => g.mg < 0), 'W', 'L'],
-    ['back-to-back vs rested', H.filter(g => g.rest === 0), H.filter(g => g.rest != null && g.rest >= 1), 'b2b', 'rest'],
+    ['home vs away', H.filter(g => g.ha === 'h'), H.filter(g => g.ha === 'a'), 'home', 'away',
+      side(tf.ha, 'home', 'away'), tf.ha],
+    ['started vs bench', H.filter(g => g.st === true), H.filter(g => g.st === false), 'S', 'B',
+      side(tf.start, 'S', 'B'), tf.start === 'S' ? 'likely starts' : tf.start === 'B' ? 'likely bench' : ''],
+    // Never highlighted: tonight's result is what is being predicted.
+    ['team won vs lost', H.filter(g => g.mg > 0), H.filter(g => g.mg < 0), 'W', 'L', null, ''],
+    ['back-to-back vs rested', H.filter(g => g.rest === 0), H.filter(g => g.rest != null && g.rest >= 1), 'b2b', 'rest',
+      tf.b2b == null ? null : tf.b2b ? 'a' : 'b', tf.b2b == null ? '' : tf.b2b ? 'back-to-back' : 'rested'],
   ];
-  for (const [lab, a, b, la, lb] of x) { const t = sp(a, b, la, lb); if (t) rows.push([lab, t]); }
+  for (const [lab, a, b, la, lb, w, on] of x) { const t = sp(a, b, la, lb, w); if (t) rows.push([lab, t, w ? on : '']); }
   const mins = H.map(g => g.m).filter(v => v != null && v > 0);
   if (mins.length >= 5) {
     const a = mean(mins.slice(0, 3)), b = mean(mins.slice(3, 10));
@@ -4005,7 +4111,7 @@ function circumstanceHist(p){
   if (p.gd && H[0]) {
     const dd = Math.round((Date.parse(p.gd) - Date.parse(H[0].d)) / 864e5);
     if (isFinite(dd) && dd > 0) rows.push(['rest tonight', `${dd - 1} day${dd - 1 === 1 ? '' : 's'} off${
-      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`]);
+      dd === 1 ? ' \u2014 second night of a back-to-back' : ''}`, dd === 1 ? 'back-to-back' : 'rested']);
   }
   // The combined split. Separate "without A" and "without B" rows each
   // still include games the other one played; tonight both are out.
@@ -4015,13 +4121,13 @@ function circumstanceHist(p){
     if (known.length >= 2) {
       const {wo, wi} = withoutAll(p, known.map(m => m.k));
       const unk = outs.filter(m => !m.known).map(m => esc(m.name));
-      rows.push([`without all ${known.length} out`, wo.length >= 2
+      rows.push([`without all ${known.length} out`, (wo.length >= 2
         ? `<span class="${mean(wo.map(g => g.v)) > mean(wi.map(g => g.v)) ? 'hit' : 'miss'}">${r1(mean(wo.map(g => g.v)))}</span> without vs ${r1(mean(wi.map(g => g.v)))} with
           <span class="dim">(${wo.length}g / ${wi.length}g \u00b7 hit ${hitText(p, wo)} / ${hitText(p, wi)})</span>
           <div class="dim" style="font-size:11px">${known.map(m => esc(m.name)).join(' + ')}${unk.length ? ` \u00b7 ${unk.join(', ')} never dressed in his saved games` : ''}</div>
           <button class="chip cf" data-chf="${p.i}|woall|1">show these games in the chart</button>`
-        : `only ${wo.length} saved game${wo.length === 1 ? '' : 's'} with ${nm} all out \u2014 not enough to read`]);
-    } else rows.push([`without all ${outs.length} out`, `${nm}: too few of them appear in his saved box scores to split`]);
+        : `only ${wo.length} saved game${wo.length === 1 ? '' : 's'} with ${nm} all out \u2014 not enough to read`), 'all out tonight']);
+    } else rows.push([`without all ${outs.length} out`, `${nm}: too few of them appear in his saved box scores to split`, 'all out tonight']);
   } else if (p.woa && p.woa.n_without != null) {
     rows.push(['without all of them', `${r1(p.woa.without_mean)} vs ${r1(p.woa.with_mean)} (${p.woa.n_without}g / ${p.woa.n_with}g)`]);
   }
@@ -4084,7 +4190,9 @@ function matchupScore(p){
       + (norm ? ` \u00b7 median ${r1(norm.v)} in ${norm.n}` : ''),
       norm == null ? 0 : Math.abs(ev.game_total - norm.v) < norm.v * 0.03 ? 0 : ((ev.game_total > norm.v) === over ? 1 : -1));
   }
-  if (ev.rest_days != null) t('rest', `${ev.rest_days}d`, ev.rest_days === 0 ? 'back-to-back' : 'days off', ev.rest_days === 0 ? (over ? -1 : 1) : 0);
+  // rest_days is days since the last game (1 = back-to-back); the
+  // tile used to test for 0, so a back-to-back never lit it.
+  if (ev.rest_days != null) t('rest', `${ev.rest_days}d`, ev.back_to_back ? 'back-to-back' : 'since last game', ev.back_to_back ? (over ? -1 : 1) : 0);
   const fresh = ev.opp_out_new || [], long = (ev.opp_out || []).filter(n => !fresh.includes(n));
   const up = tiles.filter(x => x.includes('mtile up')).length, dn = tiles.filter(x => x.includes('mtile dn')).length;
   const hrow = V.length ? `<div class="mhead" style="margin-top:9px">every saved game vs ${esc(opp)}</div>
