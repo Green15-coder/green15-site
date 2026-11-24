@@ -890,6 +890,31 @@ html{scroll-behavior:smooth}
 .plegs .sp{font-family:var(--m);font-size:9px;padding:1px 5px;border-radius:4px;background:var(--raise);margin-right:3px}
 .pfoot{font-family:var(--m);font-size:10px;color:var(--ink-2);line-height:1.55}
 .pfoot .h2go{display:block;margin:8px 0 0 auto}
+/* Parlay advanced reasoning: opens in place under each card. */
+details.preason{margin:9px 0 0;border-top:1px dashed var(--rule);padding-top:7px}
+details.preason>summary{cursor:pointer;font-family:var(--m);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--clover);list-style:none}
+details.preason>summary::-webkit-details-marker{display:none}
+details.preason>summary::after{content:' \25BE';opacity:.7}
+details.preason[open]>summary::after{content:' \25B4'}
+.prsec{margin:10px 0 0}
+.prsec h4{font-family:var(--m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:0 0 5px;font-weight:600}
+.prsec p{font-size:12px;line-height:1.5;margin:4px 0}
+.prmath{font-family:var(--m);font-size:11px;line-height:1.6;background:var(--raise);border-radius:8px;padding:7px 9px;overflow-x:auto}
+.prtab{overflow-x:auto}
+.prtab table{border-collapse:collapse;font-family:var(--m);font-size:10.5px;width:100%}
+.prtab th{font-weight:400;color:var(--ink-2);text-align:right;padding:3px 5px;white-space:nowrap}
+.prtab td{text-align:right;padding:3px 5px;white-space:nowrap;border-top:1px solid var(--rule)}
+.prtab tr.prln td{text-align:left;border-top:1px solid var(--rule);padding-top:5px;font-size:11px;color:var(--ink)}
+.prtab tr.prln+tr td{border-top:0}
+.prtab table.prpair th:first-child,.prtab table.prpair td:first-child{text-align:left;white-space:normal}
+.prleg{border:1px solid var(--rule);border-radius:10px;padding:7px 9px;margin:6px 0}
+.prleg .prh{font-size:12.5px}
+.prleg .prh .grade{margin-right:4px}
+.prleg ul{margin:4px 0 0;padding-left:16px;font-size:11.5px;line-height:1.45}
+.prleg li.for::marker{color:var(--over)} .prleg li.against::marker{color:var(--under)}
+.prleg .prk{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-top:3px}
+.prweak{border-left:3px solid var(--under);padding-left:8px}
 .calt th,.calt td{padding:7px 6px;white-space:nowrap}
 .calt td:nth-child(2){color:var(--ink-2)}
 /* Back to top */
@@ -4481,6 +4506,140 @@ function calGap(){
     .map(b => Math.abs(b.said - b.happened));
   return g.length ? Math.max(...g) : null;
 }
+/* ADVANCED REASONING. Everything here is read off the legs already on
+   the card -- no new probability, no new ranking. It shows how the
+   estimate was built (price -> fair -> model -> anchored -> calibrated
+   -> multiplied -> correlation), each leg's own case for and against,
+   the weakest leg and what dropping it does, and what breaks the
+   ticket. Missing fields print as a dash, never a guess. */
+const POPEN = new Set();
+const pp = v => v == null ? '\u2014' : (100 * v).toFixed(1) + '%';
+const sgn = v => v == null ? '\u2014' : (v > 0 ? '+' : '') + v.toFixed(1);
+function legName(q){
+  if (q.kd === 'team') return /total/.test(q.mkk || q.mk || '') ? `${esc(gameLabel(q.mu))} ${esc(q.sd)} ${q.ln}`
+    : `${esc(q.sd)}${q.mkk === 'moneyline' || q.mk === 'moneyline' ? ' ML' : ' ' + spreadSign(q, q.ln)}`;
+  return `${esc(q.pl)} ${esc(q.sd)} ${q.ln} ${esc((q.mk || '').replace(/_/g, ' '))}`;
+}
+function legShort(q){
+  return q.kd === 'team' ? legName(q) : `${esc(String(q.pl).split(' ').slice(-1)[0])} ${esc(q.sd)} ${q.ln}`;
+}
+function legReasonHtml(q, isWeak){
+  const team = q.kd === 'team', H = hist(q);
+  const lines = [];
+  // Projection against the line.
+  if (!team && q.pj != null && q.ln != null) {
+    const z = q.sv ? (q.pj - q.ln) / q.sv : null;
+    lines.push(['', `Projects <b>${q.pj.toFixed(1)}</b> against a line of ${q.ln} (${sgn(q.pj - q.ln)}${
+      z != null ? `, ${Math.abs(z).toFixed(2)} SD ${q.pj >= q.ln ? 'above' : 'below'}` : ''}).`]);
+  } else if (team && q.clr != null) lines.push(['', `Projected margin against the number: <b>${sgn(q.clr)}</b>.`]);
+  // Track record at tonight's line.
+  const rv = recentVals(q);
+  const wk = k => { const v = rv.slice(0, k); return v.length >= k ? `${v.filter(x => won(q, x)).length}/${k}` : null; };
+  const form = [['L3', wk(3)], ['L5', wk(5)], ['L10', wk(10)]].filter(x => x[1]);
+  if (!team && (form.length || (q.cl != null && q.dc))) lines.push(['', `Cleared tonight's line for this side: ${
+    form.map(([k, v]) => `${k} <b>${v}</b>`).join(' \u00b7 ')}${q.cl != null && q.dc
+      ? `${form.length ? ' \u00b7 ' : ''}window <b>${q.sd === 'Under' ? q.dc - q.cl : q.cl}/${q.dc}</b>` : ''}.`]);
+  // Opportunity: what rate per chance the line needs vs what he has done.
+  const rq = q.req;
+  if (rq && rq.required_rate != null && rq.actual_rate != null) {
+    const ok = rq.over ? rq.actual_rate >= rq.required_rate : rq.actual_rate <= rq.required_rate;
+    lines.push([ok ? 'for' : 'against', `Needs ${rq.need} on about ${rq.chances} ${esc(rq.unit || 'chances')}: a rate of
+      ${rq.required_rate.toFixed(3)} per chance; he has run ${rq.actual_rate.toFixed(3)} over ${rq.n} games.`]);
+  }
+  // Clover leaves: the named reasons for and against.
+  for (const l of (q.lv || [])) {
+    if (l[1] === 'green') lines.push(['for', `<b>${esc(l[0])}</b>: ${esc(l[2])}`]);
+    else if (l[1] === 'red') lines.push(['against', `<b>${esc(l[0])}</b>: ${esc(l[2])}`]);
+  }
+  // Tonight's circumstances.
+  if (!team) {
+    const f = tonightFacts(q), bits = [];
+    if (f.ha) bits.push(esc(f.ha));
+    if (f.b2b != null) bits.push(f.b2b ? 'second night of a back-to-back' : 'rested');
+    if (f.start) bits.push(f.start === 'S' ? 'likely starter' : 'likely off the bench');
+    if (f.game) bits.push(`spread ${f.spread}: ${f.game === 'blowout' ? 'blowout risk' : 'expected close'}`);
+    if (f.out.length) bits.push(`without ${f.out.map(m => esc(m.name)).join(', ')}`);
+    if (bits.length) lines.push(['', `Tonight: ${bits.join(' \u00b7 ')}.`]);
+  }
+  const risks = [];
+  if (!team && (q.n || 0) < 8) risks.push(`only ${q.n ?? 0} games behind it`);
+  if (q.elig === false || ageClass(q.at) === 'old') risks.push('price is old, re-check it');
+  if (coldOf(q)) risks.push('cold market (see the warning on the card)');
+  const g = gameInfo(q), st = g && g.ct ? new Date(g.ct).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
+  return `<div class="prleg${isWeak ? ' prweak' : ''}">
+    <div class="prh">${q.gr ? `<b class="grade ${gcls(q.gr)}">${esc(q.gr)}</b>` : ''}<b>${legName(q)}</b>
+      <span class="dim">${q.pr > 0 ? '+' : ''}${q.pr} \u00b7 ${esc(gameLabel(q.mu))}${st ? ' \u00b7 ' + esc(st) : ''}</span></div>
+    <div class="prk">${q.sc != null ? `Clover ${q.sc}${q.mx ? '/' + q.mx : ''}` : ''}${q.ti ? ` \u00b7 ${esc(q.ti)}` : ''}${
+      q.et ? ` \u00b7 bet tier ${esc(q.et)}` : ''} \u00b7 ${esc(gamesText(q))}${isWeak ? ' \u00b7 <b class="miss">weakest leg</b>' : ''}</div>
+    ${q.wy ? `<p>${esc(q.wy)}</p>` : ''}
+    ${lines.length ? `<ul>${lines.map(([c, t]) => `<li${c ? ` class="${c}"` : ''}>${t}</li>`).join('')}</ul>` : ''}
+    ${risks.length ? `<div class="prk miss">Watch: ${risks.join(' \u00b7 ')}.</div>` : ''}
+  </div>`;
+}
+function parlayReason(r, tag){
+  const L = r.legs, q = L.map(calProb), be = 1 / r.d;
+  // 1. The chain, per leg.
+  const rows = L.map((p, k) => {
+    const imp = 1 / dec(p.pr);
+    return `<tr class="prln"><td colspan="6">${legShort(p)} <span class="dim">${p.pr > 0 ? '+' : ''}${p.pr}</span></td></tr>
+      <tr><td>${pp(imp)}</td><td>${pp(p.fp)}</td><td>${pp(p.mp)}</td><td>${pp(p.ap)}</td><td><b>${pp(q[k])}</b></td><td>${p.ed == null ? '\u2014' : sgn(100 * p.ed)}</td></tr>`;
+  }).join('');
+  // 2. Correlation, pair by pair (same game only).
+  const pairs = [];
+  for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+    const c = pairCorr(L[i], L[j]); if (!c.same) continue;
+    let eff = null;
+    if (c.n >= 6) {
+      const pa = q[i], pb = q[j];
+      eff = Math.min(Math.min(1 / pa, 1 / pb), Math.max(0.3, 1 + c.r * Math.sqrt(((1 - pa) * (1 - pb)) / (pa * pb))));
+    }
+    pairs.push(`<tr><td>${legShort(L[i])} + ${legShort(L[j])}</td><td>${c.n}</td><td>${c.n >= 6 ? (c.r > 0 ? '+' : '') + c.r.toFixed(2) : 'unmeasured'}</td>
+      <td>${eff == null ? '\u00d71.00 (left alone)' : '\u00d7' + eff.toFixed(2)}</td></tr>`);
+  }
+  // 3. Weakest leg, and the ticket without it.
+  const wi = q.indexOf(Math.min(...q));
+  let drop = '';
+  if (L.length > 2) {
+    const rest = L.filter((_, k) => k !== wi), jr = jointProb(rest), dr = rest.reduce((a, p) => a * dec(p.pr), 1);
+    drop = `Without it the ticket is ${rest.length} legs: <b>${pp(jr.est)}</b> at ${am(dr)} (break-even ${pp(1 / dr)},
+      ${jr.est - 1 / dr > 0 ? '+' : ''}${(100 * (jr.est - 1 / dr)).toFixed(1)} pts). With it: ${pp(r.j.est)} at ${am(r.d)}
+      (${r.j.est - be > 0 ? '+' : ''}${(100 * (r.j.est - be)).toFixed(1)} pts).`;
+  }
+  // 4. Stress test: every leg worse by k points.
+  const stress = [1, 2, 3, 5].map(k => {
+    const v = q.reduce((a, x) => a * Math.max(0.01, x - k / 100), 1);
+    return `${k} pt${k > 1 ? 's' : ''} worse: <b class="${v > be ? 'hit' : 'miss'}">${pp(v)}</b>`;
+  }).join(' \u00b7 ');
+  let flip = null;
+  for (let k = 0; k <= 30; k += 0.5) { if (q.reduce((a, x) => a * Math.max(0.01, x - k / 100), 1) < be) { flip = k; break; } }
+  const fair = r.j.est > 0 ? am(1 / r.j.est) : '\u2014';
+  const sgp = new Set(L.map(p => p.mu)).size < L.length;
+  const why = tag ? `Built by the "${esc(tag)}" recipe: model chance at least ${tag === 'Safest 2-leg' ? 60 : 55}%, games not started, prices -250 to +400${
+      tag === 'Form + model 3-leg' ? ', cleared tonight\u2019s line in at least 2 of the last 3' : ''}${
+      tag === 'Value 4-leg' ? ', ranked on chance \u00d7 payout' : ', ranked on hit chance'}${
+      tag === 'Same-game 3-leg' ? ', one game, no measured-negative pair' : ', one leg per game'}.`
+    : `Built from your filters, ranked on ${PF.sort === 'edge' ? 'model edge' : PF.sort === 'pay' ? 'chance \u00d7 payout' : 'hit chance'}.`;
+  return `<div class="prsec"><h4>Why this ticket</h4><p>${why} The builder searched combinations of the top legs
+      in the pool and kept the tickets with the best ${tag === 'Value 4-leg' || (!tag && PF.sort === 'pay') ? 'value' : !tag && PF.sort === 'edge' ? 'total edge' : 'estimated hit chance'}.</p></div>
+    <div class="prsec"><h4>From price to estimate</h4>
+      <div class="prtab"><table><tr><th>Book</th><th>Fair</th><th>Model</th><th>Anch.</th><th>Used</th><th>Edge</th></tr>${rows}</table></div>
+      <p class="dim">Book = what the price implies, vig included. Fair = vig removed. Model = Green15's own read. Anch. (anchored) = the model
+        pulled 70% back toward fair, capped at 4 pts of edge. Used = anchored, corrected by how that probability range has actually landed on the Record tab.
+        Edge = anchored minus fair, in points.</p></div>
+    <div class="prsec"><h4>Putting the legs together</h4>
+      <div class="prmath">${q.map(pp).join(' \u00d7 ')} = <b>${pp(r.j.ind)}</b> if the legs were independent${
+        pairs.length ? `<br>same-game adjustment \u00d7${(r.j.est / r.j.ind).toFixed(2)} = <b>${pp(r.j.est)}</b> estimated` : ''}
+        <br>payout ${am(r.d)} needs <b>${pp(be)}</b> to break even \u2192 ${r.j.est - be > 0 ? '+' : ''}${(100 * (r.j.est - be)).toFixed(1)} pts
+        <br>expected return per $1: <b class="${r.ev > 0 ? 'hit' : 'miss'}">${r.ev > 0 ? '+' : ''}${r.ev.toFixed(2)}</b> \u00b7 fair price at this estimate: ${fair}</div>
+      ${pairs.length ? `<div class="prtab"><table class="prpair"><tr><th>Same-game pair</th><th>Shared games</th><th>Correlation</th><th>Effect</th></tr>${pairs.join('')}</table></div>
+      <p class="dim">Correlation is measured on the games both legs share, shrunk toward zero for small samples. Under 6 shared games it is left out, not guessed.${
+        sgp ? ' Books price same-game tickets lower than the multiplied price shown here.' : ''}</p>`
+        : '<p class="dim">Every leg is from a different game, so no correlation is applied.</p>'}</div>
+    <div class="prsec"><h4>Weakest leg</h4><p><b>${legName(L[wi])}</b> at ${pp(q[wi])} is the leg most likely to miss.${drop ? ' ' + drop : ''}</p></div>
+    <div class="prsec"><h4>Stress test</h4><p>If every leg is worse than estimated by: ${stress}.
+      ${flip == null ? '' : flip === 0 ? 'It is below break-even already.' : `It drops below break-even once each leg is about <b>${flip} pts</b> worse.`}</p></div>
+    <div class="prsec"><h4>Each leg</h4>${L.map((p, k) => legReasonHtml(p, k === wi && L.length > 1)).join('')}</div>`;
+}
 function parlayCard(r, tag){
   const sgp = new Set(r.legs.map(p => p.mu)).size < r.legs.length;
   const stale = r.legs.filter(p => p.elig === false || ageClass(p.at) === 'old').length;
@@ -4519,8 +4678,14 @@ function parlayCard(r, tag){
           ? 'One hitting makes the other likelier, so this is closer to one bet than two; books price that in.'
           : 'One hitting makes the other less likely, which is why the estimate is below the naive product.'}</div>`;
     }).join('')}</div>` : ''}
+    <details class="preason" data-preason="${ids}"${POPEN.has(ids) ? ' open' : ''}><summary>Advanced reasoning</summary>${parlayReason(r, tag)}</details>
   </div>`;
 }
+// Keep a parlay's reasoning open across redraws (filters, shuffle).
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!d || !d.dataset || d.dataset.preason == null) return;
+  d.open ? POPEN.add(d.dataset.preason) : POPEN.delete(d.dataset.preason);
+}, true);
 let REC_DONE = 0;
 function drawParlays(){
   const el = $('parlayout'); if (!el || !D) return;
