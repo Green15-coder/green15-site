@@ -677,6 +677,7 @@ html.sheeton #totop,html.sheeton .tray{visibility:hidden}
 .shzh span:first-child{grid-column:2 / 4} .shzh span{text-align:right}
 details.shbgd{margin:2px 0 6px} details.shbgd>summary{cursor:pointer;font-family:var(--m);font-size:10.5px;letter-spacing:.06em;
   text-transform:uppercase;color:var(--ink-2)}
+.tmore{height:1px}
 .shotc .ztx{font-size:3px;text-anchor:middle;fill:var(--ink);font-family:var(--m)}
 .tshots{margin-top:6px}
 .injside{margin:4px 0 8px}
@@ -800,7 +801,7 @@ td:first-child{text-align:left;font-family:var(--b);min-width:0}
 .glines>div{background:var(--raise);border-radius:9px;padding:5px 6px;text-align:center}
 .glines small{display:block;font-family:var(--m);font-size:9px;color:var(--ink-2)}
 .glines b{font-family:var(--m);font-size:13.5px} .glines .hit{color:var(--over)}
-.gbar{display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--raise)}
+.gtbar{display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--raise)}
 .gleg{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--m);font-size:9.5px;color:var(--ink-2);margin:4px 0 8px}
 .gleg i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}
 .gtops-h{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:2px 0 4px}
@@ -5808,7 +5809,7 @@ function gameCard(g, p0){
       <div><small>total</small><b>${g.total ?? '\u2014'}</b></div>
       <div><small>props</small><b>${g.props ?? 0}</b></div>
       <div><small>playable</small><b class="${g.playable ? 'hit' : ''}">${g.playable ?? 0}</b></div></div>
-    <div class="gbar">${bar}</div><div class="gleg">${legend}</div>
+    <div class="gtbar">${bar}</div><div class="gleg">${legend}</div>
     ${tops ? `<div class="gtops-h">Best on the board</div>${tops}` : ''}
     <div class="gbtns"><button class="h2go" data-game="${esc(g.matchup)}">See on board</button>
       <button class="h2go" data-gpar="${esc(g.matchup)}">Build parlay</button></div>
@@ -5952,8 +5953,10 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-injsport]');
   if (b) { INJSPORT = b.dataset.injsport; drawInjuries(); }
 });
+let INJ_T = 0;
+const drawInjuriesSoon = () => { clearTimeout(INJ_T); INJ_T = setTimeout(drawInjuries, 300); };
 document.addEventListener('input', e => {
-  if (e.target && e.target.id === 'injq') drawInjuries();
+  if (e.target && e.target.id === 'injq') drawInjuriesSoon();
 });
 
 /* ---------- trending ---------- */
@@ -6182,6 +6185,40 @@ function trendRow(r, id, name, sub, rank){
         + detailFor(m)).join('') : ''}</div>`;
 }
 
+/* Trending rows go in as you scroll: forty at a time, the next forty
+   when the end of the list comes within a screen or so. Every row
+   carries a chart and a shot map, and building all of them at once was
+   tens of thousands of elements before the first one was looked at. */
+const TREND_PAGE = 40;
+let TREND_N = TREND_PAGE, TREND_KEY = '', TREND_LIST = [], TREND_IO = null;
+function trendPlayerRow(r, i){
+  return trendRow(r, 'p' + i, r.player,
+    `${esc(r.sport)} · ${r.team ? esc(r.team)
+      : '<span class="unv">team unverified</span>'}${
+      (r.markets || []).length
+        ? ' · ' + esc(r.markets.join(', ').replace(/_/g, ' ')) : ''}`,
+    i + 1);
+}
+function trendBatch(a, b){
+  const io = typeof IntersectionObserver !== 'undefined';
+  const end = io ? Math.min(b, TREND_LIST.length) : TREND_LIST.length;
+  return TREND_LIST.slice(a, end).map((r, k) => trendPlayerRow(r, a + k)).join('')
+    + (end < TREND_LIST.length ? '<div class="tmore" aria-hidden="true"></div>' : '');
+}
+function trendWatch(){
+  if (TREND_IO) TREND_IO.disconnect();
+  const el = $('trendrows'), s = el && el.querySelector('.tmore');
+  if (!s || typeof IntersectionObserver === 'undefined') return;
+  TREND_IO = new IntersectionObserver(es => {
+    if (!es.some(e => e.isIntersecting)) return;
+    TREND_IO.disconnect();
+    const from = TREND_N; TREND_N += TREND_PAGE;
+    s.remove();
+    el.insertAdjacentHTML('beforeend', trendBatch(from, TREND_N));
+    trendWatch();
+  }, {rootMargin: '900px 0px'});
+  TREND_IO.observe(s);
+}
 function drawTrending(){
   const t = D.trending || {};
   const players = t.players || [], teams = t.teams || [];
@@ -6221,14 +6258,11 @@ function drawTrending(){
       + `history over the last ${TWIN}. That is a normal night, not a `
       + 'missing feed.';
 
-  $('trendrows').innerHTML = list.map((r, i) => trendRow(
-    r, 'p' + i, r.player,
-    `${esc(r.sport)} · ${r.team ? esc(r.team)
-      : '<span class="unv">team unverified</span>'}${
-      (r.markets || []).length
-        ? ' · ' + esc(r.markets.join(', ').replace(/_/g, ' ')) : ''}`,
-    i + 1
-  )).join('');
+  const key = [TSPORT, TDIR, TWIN].join('|');
+  if (key !== TREND_KEY) { TREND_KEY = key; TREND_N = TREND_PAGE; }
+  TREND_LIST = list;
+  $('trendrows').innerHTML = trendBatch(0, TREND_N);
+  trendWatch();
 
   const tl = teams
     .filter(r => TSPORT === 'all' || (r.sport || '?') === TSPORT)
@@ -6266,6 +6300,7 @@ function drawTrendGames(t, qual){
   $('notrend').hidden = keys.length > 0;
   $('notrend').textContent = 'No player has a priced record in this sport yet.';
   const min = t.min_pct ?? 15;
+  if (TREND_IO) { TREND_IO.disconnect(); TREND_KEY = ''; }
   $('trendrows').innerHTML = keys.map((k, gi) => {
     const rs = groups[k].sort((a, b) => {
       const ma = topMove(a), mb = topMove(b);
@@ -7496,7 +7531,6 @@ function askForm(r, rows){
             dec: a.filter(g => ok(g.v) != null).length};
   };
   const cells = wins.map(cell);
-  const head = wins.map((k, j) => `<th>${j === wins.length - 1 ? `All ${k}` : `L${k}`}</th>`).join('');
   const all = cells[cells.length - 1].avg, l5 = games.length >= 5 ? cell(5).avg : null;
   const trend = l5 == null || !all ? '' : Math.abs(l5 - all) < Math.max(0.5, 0.08 * all)
     ? 'His last 5 are in line with the full span.'
@@ -7910,8 +7944,8 @@ $('trkcopy').onclick = async () => {
 
 // Debounced: a redraw per keystroke on a long board made typing lag.
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-$('q').addEventListener('input', debounce(draw, 140));
-$('askq').addEventListener('input', debounce(drawAsk, 160));
+$('q').addEventListener('input', debounce(draw, 300));
+$('askq').addEventListener('input', debounce(drawAsk, 300));
 $('askq').addEventListener('change', e => askRecentAdd(e.target.value));
 $('bank').addEventListener('input', drawStakes);
 // Tapping a game filters the board to it.
@@ -8108,9 +8142,15 @@ const GAMES = new Map();     // sport|away|home -> {ct, st, det, ab}
 let CLOCK_AT = null;
 const nick = n => teamNorm(String(n || '').trim().split(/\s+/).pop());
 const gKeys = (sp, away, home) => [`${sp}|${teamNorm(away)}|${teamNorm(home)}`, `${sp}|~${nick(away)}|~${nick(home)}`];
+/* The two lookup keys for a matchup, built once. Folding team names is
+   the expensive part and the names never change; the GAMES lookup stays
+   live, so a scoreboard read is seen on the next call. */
+const GKEYS = new Map();
 function gameInfo(p){
-  const {away, home} = matchSides(p), sp = String(p.sp || '').toUpperCase();
-  for (const k of gKeys(sp, away, home)) { const g = GAMES.get(k); if (g) return g; }
+  const sp = String(p.sp || '').toUpperCase(), mk = sp + '|' + (p.mu || '');
+  let ks = GKEYS.get(mk);
+  if (!ks) { const {away, home} = matchSides(p); ks = gKeys(sp, away, home); GKEYS.set(mk, ks); }
+  for (const k of ks) { const g = GAMES.get(k); if (g) return g; }
   const ct = p.ct ? Date.parse(p.ct) : NaN;
   return Number.isFinite(ct) ? {ct, st: null, det: '', ab: null} : null;
 }
@@ -8121,11 +8161,24 @@ function startedNow(p){
   return !!(g.ct && Date.now() >= g.ct);
 }
 const sameDay = (a, b) => a.toDateString() === b.toDateString();
+/* Start-time text, formatted once per start time. Locale formatting
+   is slow on phones and the board asks for the same few start times
+   thousands of times a render. The cache is dropped when the day
+   changes, since "Thu 7:00 PM" becomes "7:00 PM" on Thursday. */
+const T_FMT = new Intl.DateTimeFormat([], {hour: 'numeric', minute: '2-digit'});
+const W_FMT = new Intl.DateTimeFormat([], {weekday: 'short'});
+const START_TXT = new Map(); let START_DAY = '';
 function startTxt(p){
   const g = gameInfo(p); if (!g || !g.ct) return '';
-  const d = new Date(g.ct), now = new Date();
-  const t = d.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
-  return sameDay(d, now) ? t : `${d.toLocaleDateString([], {weekday: 'short'})} ${t}`;
+  const now = new Date(), day = now.toDateString();
+  if (day !== START_DAY) { START_TXT.clear(); START_DAY = day; }
+  let s = START_TXT.get(g.ct);
+  if (s == null) {
+    const d = new Date(g.ct), t = T_FMT.format(d);
+    s = sameDay(d, now) ? t : `${W_FMT.format(d)} ${t}`;
+    START_TXT.set(g.ct, s);
+  }
+  return s;
 }
 function clockHtml(p){
   const g = gameInfo(p); if (!g || !g.ct) return '';
@@ -8157,7 +8210,14 @@ function startSlots(){
   return [...m.entries()].sort((a, b) => a[1] - b[1]).map(x => x[0]);
 }
 const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, '');
-async function readScoreboards(){
+let SB_INFLIGHT = null;
+function readScoreboards(){
+  // The 3-minute timer, the tab coming back and the live tick can
+  // overlap; they share one read instead of each fetching every day.
+  if (!SB_INFLIGHT) SB_INFLIGHT = readScoreboardsNow().finally(() => { SB_INFLIGHT = null; });
+  return SB_INFLIGHT;
+}
+async function readScoreboardsNow(){
   const want = new Map();     // sport -> Set(yyyymmdd)
   const today = new Date(), loc = d => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   for (const p of ALLP) {
@@ -8253,10 +8313,19 @@ function parseLiveBox(j, sp){
     score: (comp.competitors || []).map(c => ({ab: ((c.team || {}).abbreviation) || '', ha: c.homeAway, s: c.score}))
       .sort((a, b) => (a.ha === 'away' ? 0 : 1) - (b.ha === 'away' ? 0 : 1))};
 }
-async function getLiveBox(sp, id, force){
-  if (!id || !ESPN_PATH[sp]) return null;
+/* One request per game at a time: the Today tab, the tracker and the
+   alerts can all ask for the same box in the same tick. */
+const LIVE_INFLIGHT = new Map();
+function getLiveBox(sp, id, force){
+  if (!id || !ESPN_PATH[sp]) return Promise.resolve(null);
   const c = LIVEBOX.get(id);
-  if (c && (c.final || (!force && Date.now() - c.at < LIVE_TTL))) return c.box;
+  if (c && (c.final || (!force && Date.now() - c.at < LIVE_TTL))) return Promise.resolve(c.box);
+  if (LIVE_INFLIGHT.has(id)) return LIVE_INFLIGHT.get(id);
+  const job = fetchLiveBox(sp, id, c).finally(() => LIVE_INFLIGHT.delete(id));
+  LIVE_INFLIGHT.set(id, job);
+  return job;
+}
+async function fetchLiveBox(sp, id, c){
   try {
     const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${ESPN_PATH[sp]}/summary?event=${id}`, {cache: 'no-store'});
     if (!r.ok) return c ? c.box : null;
