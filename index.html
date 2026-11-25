@@ -657,6 +657,26 @@ html.sheeton #totop,html.sheeton .tray{visibility:hidden}
 .shotc .ctz{fill:none;stroke:var(--rule);stroke-width:.2;stroke-dasharray:1 1}
 .shotc .zcell{fill:var(--clover-soft);stroke:var(--rule);stroke-width:.2}
 .shotc .zbar{fill:var(--clover);opacity:.8}
+.shotc .hzn{fill:none}
+.shotc .hzl{font-family:var(--m);font-size:3px;font-weight:700;text-anchor:middle;fill:var(--ink)}
+.shotc .hzl.sm{font-size:1.9px} .shotc .hzs{font-size:1.9px;font-weight:400;fill:var(--ink-2)}
+.shleg i.hzk{border-radius:2px} .shleg i.hzk.up{background:var(--over);opacity:.6} .shleg i.hzk.dn{background:var(--under);opacity:.6}
+.shsep{flex:none;width:1px;background:var(--rule);margin:0 2px}
+.shotgs .chip{font-size:10px}
+.shmu{font-size:12px;margin:4px 0 8px;display:grid;gap:4px}
+.shmu>div{border-radius:8px;padding:6px 8px;background:var(--raise)}
+.shmu span{font-family:var(--m);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
+.shmu .up span{color:var(--over)} .shmu .dn span{color:var(--under)}
+.shz{display:grid;gap:4px;margin:4px 0 6px}
+.shzr{display:grid;grid-template-columns:88px 1fr 30px 82px 30px;gap:6px;align-items:center;font-size:12px}
+.shzn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shzb{height:6px;border-radius:99px;background:var(--raise);overflow:hidden} .shzb i{display:block;height:100%;background:var(--clover)}
+.shzs,.shzp,.shzd{font-family:var(--m);font-size:10.5px;text-align:right} .shzs{color:var(--ink-2)}
+.shzd.hit{color:var(--over)} .shzd.miss{color:var(--under)}
+.shzh{display:grid;grid-template-columns:88px 1fr 30px 82px 30px;white-space:nowrap;gap:6px;font-family:var(--m);font-size:9px;color:var(--ink-2)}
+.shzh span:first-child{grid-column:2 / 4} .shzh span{text-align:right}
+details.shbgd{margin:2px 0 6px} details.shbgd>summary{cursor:pointer;font-family:var(--m);font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-2)}
 .shotc .ztx{font-size:3px;text-anchor:middle;fill:var(--ink);font-family:var(--m)}
 .tshots{margin-top:6px}
 .injside{margin:4px 0 8px}
@@ -763,6 +783,66 @@ td:first-child{text-align:left;font-family:var(--b);min-width:0}
   font-variant-numeric:tabular-nums}
 .boxt .bxhi{font-weight:700;background:var(--clover-soft)}
 .askrow{cursor:pointer}
+/* Games cards. */
+#gametools .chips{margin:0 0 7px}
+.gslot{font-family:var(--m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:14px 0 6px}
+.gcard{border:1px solid var(--rule);background:var(--card);border-radius:14px;padding:11px 12px;margin:0 0 9px}
+.gtop2{display:flex;gap:8px;align-items:center;font-family:var(--m);font-size:10.5px;color:var(--ink-2)}
+.gtop2 .px{margin-left:auto;font-size:10px}
+.gteams{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin:9px 0}
+.gtm{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;min-width:0}
+.gbadge{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--clover-soft);
+  color:var(--ink);font-family:var(--m);font-weight:700;font-size:12.5px;border:1px solid var(--rule)}
+.gtn{font-size:12.5px;line-height:1.2}
+.gout{font-family:var(--m);font-size:9.5px;color:var(--under);border:1px solid var(--under);border-radius:99px;padding:0 6px}
+.gat{font-family:var(--m);color:var(--ink-2)}
+.glines{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:4px 0 9px}
+.glines>div{background:var(--raise);border-radius:9px;padding:5px 6px;text-align:center}
+.glines small{display:block;font-family:var(--m);font-size:9px;color:var(--ink-2)}
+.glines b{font-family:var(--m);font-size:13.5px} .glines .hit{color:var(--over)}
+.gbar{display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--raise)}
+.gleg{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--m);font-size:9.5px;color:var(--ink-2);margin:4px 0 8px}
+.gleg i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}
+.gtops-h{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:2px 0 4px}
+.gtop{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:0;
+  border-top:1px dashed var(--rule);padding:6px 0;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.gtopn{min-width:0} .gtops{font-family:var(--m);font-size:10.5px;color:var(--ink-2);white-space:nowrap}
+.gtops b{color:var(--ink)}
+.gbtns{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+/* Ask hero, chart and tiles. */
+.askhero{background:linear-gradient(140deg,var(--clover-soft),var(--card) 70%);border:1px solid var(--rule);
+  border-radius:16px;padding:16px 14px 10px;margin:4px 0 10px}
+.askhero h2{margin:0 0 3px}
+.askhero>p{margin:0 0 11px;font-size:13.5px;color:var(--ink-2)}
+.askbar{position:relative}
+.askbar .askmag{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-2);pointer-events:none}
+.askhero .askbar input{padding-left:38px!important;border-radius:12px;font-size:15px;min-height:44px}
+details.askhow{margin-top:8px} details.askhow>summary{cursor:pointer;font-family:var(--m);font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+#askrecent,#askeg{align-items:center;margin:2px 0 8px}
+#askrecent .eyebrow,#askeg .eyebrow{flex:none;margin-right:2px}
+.askclr{opacity:.7}
+.askstats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.askmeta{font-size:11.5px;margin:4px 0 10px;line-height:1.5}
+.aftop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 4px}
+.aring{display:flex;align-items:center;gap:8px}
+.aring .arn{font-family:var(--m);font-size:14px;font-weight:600;fill:var(--ink)}
+.aring b{display:block;font-family:var(--m);font-size:15px}
+.aring small{font-family:var(--m);font-size:9.5px;color:var(--ink-2)}
+.aftiles{display:flex;gap:5px;flex:1 1 100%;min-width:0}
+.aft{background:var(--raise);border-radius:9px;padding:5px 4px;flex:1 1 0;min-width:44px;text-align:center}
+.aft small{display:block;font-family:var(--m);font-size:9px;color:var(--ink-2)}
+.aft b{display:block;font-family:var(--m);font-size:15px}
+.aft span{font-family:var(--m);font-size:10px} .aft .hit{color:var(--over)} .aft .miss{color:var(--under)}
+.achart{margin:6px 0 2px} .achart svg{width:100%;height:auto;display:block}
+.achart .acv{font-family:var(--m);font-size:8.5px;text-anchor:middle;fill:var(--ink)}
+.achart .aco{font-family:var(--m);font-size:7px;text-anchor:middle;fill:var(--ink-2)}
+.achart .acl{stroke:var(--ink);stroke-width:1;stroke-dasharray:4 3;opacity:.7}
+.achart .acll{font-family:var(--m);font-size:8px;text-anchor:end;fill:var(--ink)}
+.achl{font-size:10px;font-family:var(--m)}
+tr.ar-h td:first-child{box-shadow:inset 3px 0 0 var(--over)} tr.ar-m td:first-child{box-shadow:inset 3px 0 0 var(--under)}
+tr.ar-n td:first-child{box-shadow:inset 3px 0 0 var(--rule)}
+tr.ar-h td:nth-child(-n+2),tr.ar-m td:nth-child(-n+2),tr.ar-n td:nth-child(-n+2){white-space:nowrap}
 .askbx td{padding:0 0 8px;border-top:0}
 .empty{padding:28px 0;color:var(--ink-2);font-size:14px}
 .gamehead{grid-template-columns:1fr auto auto auto}
@@ -889,7 +969,46 @@ html{scroll-behavior:smooth}
 .plegs .dim{display:block;font-family:var(--m);font-size:10px}
 .plegs .sp{font-family:var(--m);font-size:9px;padding:1px 5px;border-radius:4px;background:var(--raise);margin-right:3px}
 .pfoot{font-family:var(--m);font-size:10px;color:var(--ink-2);line-height:1.55}
-.pfoot .h2go{display:block;margin:8px 0 0 auto}
+.pfoot .pfbtn{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+.pfoot .pfbtn .h2go{display:inline-block;margin:0}
+.pfoot .h2go.saved{opacity:.7}
+.pbtns{display:flex;flex-direction:column;gap:4px}
+/* Saved parlays (Tracked tab). */
+.pktiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;margin:6px 0}
+.pkt{background:var(--raise);border-radius:10px;padding:8px 9px}
+.pkt b{display:block;font-family:var(--m);font-size:17px}
+.pkt small{font-family:var(--m);font-size:9px;color:var(--ink-2);letter-spacing:.04em}
+.pkt .hit,.pkday .hit,.pkpnl.hit{color:var(--over)} .pkt .miss,.pkday .miss,.pkpnl.miss,.pksub .miss{color:var(--under)}
+.pknote{font-size:11.5px;color:var(--ink-2);margin:4px 0 8px}
+#pkdays{margin:4px 0 8px}
+.pkday{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:14px 0 6px;
+  padding-bottom:4px;border-bottom:1px solid var(--rule);font-family:var(--m);font-size:11px;color:var(--ink-2)}
+.pkday>b{color:var(--ink);font-size:12px}
+.pkcard{border:1px solid var(--rule);border-left:4px solid var(--flat);border-radius:12px;padding:10px 11px;margin:0 0 8px}
+.pkcard.st-won{border-left-color:var(--over)} .pkcard.st-lost{border-left-color:var(--under)}
+.pkcard.st-live{border-left-color:var(--mark)}
+.pkhead{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px}
+.pkst{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;
+  border-radius:99px;background:var(--raise);color:var(--ink-2)}
+.st-won .pkst{background:var(--over);color:var(--paper)} .st-lost .pkst{background:var(--under);color:var(--paper)}
+.st-live .pkst{background:var(--mark);color:#1b1b16}
+.pkpx{margin-left:auto;font-family:var(--m);font-size:13px}
+.pkpnl{font-family:var(--m);font-size:13px;font-weight:600}
+.pksub{font-family:var(--m);font-size:10px;color:var(--ink-2);margin:4px 0 6px}
+.pklegs{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.pklegs li{display:grid;grid-template-columns:20px 1fr;gap:6px;font-size:13px;align-items:start}
+.pklegs .dim{display:block;font-family:var(--m);font-size:10px;color:var(--ink-2)}
+.pkdot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--flat);display:grid;place-items:center;
+  font-size:10px;font-family:var(--m);margin-top:1px}
+.lg-hit .pkdot{background:var(--over);border-color:var(--over);color:var(--paper)}
+.lg-lost .pkdot{background:var(--under);border-color:var(--under);color:var(--paper)}
+.lg-push .pkdot,.lg-void .pkdot{border-style:dashed;font-size:7px}
+.lg-void b{text-decoration:line-through;opacity:.7}
+.pkvs{color:var(--ink-2)}
+.pkval{display:block;font-family:var(--m);font-size:10.5px;margin-top:2px}
+.pkctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:9px;font-family:var(--m);font-size:10px;color:var(--ink-2)}
+.pkctl input{width:64px;font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--rule);border-radius:7px;
+  background:transparent;color:var(--ink)}
 /* Parlay advanced reasoning: opens in place under each card. */
 details.preason{margin:9px 0 0;border-top:1px dashed var(--rule);padding-top:7px}
 details.preason>summary{cursor:pointer;font-family:var(--m);font-size:10.5px;letter-spacing:.08em;
@@ -1003,6 +1122,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   <section>
     <h2>Tonight's slate</h2>
     <p class="traynote" id="slatenote"></p>
+    <div id="gametools"></div>
     <div id="gamerows"></div>
     <div class="empty" id="nogames" hidden>No games on the board.</div>
   </section>
@@ -1029,17 +1149,24 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 <!-- ───────────────────────── HEALTH ─────────────────────── -->
 <div id="tab-ask" hidden>
   <section>
-    <div class="hrow"><h2>Ask</h2></div>
-    <p class="traynote">A question box over this engine's own graded
-    history. It looks up rows, it does not generate answers — every
-    number below came off a real box score, so it can tell you it has
-    nothing rather than produce a figure. It reads a name, a stat and a
-    few filters, and shows what it understood so a misread is visible
-    instead of silent.</p>
-    <div class="search askbar">
-      <input id="askq" type="search" autocomplete="off" spellcheck="false"
-             placeholder="Maxey points last 5 &middot; Barrett vs BOS">
+    <div class="askhero">
+      <h2>Ask the history</h2>
+      <p>Any player, any stat, any split &mdash; answered from real box scores.</p>
+      <div class="search askbar">
+        <svg class="askmag" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="askq" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Maxey points last 5 &middot; Barrett vs BOS">
+      </div>
+      <details class="askhow"><summary>How Ask works</summary>
+      <p class="traynote">A question box over this engine's own graded
+      history. It looks up rows, it does not generate answers — every
+      number below came off a real box score, so it can tell you it has
+      nothing rather than produce a figure. It reads a name, a stat and a
+      few filters (last 5, vs a team, home or away, over a number, without a
+      teammate), and shows what it understood so a misread is visible
+      instead of silent.</p></details>
     </div>
+    <div class="chips" id="askrecent"></div>
     <div class="chips" id="askeg"></div>
     <div id="askout"></div>
   </section>
@@ -1219,6 +1346,16 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 
 <!-- ──────────────────────── TRACKED ───────────────────────── -->
 <div id="tab-track" hidden>
+  <section id="pksec">
+    <div class="hrow"><h2>Saved parlays</h2></div>
+    <p class="traynote">Parlays you saved from the Parlays tab or your slip, by the day they were
+    saved for. Each leg settles itself from the live box while its game is on, then from the
+    box scores in the next morning's build. A leg whose player did not play is void and drops
+    out of the price, as a book treats it. Enter the odds you actually got to grade it at your price.</p>
+    <div id="pksum"></div>
+    <div class="chips" id="pkdays"></div>
+    <div id="pkrows"></div>
+  </section>
   <section>
     <div class="hrow"><h2>What you actually did</h2></div>
     <p class="traynote">Three things kept apart on purpose: props you are
@@ -1268,7 +1405,8 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
         <div class="big" id="pProb">—</div></div>
       <div style="text-align:right"><span class="eyebrow">Break-even</span>
         <div class="big" id="pBE">—</div></div>
-      <button class="add" id="pClear">clear</button>
+      <div class="pbtns"><button class="add" id="pSave">save</button>
+      <button class="add" id="pClear">clear</button></div>
     </div>
     <div class="legs" id="pLegs"></div>
     <div id="pFan"></div>
@@ -3121,7 +3259,7 @@ const zlabel = (lg, kind) => lg === 'NBA' ? ['FG', 'shots'] : lg === 'NHL'
 
 /* The drawing, per sport. `fade` marks rows from games outside the
    highlighted window (Trending uses it). */
-function shotSvg(lg, kind, games, hot){
+function shotSvg(lg, kind, games, hot, layer){
   const isHot = i => hot == null || i < hot;
   if (lg === 'NBA') {
     const B = 5.25, Y = v => (v + B).toFixed(2);
@@ -3139,7 +3277,8 @@ function shotSvg(lg, kind, games, hot){
       <line x1="22" y1="4" x2="28" y2="4" class="ct"/>
       <path d="M3 0L3 ${Y(8.95)}A23.75 23.75 0 0 0 47 ${Y(8.95)}L47 0" class="ct"/>
       <path d="M21 ${B}A4 4 0 0 0 29 ${B}" class="ct"/>`;
-    return `<svg class="shotc" viewBox="0 0 50 42" role="img" aria-label="shot chart">${court}${dots.join('')}</svg>`;
+    const ly = layer || {};
+    return `<svg class="shotc" viewBox="0 0 50 42" role="img" aria-label="shot chart">${ly.under || ''}${court}${ly.noDots ? '' : dots.join('')}${ly.over || ''}</svg>`;
   }
   if (lg === 'NHL') {
     // Attacking half, net on the right at x=89; drawn with the net at
@@ -3270,8 +3409,16 @@ function shotChart(p){
     <div class="simcrit"><span class="unv">No play-by-play saved for his recent
     games yet. It fills in as box scores are re-read.</span></div>${defBox(lg, kind, opp, null)}</div>`;
   const n = SHOTN[p.i] || SHOT_SHOW;
-  const games = all.slice(0, n);
+  const span = all.slice(0, n);
+  const gi = SHOTG[p.i] != null && SHOTG[p.i] < span.length ? SHOTG[p.i] : null;
+  const games = gi == null ? span : [span[gi]];
   const t = zoneTally(lg, kind, games);
+  const view = lg === 'NBA' ? (SHOTV[p.i] || 'shots') : 'shots';
+  const layer = lg === 'NBA' ? {...nbaZoneLayer(t, view === 'zones'), noDots: view === 'zones'} : null;
+  const viewChips = lg === 'NBA' ? [['shots', 'Shots'], ['zones', 'Hot zones']].map(([k, l]) =>
+    `<button class="chip${view === k ? ' on' : ''}" data-shotv="${p.i}:${k}">${l}</button>`).join('') : '';
+  const gameChips = span.length > 1 ? [`<button class="chip${gi == null ? ' on' : ''}" data-shotg="${p.i}:-1">All ${span.length}</button>`]
+    .concat(span.map((g, k) => `<button class="chip${gi === k ? ' on' : ''}" data-shotg="${p.i}:${k}">${esc(String(g[0]).slice(5).replace('-', '/'))} ${esc(g[1] || '')}</button>`)).join('') : '';
   const [mk, ak] = zlabel(lg, kind);
   const pct = v => v && v[1] ? Math.round(100 * v[0] / v[1]) + '%' : '\u2014';
   const zs = zoneList(lg, kind);
@@ -3286,21 +3433,108 @@ function shotChart(p){
   return `<div class="simbox"><h4>${lg === 'NFL' ? (kind === 'ru' ? 'run lanes' : kind === 'tg'
       ? 'targets by zone' : 'throws by zone') : 'shot chart'} · last ${games.length}
       game${games.length === 1 ? '' : 's'}</h4>
-    <div class="chips shotn">${pick}</div>
-    ${shotSvg(lg, kind, games)}
-    <div class="shleg">${legend}<span>${t.made}/${t.att} ${esc(mk)} · ${pct([t.made, t.att])}${extra}</span></div>
-    <table class="gtab"><tbody>${zs.map(z => {
-      const v = t.z[z];
-      return `<tr><td>${esc(z)}</td><td class="v" style="text-align:right">${
-        v ? `${v[0]}/${v[1]} · ${pct(v)}` : '\u2014'}</td>
-        <td class="v dim" style="text-align:right">${v ? Math.round(100 * v[1] / t.att) + '% of ' + esc(ak) : ''}</td></tr>`;
-    }).join('')}</tbody></table>
+    <div class="chips shotn">${pick}${viewChips ? '<span class="shsep"></span>' + viewChips : ''}</div>
+    ${gameChips ? `<div class="chips shotn shotgs">${gameChips}</div>` : ''}
+    ${shotSvg(lg, kind, games, null, layer)}
+    <div class="shleg">${view === 'zones' ? `<span><i class="hzk up"></i> better than league</span><span><i class="hzk dn"></i> worse</span>` : legend}<span>${t.made}/${t.att} ${esc(mk)} · ${pct([t.made, t.att])}${extra}</span></div>
+    ${shotMatchup(lg, kind, opp, t)}
+    ${shotZoneRows(lg, kind, t)}
+    ${gi == null && span.length > 1 ? `<details class="shbgd"><summary>Game by game</summary>${shotByGame(lg, kind, span)}</details>` : ''}
     ${defBox(lg, kind, opp, t)}
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">From ESPN
       play-by-play, ${games.map(g => `${String(g[0]).slice(5)} v ${esc(g[1] || '?')}`).join(', ')}.
       ${lg === 'NBA' ? 'Rim is within 4 ft, paint within 14 ft, a corner 3 is any three less than 8 ft up the floor.'
         : lg === 'NHL' ? 'Every shot is folded to one net. Slot is between the faceoff dots out to the tops of the circles; crease is within 10 ft of the net.'
         : 'Zones are the play-by-play\u2019s own words: short/deep and left/middle/right for throws, the gap named for runs.'}</span></div></div>`;
+}
+
+/* NBA hot zones: each of the five zones shaded by his FG% there against
+   the league's. Green is better than league, red worse; the depth of
+   the colour is the size of the gap, full at 10 points. A zone he has
+   not shot from is left blank rather than coloured as average. */
+const SHOTV = {}, SHOTG = {};
+function nbaZoneLayer(t, labels){
+  const L = (((D.dzones || {}).NBA) || {}).lg || {};
+  const B = 5.25, Y = v => (v + B).toFixed(2);
+  const shape = {
+    'above-break 3': `<rect x="0" y="0" width="50" height="42"/>`,
+    'corner 3': `<rect x="0" y="0" width="3" height="${Y(8)}"/><rect x="47" y="0" width="3" height="${Y(8)}"/>`,
+    'mid-range': `<path d="M3 0L3 ${Y(8.95)}A23.75 23.75 0 0 0 47 ${Y(8.95)}L47 0Z"/>`,
+    'paint': `<circle cx="25" cy="${B}" r="14"/>`,
+    'rim': `<circle cx="25" cy="${B}" r="4"/>`,
+  };
+  const fill = SHOT_ZONES.slice().reverse().map(z => {
+    const v = t.z[z], l = L[z];
+    const base = `<g fill="var(--raise)">${shape[z]}</g>`;
+    if (!v || !v[1] || !l || !l[1]) return base;
+    const d = v[0] / v[1] - l[0] / l[1], a = (Math.min(1, Math.abs(d) / .10) * .55 + .08) * (labels ? 1 : .6);
+    const c = Math.abs(d) < .02 ? 'var(--flat)' : d > 0 ? 'var(--over)' : 'var(--under)';
+    return `${base}<g fill="${c}" fill-opacity="${a.toFixed(2)}" class="hz">${shape[z]}</g>`;
+  });
+  // Rim and paint sit on top of mid-range, mid-range on top of the
+  // threes, so drawing outermost first leaves each zone its own area.
+  const order = ['above-break 3', 'corner 3', 'mid-range', 'paint', 'rim'];
+  const under = order.map(z => fill[SHOT_ZONES.slice().reverse().indexOf(z)]).join('');
+  if (!labels) return {under, over: ''};
+  const pos = {'rim': [25, B + 1.3], 'paint': [25, B + 10.5], 'mid-range': [25, 25.5], 'above-break 3': [25, 36.5]};
+  const lab = (z, x, y, rot) => { const v = t.z[z]; if (!v || !v[1]) return '';
+    const s = `${Math.round(100 * v[0] / v[1])}%`;
+    return rot ? `<text class="hzl sm" transform="translate(${x} ${y}) rotate(90)">${s}</text>`
+      : `<text class="hzl" x="${x}" y="${y}">${s}<tspan class="hzs" x="${x}" dy="2.6">${v[0]}/${v[1]}</tspan></text>`; };
+  const over = Object.entries(pos).map(([z, [x, y]]) => lab(z, x, y)).join('')
+    + lab('corner 3', 1.5, 6.6, 1) + lab('corner 3', 48.5, 6.6, 1);
+  return {under, over};
+}
+/* Where his shots go against where the defence gives them up: a zone
+   that is at least 15% of his attempts and that tonight's opponent
+   allows 3+ points above league is an edge; 3+ below is tough. */
+function shotMatchup(lg, kind, opp, t){
+  const DZ = ((D.dzones || {})[lg]) || null;
+  if (!DZ || !opp || !t.att) return '';
+  const T0 = (DZ.t || {})[opp]; if (!T0 || !T0.g) return '';
+  const T = defSpan(T0, DEFN), edge = [], tough = [];
+  for (const z of zoneList(lg, kind)) {
+    const zk = lg === 'NFL' && kind === 'ru' ? `run ${z}` : z;
+    const m = t.z[z], a = T.z[zk], L = DZ.lg[zk];
+    if (!m || m[1] / t.att < .15 || !a || !a[1] || !L || !L[1]) continue;
+    const d = a[0] / a[1] - L[0] / L[1], share = Math.round(100 * m[1] / t.att);
+    if (d >= .03) edge.push(`<b>${esc(z)}</b> (${share}% of his attempts, allows +${Math.round(100 * d)})`);
+    else if (d <= -.03) tough.push(`<b>${esc(z)}</b> (${share}%, allows ${Math.round(100 * d)})`);
+  }
+  if (!edge.length && !tough.length) return `<div class="shmu"><span class="dim">Matchup:</span> none of his main zones
+    is more than 3 points off league against ${esc(opp)}.</div>`;
+  return `<div class="shmu">${edge.length ? `<div class="up"><span>Edge vs ${esc(opp)}</span> ${edge.join(', ')}</div>` : ''}${
+    tough.length ? `<div class="dn"><span>Tough vs ${esc(opp)}</span> ${tough.join(', ')}</div>` : ''}</div>`;
+}
+function shotZoneRows(lg, kind, t){
+  const L = ((((D.dzones || {})[lg]) || {}).lg) || {};
+  const zs = zoneList(lg, kind), [, ak] = zlabel(lg, kind);
+  return `<div class="shz">${zs.map(z => {
+    const v = t.z[z], l = L[lg === 'NFL' && kind === 'ru' ? `run ${z}` : z];
+    const r = v && v[1] ? v[0] / v[1] : null, lr = l && l[1] ? l[0] / l[1] : null;
+    const d = r != null && lr != null ? r - lr : null, sh = v && t.att ? v[1] / t.att : 0;
+    return `<div class="shzr"><span class="shzn">${esc(z)}</span>
+      <span class="shzb"><i style="width:${(100 * sh).toFixed(1)}%"></i></span>
+      <span class="shzs">${v ? Math.round(100 * sh) + '%' : ''}</span>
+      <span class="shzp">${v ? `${v[0]}/${v[1]} \u00b7 <b>${Math.round(100 * r)}%</b>` : '\u2014'}</span>
+      <span class="shzd ${d == null ? 'dim' : d >= .03 ? 'hit' : d <= -.03 ? 'miss' : 'dim'}">${d == null ? '' : (d > 0 ? '+' : '') + Math.round(100 * d)}</span></div>`;
+  }).join('')}<div class="shzh"><span>share of ${esc(ak)}</span><span>made \u00b7 pct</span><span>vs lg</span></div></div>`;
+}
+function shotByGame(lg, kind, games){
+  const rows = games.map(g => {
+    const t = zoneTally(lg, kind, [g]);
+    if (lg === 'NBA') {
+      const sh = g[2] || [], th = sh.filter(r => r[3] === 3), rim = sh.filter(r => shotZone(r[0], r[1], r[3]) === 'rim');
+      return `<tr><td>${esc(String(g[0]).slice(5))}</td><td class="dim">${esc(g[1] || '?')}</td><td class="v">${t.made}/${t.att}</td>
+        <td class="v">${th.filter(r => r[2]).length}/${th.length}</td><td class="v">${rim.filter(r => r[2]).length}/${rim.length}</td></tr>`;
+    }
+    return `<tr><td>${esc(String(g[0]).slice(5))}</td><td class="dim">${esc(g[1] || '?')}</td><td class="v">${t.made}/${t.att}</td>${
+      lg === 'NFL' ? `<td class="v">${t.pts}</td>` : `<td class="v">${t.pts}</td>`}</tr>`;
+  }).join('');
+  const [mk, ak] = zlabel(lg, kind);
+  const head = lg === 'NBA' ? '<th>FG</th><th>3PT</th><th>rim</th>'
+    : `<th>${esc(mk)}/${esc(ak)}</th><th>${lg === 'NFL' ? 'yds' : 'on goal'}</th>`;
+  return `<div class="tscroll"><table class="gtab shbg"><thead><tr><th>game</th><th>opp</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 /* Team markets: both defences by zone, side by side. */
@@ -4668,7 +4902,8 @@ function parlayCard(r, tag){
       sgp ? ' \u00b7 same game: the book will price this lower than shown' : ''}${
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
       stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
-      <button class="h2go" data-padd="${ids}">Add to slip</button></div>
+      <div class="pfbtn"><button class="h2go" data-padd="${ids}">Add to slip</button>
+      <button class="h2go${pkSaved(r.legs) ? ' saved' : ''}" data-psave="${ids}" data-ptag="${esc(tag || '')}">${pkSaved(r.legs) ? 'Saved \u2713' : 'Save parlay'}</button></div></div>
     ${r.legs.some(coldOf) ? `<div class="pwarn">${r.legs.filter(coldOf).map(q =>
       `<div><b>Cold market</b>: ${esc(q.sd)} ${q.ln} ${esc(q.mu ? gameLabel(q.mu) : '')} \u2014 ${coldText(coldOf(q))}</div>`).join('')}</div>` : ''}
     ${(r.j.warn || []).length ? `<div class="pwarn">${r.j.warn.map(w => {
@@ -4950,6 +5185,7 @@ function trkExport(){
     exported_at: new Date().toISOString(),
     slate_day: D.slate_day || null,
     entries: [...TRK.values()],
+    parlays: [...PSAVED.values()],
   }, null, 2);
 }
 
@@ -5003,7 +5239,8 @@ function drawTrack(){
   all.forEach(e => { if (cnt[e.st] != null) cnt[e.st]++; });
   // Blank, not "0". The other tab counts are slate sizes; a literal
   // zero beside an empty tracker reads as a failed load.
-  $('cTrack').textContent = all.length || '';
+  $('cTrack').textContent = (all.length + PSAVED.size) || '';
+  drawSavedParlays();
 
   $('trkviews').innerHTML = [['all', 'All', all.length]]
     .concat(TRK_STATES.map(([k, l]) => [k, l, cnt[k]]))
@@ -5093,6 +5330,247 @@ function drawTrack(){
        private window, or site data blocked. Everything above is in
        memory and goes when you close the tab. Export it now if you need
        it.`;
+}
+
+/* ---------- saved parlays ----------
+   A parlay saved from the builder or the slip, tracked day by day.
+   Legs, prices and the estimate are frozen at save time. Each leg
+   settles from the live ESPN box while its game is on, then from the
+   saved box scores the daily build carries. Once settled, the result
+   is written onto the leg, so it survives the box history rolling
+   over. A leg whose player did not play is void, as a book treats it.
+   Browser storage only, like the rest of Tracked. */
+const PK_KEY = 'green15.parlays.v1';
+const PSAVED = new Map();
+let PKOK = true, PKDAY = 'all';
+const PK_DNP = {NBA: 'minutes', NHL: 'timeonice'};
+function pkLoad(){
+  let raw = null;
+  try { raw = localStorage.getItem(PK_KEY); } catch (_) { return false; }
+  if (!raw) return true;
+  try {
+    const rows = JSON.parse(raw);
+    if (Array.isArray(rows)) { PSAVED.clear();
+      for (const r of rows) if (r && r.id && Array.isArray(r.legs)) PSAVED.set(r.id, r); }
+  } catch (_) { /* unreadable store: start empty rather than throw */ }
+  return true;
+}
+function pkStore(){
+  try { localStorage.setItem(PK_KEY, JSON.stringify([...PSAVED.values()])); return true; }
+  catch (_) { return false; }
+}
+function pkLegOf(p){
+  return {sp: String(p.sp || '').toUpperCase(), pl: p.pl || '', mk: p.mk || '', mkk: p.mkk || '',
+    kd: p.kd || 'player', sd: p.sd || '', ln: p.ln ?? null, mu: p.mu || '', gd: p.gd || null,
+    ct: p.ct || null, pr: p.pr ?? null, cal: calProb(p), mp: p.mp ?? null, gr: p.gr ?? null,
+    res: null, val: null};
+}
+function pkIdOf(legs){
+  return (D.slate_day || 'undated') + '|' + legs.map(l =>
+    [l.sp, l.mu, l.pl, l.mk, l.sd, l.ln].join('~').toLowerCase()).sort().join('|');
+}
+function pkSaved(props){ return PSAVED.has(pkIdOf(props.map(pkLegOf))); }
+function pkSaveLegs(props, tag){
+  if (props.length < 2) { toast('A parlay needs at least two legs.'); return null; }
+  const legs = props.map(pkLegOf), id = pkIdOf(legs);
+  if (PSAVED.has(id)) { toast('Already saved. Find it on the Tracked tab.'); return id; }
+  const j = jointProb(props), d = props.reduce((a, p) => a * dec(p.pr), 1);
+  PSAVED.set(id, {id, day: D.slate_day || null, at: new Date().toISOString(), tag: tag || '',
+    legs, est: j.est, ind: j.ind, d, stake: 1, placed: false, fill: null});
+  PKOK = pkStore();
+  toast(`Saved ${legs.length}-leg parlay. Track it on the Tracked tab.`);
+  pkCount();
+  TAB_DONE.delete('track');
+  return id;
+}
+function pkCount(){ const c = $('cTrack'); if (c) c.textContent = (TRK.size + PSAVED.size) || ''; }
+const pkAdd = (d, n) => { const t = Date.parse(d); return isFinite(t) ? new Date(t + n * 864e5).toISOString().slice(0, 10) : null; };
+function pkOu(v, l){
+  if (v == null || l.ln == null || !Number.isFinite(+l.ln)) return null;
+  if (v === l.ln) return 'push';
+  return (v > l.ln) === !/^under$/i.test(l.sd) ? 'hit' : 'lost';
+}
+/* The leg from the saved box scores. The game is on its local date,
+   which is the filed date or the day before it (a 7pm Central tip is
+   already tomorrow in UTC), and both teams have to match the matchup. */
+function pkFromBox(l, day){
+  const lo = l.gd ? pkAdd(l.gd, -1) : day, hi = l.gd || (day ? pkAdd(day, 1) : null);
+  if (!lo || !hi) return null;
+  const {away, home} = matchSides(l), a = teamAbbr(l.sp, away), h = teamAbbr(l.sp, home);
+  const inWin = r => r[0] >= lo && r[0] <= hi;
+  if (l.kd === 'team') {
+    const mk = l.mkk || l.mk || '', tot = /total/.test(mk);
+    const ab = tot ? h : teamAbbr(l.sp, l.sd);
+    if (!ab) return null;
+    const opp = ab === a ? h : a;
+    const rows = ((D.tbox || {})[`${l.sp}|${ab}`] || []).filter(inWin);
+    const r = rows.find(x => !opp || x[1] === opp) || (rows.length === 1 ? rows[0] : null);
+    if (!r) return null;
+    const f = r[3], al = r[4], m = r[5];
+    if (tot) return f == null || al == null ? null : {res: pkOu(f + al, l), val: f + al};
+    if (m == null) return null;
+    if (/moneyline/.test(mk)) return {res: m > 0 ? 'hit' : m < 0 ? 'lost' : 'push', val: m};
+    if (l.ln == null) return null;
+    const c = m + l.ln;
+    return {res: c > 0 ? 'hit' : c < 0 ? 'lost' : 'push', val: m};
+  }
+  const rows = boxRows(l.sp, l.pl).filter(inWin);
+  const r = rows.find(x => !a || !h || ([a, h].includes(x[1]) && [a, h].includes(x[2])))
+    || (rows.length === 1 ? rows[0] : null);
+  if (!r) return null;
+  const keys = (((D.box || {}).keys) || {})[l.sp] || [], mj = keys.indexOf(PK_DNP[l.sp] || 'minutes');
+  if (mj >= 0 && !(+r[3 + mj] > 0)) return {res: 'void', val: null};
+  const idx = mkIdx(l.sp, l.mk); if (!idx) return null;
+  const v = rowVal(idx, r);
+  return v == null ? null : {res: pkOu(v, l), val: v};
+}
+function pkLegState(l, day){
+  if (l.res) return {res: l.res, val: l.val};
+  let lv = null, st = null;
+  try { lv = trkLive(l); st = trkSettle(l); } catch (_) {}
+  if (st) {
+    let val = null;
+    try { const g = gameInfo({sp: l.sp, mu: l.mu}), c = g && LIVEBOX.get(g.id), box = c && c.box;
+      if (box && l.kd !== 'team') { const hit = livePlayer(box, l.pl); if (hit) val = liveStat(hit.r, l.mk); } } catch (_) {}
+    return {res: st, val, fresh: true, live: lv};
+  }
+  const b = pkFromBox(l, day);
+  if (b && b.res) return {...b, fresh: true};
+  return {res: null, live: lv};
+}
+function pkStatus(pk){
+  const S = pk.legs.map(l => pkLegState(l, pk.day));
+  let changed = false;
+  S.forEach((s, k) => { if (s.fresh && s.res) { pk.legs[k].res = s.res; pk.legs[k].val = s.val ?? null; changed = true; } });
+  const lost = S.some(s => s.res === 'lost'), open = S.filter(s => !s.res).length;
+  const live = S.some(s => !s.res && s.live && s.live.g && s.live.g.st === 'in');
+  const hits = S.filter(s => s.res === 'hit').length;
+  const st = lost ? 'lost' : open ? (live ? 'live' : 'open') : hits ? 'won' : 'push';
+  const dEff = pk.legs.reduce((a, l, k) => S[k].res === 'push' || S[k].res === 'void' ? a : a * dec(l.pr), 1);
+  const price = st === 'won' && pk.fill != null && hits === S.length ? dec(pk.fill) : dEff;
+  const stake = pk.stake ?? 1;
+  const pnl = st === 'won' ? stake * (price - 1) : st === 'lost' ? -stake : st === 'push' ? 0 : null;
+  const last = pk.legs.map(l => l.gd).filter(Boolean).sort().pop() || pk.day;
+  const today = String(D.data_at || D.generated_at || '').slice(0, 10);
+  const overdue = open > 0 && last && today && pkAdd(last, 2) < today;
+  return {S, st, open, hits, pnl, price, changed, overdue};
+}
+function pkOpenLegs(){
+  const out = [];
+  for (const pk of PSAVED.values()) for (const l of pk.legs) if (!l.res) out.push(l);
+  return out;
+}
+const PK_ST = {open: 'Open', live: 'Live', won: 'Won', lost: 'Lost', push: 'Push'};
+const PK_LEG = {hit: '\u2713', lost: '\u2715', push: '=', void: 'void'};
+function pkDayLabel(d){
+  if (!d) return 'Undated';
+  const t = new Date(d + 'T12:00:00');
+  return isFinite(t) ? t.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'}) : d;
+}
+const pkU = v => (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2) + 'u';
+function drawSavedParlays(){
+  const sec = $('pksec'); if (!sec) return;
+  const all = [...PSAVED.values()].sort((a, b) => String(b.day || '').localeCompare(String(a.day || ''))
+    || String(b.at || '').localeCompare(String(a.at || '')));
+  const ST = new Map(); let dirty = false;
+  for (const pk of all) { const s = pkStatus(pk); ST.set(pk.id, s); if (s.changed) dirty = true; }
+  if (dirty) PKOK = pkStore();
+  const done = all.filter(pk => ['won', 'lost', 'push'].includes(ST.get(pk.id).st));
+  const W = done.filter(pk => ST.get(pk.id).st === 'won').length, L = done.filter(pk => ST.get(pk.id).st === 'lost').length;
+  const P = done.length - W - L, units = done.reduce((a, pk) => a + (ST.get(pk.id).pnl || 0), 0);
+  const graded = done.filter(pk => ST.get(pk.id).st !== 'push');
+  const expW = graded.reduce((a, pk) => a + (pk.est || 0), 0);
+  const open = all.length - done.length;
+  const legsDone = all.flatMap(pk => ST.get(pk.id).S).filter(s => s.res === 'hit' || s.res === 'lost');
+  const legHit = legsDone.filter(s => s.res === 'hit').length;
+  $('pksum').innerHTML = all.length ? `<div class="pktiles">
+      <div class="pkt"><b>${W}\u2013${L}${P ? '\u2013' + P : ''}</b><small>record</small></div>
+      <div class="pkt"><b class="${units > 0 ? 'hit' : units < 0 ? 'miss' : ''}">${pkU(units)}</b><small>units (settled)</small></div>
+      <div class="pkt"><b>${graded.length ? W + ' / ' + expW.toFixed(1) : '\u2014'}</b><small>won vs expected</small></div>
+      <div class="pkt"><b>${legsDone.length ? Math.round(100 * legHit / legsDone.length) + '%' : '\u2014'}</b><small>legs hit (${legHit}/${legsDone.length})</small></div>
+      <div class="pkt"><b>${open}</b><small>open</small></div></div>
+    <p class="pknote">Won vs expected adds up the hit chance each parlay had when you saved it. Winning more than expected
+      over many tickets is the sign the estimates are fair; a handful of tickets says very little.</p>`
+    : `<div class="empty">No saved parlays yet. Tap <b>Save parlay</b> on any card in the Parlays tab, or <b>save</b> on your slip.</div>`;
+  const days = [...new Set(all.map(pk => pk.day || ''))];
+  if (PKDAY !== 'all' && !days.includes(PKDAY)) PKDAY = 'all';
+  $('pkdays').innerHTML = all.length ? [['all', 'All days']].concat(days.slice(0, 10).map(d => [d, pkDayLabel(d)]))
+    .map(([k, l]) => `<button class="chip${PKDAY === k ? ' on' : ''}" data-pkday="${esc(k)}">${esc(l)}</button>`).join('') : '';
+  const show = PKDAY === 'all' ? all : all.filter(pk => (pk.day || '') === PKDAY);
+  let html = '', cur = null;
+  for (const pk of show) {
+    if ((pk.day || '') !== cur) {
+      cur = pk.day || '';
+      const mine = show.filter(x => (x.day || '') === cur), md = mine.filter(x => ['won', 'lost', 'push'].includes(ST.get(x.id).st));
+      const w = md.filter(x => ST.get(x.id).st === 'won').length, l = md.filter(x => ST.get(x.id).st === 'lost').length;
+      const u = md.reduce((a, x) => a + (ST.get(x.id).pnl || 0), 0);
+      html += `<div class="pkday"><b>${esc(pkDayLabel(cur))}</b><span>${mine.length} parlay${mine.length === 1 ? '' : 's'}${
+        md.length ? ` \u00b7 ${w}\u2013${l} \u00b7 <b class="${u > 0 ? 'hit' : u < 0 ? 'miss' : ''}">${pkU(u)}</b>` : ''}${
+        mine.length - md.length ? ` \u00b7 ${mine.length - md.length} open` : ''}</span></div>`;
+    }
+    html += pkCard(pk, ST.get(pk.id));
+  }
+  $('pkrows').innerHTML = html;
+  if (pkOpenLegs().some(l => { const g = gameInfo({sp: l.sp, mu: l.mu}); return g && g.id && (g.st === 'in' || g.st === 'post') && !LIVEBOX.get(g.id); }))
+    trkLiveFetch().then(n => { if (n) drawSavedParlays(); });
+}
+function pkGame(l){
+  const g = gameLabel(l.mu); if (g !== l.mu) return g;
+  const {away, home} = matchSides(l), a = teamAbbr(l.sp, away), h = teamAbbr(l.sp, home);
+  return a && h ? `${a} @ ${h}` : l.mu;
+}
+function pkCard(pk, s){
+  const legs = pk.legs.map((l, k) => {
+    const x = s.S[k], r = x.res;
+    const val = r ? (x.val != null ? `<b>${Math.round(x.val * 10) / 10}</b> <span class="pkvs">${
+      l.kd === 'team' && !/total/.test(l.mkk || l.mk || '') ? 'margin' : 'vs ' + l.ln}</span>` : '') : x.live && x.live.html ? x.live.html : '';
+    return `<li class="lg-${r || 'open'}"><span class="pkdot">${r ? PK_LEG[r] : ''}</span>
+      <div><b>${legName(l)}</b>
+        <span class="dim">${l.pr > 0 ? '+' : ''}${l.pr ?? ''} \u00b7 ${esc(pkGame(l))}${
+          l.cal != null ? ` \u00b7 est ${pc(l.cal)}` : ''}</span>
+        ${val ? `<span class="pkval">${val}${r === 'void' ? ' did not play' : ''}</span>` : r === 'void' ? '<span class="pkval">did not play \u2014 leg void</span>' : ''}</div></li>`;
+  }).join('');
+  const pnl = s.pnl == null ? '' : `<span class="pkpnl ${s.pnl > 0 ? 'hit' : s.pnl < 0 ? 'miss' : ''}">${pkU(s.pnl)}</span>`;
+  return `<div class="pkcard st-${s.st}">
+    <div class="pkhead"><span class="pkst">${PK_ST[s.st]}</span>
+      <b>${pk.legs.length}-leg</b>${pk.tag ? ` <span class="dim">${esc(pk.tag)}</span>` : ''}
+      <span class="pkpx">${am(pk.d)}</span>${pnl}</div>
+    <div class="pksub">est. hit ${pc(pk.est)} when saved \u00b7 ${s.hits}/${pk.legs.length} legs hit${s.open ? ` \u00b7 ${s.open} to go` : ''}${
+      pk.placed ? ' \u00b7 <b>placed</b>' : ''}${s.overdue ? ' \u00b7 <span class="miss">no box score found yet</span>' : ''}</div>
+    <ol class="pklegs">${legs}</ol>
+    <div class="pkctl">
+      <label>stake <input type="text" inputmode="decimal" data-pkstake="${esc(pk.id)}" value="${pk.stake ?? ''}" placeholder="units"></label>
+      <label>odds you got <input type="text" inputmode="numeric" data-pkfill="${esc(pk.id)}"
+        value="${pk.fill != null ? (pk.fill > 0 ? '+' : '') + pk.fill : ''}" placeholder="${am(pk.d)}"></label>
+      <button class="chip${pk.placed ? ' on' : ''}" data-pkplaced="${esc(pk.id)}">${pk.placed ? 'Placed \u2713' : 'Mark placed'}</button>
+      <button class="chip" data-pkdel="${esc(pk.id)}">remove</button></div>
+  </div>`;
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-psave],[data-pkday],[data-pkplaced],[data-pkdel],#pSave');
+    if (!t) return;
+    if (t.id === 'pSave') { pkSaveLegs([...SEL.values()], 'From your slip'); t.textContent = 'saved \u2713'; return; }
+    if (t.dataset.psave != null) {
+      const props = t.dataset.psave.split(',').map(Number).map(i => PROPS.find(x => x.i === i)).filter(Boolean);
+      if (pkSaveLegs(props, t.dataset.ptag || '')) t.textContent = 'Saved \u2713';
+      return;
+    }
+    if (t.dataset.pkday != null) { PKDAY = t.dataset.pkday; drawSavedParlays(); return; }
+    const pk = PSAVED.get(t.dataset.pkplaced || t.dataset.pkdel); if (!pk) return;
+    if (t.dataset.pkplaced != null) pk.placed = !pk.placed;
+    else { if (!confirm('Remove this saved parlay?')) return; PSAVED.delete(pk.id); pkCount(); }
+    PKOK = pkStore(); drawSavedParlays();
+  });
+  document.addEventListener('change', e => {
+    const t = e.target; if (!t || !t.dataset) return;
+    const id = t.dataset.pkstake || t.dataset.pkfill; if (!id) return;
+    const pk = PSAVED.get(id); if (!pk) return;
+    const s = String(t.value).trim(), v = Number(s.replace(/[+,$\s]/g, ''));
+    if (t.dataset.pkstake) pk.stake = !s ? null : Number.isFinite(v) && v >= 0 ? v : pk.stake;
+    else pk.fill = !s ? null : Number.isFinite(v) && Math.abs(v) >= 100 ? Math.round(v) : pk.fill;
+    PKOK = pkStore(); setTimeout(drawSavedParlays, 0);
+  });
 }
 
 /* ---------- parlay ---------- */
@@ -5252,42 +5730,98 @@ function fanaticsSlip(legs){
 }
 
 /* ---------- today / slate ---------- */
+let GSORT = 'start', GSPORT = '';
+/* The favourite and the number, from the main spread line on the board:
+   the one priced nearest even money. The game list stores the spread
+   unsigned, so the side has to come from the props. */
+function gameFav(mu){
+  const sp = PROPS.filter(p => p.mu === mu && p.kd === 'team' && /spread|puck/.test(p.mkk || p.mk || '') && p.ln != null && p.pr != null)
+    .sort((a, b) => Math.abs(Math.abs(a.pr) - 110) - Math.abs(Math.abs(b.pr) - 110));
+  const p = sp[0]; if (!p) return null;
+  const {away, home} = matchSides(p);
+  if (p.ln === 0) return {team: null, ln: 0};
+  const fav = p.ln < 0 ? p.sd : (teamNorm(p.sd) === teamNorm(away) ? home : away);
+  return {team: fav, ln: -Math.abs(p.ln), sp: p.sp};
+}
+function gameOuts(sp, team){
+  const rows = ((((D.injuries || {})[String(sp || '').toUpperCase()]) || {}).rows) || [];
+  const t = teamNorm(team);
+  return rows.filter(r => teamNorm(r.team) === t && OUT_RX.test(r.status || ''));
+}
+function gameTeam(sp, nm, outs){
+  const ab = teamAbbr(sp, nm) || String(nm || '').split(' ').pop().slice(0, 3).toUpperCase();
+  return `<div class="gtm"><span class="gbadge">${esc(ab)}</span><span class="gtn">${esc(nm)}</span>${
+    outs.length ? `<span class="gout" title="${esc(outs.map(o => o.name).join(', '))}">${outs.length} out</span>` : ''}</div>`;
+}
+const G_TIERS = [['Legendary', 'var(--clover)'], ['Elite', 'var(--clover)'], ['Strong', 'var(--over)'], ['Playable', 'var(--over)'], ['Fringe', 'var(--mark)'], ['Weak', 'var(--flat)']];
 function drawGames(){
   drawLive();
   // Only games that have not started, in start order.
-  const live = new Map(gamesOnBoard().map((g, i) => [g.mu, i]));
+  const order = gamesOnBoard(), live = new Map(order.map((g, i) => [g.mu, i])), ct = new Map(order.map(g => [g.mu, g.ct]));
   const all = D.games || [];
-  const gs = all.filter(g => live.has(g.matchup)).sort((a, b) => live.get(a.matchup) - live.get(b.matchup));
-  const gone = all.length - gs.length;
-  $('cGames').textContent = gs.length;
+  let gs = all.filter(g => live.has(g.matchup)).sort((a, b) => live.get(a.matchup) - live.get(b.matchup));
+  const gone = all.length - gs.length, total = gs.length;
+  const sports = [...new Set(gs.map(g => g.sport).filter(Boolean))];
+  if (GSPORT && !sports.includes(GSPORT)) GSPORT = '';
+  if (GSPORT) gs = gs.filter(g => g.sport === GSPORT);
+  if (GSORT === 'play') gs.sort((a, b) => (b.playable || 0) - (a.playable || 0) || live.get(a.matchup) - live.get(b.matchup));
+  else if (GSORT === 'props') gs.sort((a, b) => (b.props || 0) - (a.props || 0));
+  $('cGames').textContent = total;
   $('nogames').hidden = gs.length > 0;
-  $('slatenote').textContent = (gs.length
-    ? `${gs.length} game${gs.length === 1 ? '' : 's'} not yet started, earliest first. Tap a game to filter the board to it.`
+  $('slatenote').textContent = (total
+    ? `${total} game${total === 1 ? '' : 's'} not yet started. Open a prop from a card, see the game on the board, or build a parlay from just that game.`
     : '') + (gone ? ` ${gone} game${gone === 1 ? '' : 's'} on this slate already started or finished.` : '');
-  $('gamerows').innerHTML = gs.map(g => {
-    const tiers = Object.entries(g.tiers || {})
-      .sort((a,b) => b[1]-a[1])
-      .map(([t,n]) => `${n} ${t.toLowerCase()}`).join(' · ');
-    const b = g.best || {};
-    return `<div class="row"><button class="rowhead gamehead"
-        data-game="${esc(g.matchup)}">
-      <div class="pick">
-        <span class="nm">${esc(g.matchup)}</span>
-        <span class="sub">${esc(g.sport || '')}${(() => { const p = PROPS.find(x => x.mu === g.matchup);
-          return p && startTxt(p) ? ` · starts ${clockHtml(p)}` : ''; })()} · ${g.props} props${
-          g.spread != null ? ` · spread ${g.spread}` : ''}${
-          g.total != null ? ` · total ${g.total}` : ''}</span>
-        <span class="sub">${esc(tiers)}</span>
-        ${b.pl ? `<span class="sub">top: ${esc(b.pl)} ${esc(b.sd||'')} ${b.ln ?? ''}
-          <b>${b.sc ?? '-'}/15</b></span>` : ''}
-      </div>
-      <span class="px ${g.priced_at ? ageClass(g.priced_at) : 'dim'}"
-        style="font-size:10.5px">${g.priced_at ? ageText(g.priced_at) : ''}</span>
-      <span class="sc"><b>${g.playable}</b>playable</span>
-      <span class="add">→</span>
-    </button></div>`;
-  }).join('');
+  $('gametools').innerHTML = total ? `<div class="chips">${[['', 'All']].concat(sports.map(s => [s, s])).map(([k, l]) =>
+      `<button class="chip${GSPORT === k ? ' on' : ''}" data-gsport="${esc(k)}">${k ? sico(k) : ''}${esc(l)}</button>`).join('')}</div>
+    <div class="chips">${[['start', 'Start time'], ['play', 'Most playable'], ['props', 'Most props']].map(([k, l]) =>
+      `<button class="chip${GSORT === k ? ' on' : ''}" data-gsort="${k}">${l}</button>`).join('')}</div>` : '';
+  let html = '', slot = null;
+  for (const g of gs) {
+    const p0 = PROPS.find(x => x.mu === g.matchup);
+    if (GSORT === 'start') {
+      const t = (p0 && startTxt(p0)) || 'Time unknown';
+      if (t !== slot) { slot = t; html += `<div class="gslot">${esc(t)}</div>`; }
+    }
+    html += gameCard(g, p0);
+  }
+  $('gamerows').innerHTML = html;
 }
+function gameCard(g, p0){
+  const sp = g.sport || (p0 && p0.sp) || '';
+  const {away, home} = matchSides({mu: g.matchup});
+  const fav = gameFav(g.matchup);
+  const tiers = g.tiers || {}, n = Object.values(tiers).reduce((a, b) => a + b, 0) || 1;
+  const bar = G_TIERS.filter(([t]) => tiers[t]).map(([t, c]) =>
+    `<i style="width:${(100 * tiers[t] / n).toFixed(2)}%;background:${c}" title="${tiers[t]} ${t.toLowerCase()}"></i>`).join('');
+  const legend = G_TIERS.filter(([t]) => tiers[t]).map(([t, c]) => `<span><i style="background:${c}"></i>${tiers[t]} ${t.toLowerCase()}</span>`).join('');
+  const top = PROPS.filter(p => p.mu === g.matchup && p.sc != null)
+    .sort((a, b) => (b.sc - a.sc) || ((b.ed ?? -1) - (a.ed ?? -1))).slice(0, 3);
+  const tops = top.map(p => `<button class="gtop" data-open="${p.i}">
+      <span class="gtopn">${legName(p)}</span>
+      <span class="gtops"><b>${p.sc}/15</b> ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}${p.ti ? ' \u00b7 ' + esc(p.ti.toLowerCase()) : ''}</span></button>`).join('');
+  return `<div class="gcard">
+    <div class="gtop2"><span class="gsp">${sico(sp)}${esc(sp)}</span>${p0 && startTxt(p0) ? clockHtml(p0) : ''}
+      <span class="px ${g.priced_at ? ageClass(g.priced_at) : 'dim'}">${g.priced_at ? 'priced ' + ageText(g.priced_at) : ''}</span></div>
+    <div class="gteams">${gameTeam(sp, away, gameOuts(sp, away))}<span class="gat">@</span>${gameTeam(sp, home, gameOuts(sp, home))}</div>
+    <div class="glines">
+      <div><small>favourite</small><b>${fav ? (fav.team ? esc(teamAbbr(sp, fav.team) || fav.team) + ' ' + fav.ln : 'pick\u2019em') : '\u2014'}</b></div>
+      <div><small>total</small><b>${g.total ?? '\u2014'}</b></div>
+      <div><small>props</small><b>${g.props ?? 0}</b></div>
+      <div><small>playable</small><b class="${g.playable ? 'hit' : ''}">${g.playable ?? 0}</b></div></div>
+    <div class="gbar">${bar}</div><div class="gleg">${legend}</div>
+    ${tops ? `<div class="gtops-h">Best on the board</div>${tops}` : ''}
+    <div class="gbtns"><button class="h2go" data-game="${esc(g.matchup)}">See on board</button>
+      <button class="h2go" data-gpar="${esc(g.matchup)}">Build parlay</button></div>
+  </div>`;
+}
+if (typeof document !== 'undefined') document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('[data-gsport],[data-gsort],[data-gpar]');
+  if (!t) return;
+  if (t.dataset.gsport != null) { GSPORT = t.dataset.gsport; return drawGames(); }
+  if (t.dataset.gsort != null) { GSORT = t.dataset.gsort; return drawGames(); }
+  PF.games = new Set([t.dataset.gpar]); PF.oneGame = 0; PF.corr = 'any'; PF.maxGame = Math.max(PF.maxGame || 0, 3);
+  showTab('parlays'); REC_DONE = 0; drawParlays(); window.scrollTo(0, 0);
+});
 
 /* ---------- staking ---------- */
 function drawStakes(){
@@ -5773,7 +6307,8 @@ document.addEventListener('click', e => {
       x.classList.toggle('on', x === w));
     return drawTrending(); }
   const ak = e.target.closest('[data-ask]');
-  if (ak) { $('askq').value = ak.dataset.ask; drawAsk(); return; }
+  if (ak) { $('askq').value = ak.dataset.ask; drawAsk(); askRecentAdd(ak.dataset.ask); return; }
+  if (e.target.closest('[data-askclr]')) { try { localStorage.removeItem(ASK_RECENT); } catch (_) {} askRecentDraw(); return; }
   const lvs = e.target.closest('[data-lvsport]');
   if (lvs) { LVSPORT = lvs.dataset.lvsport; drawLeafValue(); return; }
   const bv = e.target.closest('[data-view]');
@@ -5827,10 +6362,17 @@ document.addEventListener('click', e => {
     if (again) scrollByAny(again.getBoundingClientRect().top - y0);
     return;
   }
+  const sv = e.target.closest('[data-shotv],[data-shotg]');
+  if (sv) {
+    const a = sv.dataset.shotv || sv.dataset.shotg, [i, k] = a.split(':');
+    if (sv.dataset.shotv) SHOTV[+i] = k; else SHOTG[+i] = +k < 0 ? null : +k;
+    const attr = sv.dataset.shotv ? 'data-shotv' : 'data-shotg';
+    return holdPlace(sv, `[${attr}="${a}"]`, () => redrawRow(sv) || draw());
+  }
   const sn = e.target.closest('[data-shotn]');
   if (sn) {
     const [i, k] = sn.dataset.shotn.split(':').map(Number);
-    SHOTN[i] = k;
+    SHOTN[i] = k; SHOTG[i] = null;
     return holdPlace(sn, `[data-shotn="${i}:${k}"]`, () => redrawRow(sn) || draw());
   }
   const sc = e.target.closest('[data-sec]');
@@ -6845,6 +7387,52 @@ function askTonightExamples(){
    as last 3 / 5 / 10 beside the full span, so a question is answered
    by how he is playing now first and the long average second. Uses
    the same opponent and home/away filters as the question. */
+/* Ask: his game-by-game numbers as bars, oldest left, with the line
+   dashed across. Green cleared it, red did not, grey sat on it. */
+function askChart(games, line, ok, sp){
+  if (games.length < 2) return '';
+  const W = 320, H = 132, top = 16, base = 104, n = games.length, gap = 3, G = 22;
+  const bw = (W - G - gap * (n - 1)) / n;
+  const mx = Math.max(1, line || 0, ...games.map(g => g.v)) * 1.08;
+  const y = v => base - (base - top) * (v / mx);
+  const bars = games.map((g, k) => {
+    const o = ok(g.v), c = o == null ? (line == null ? 'var(--clover)' : 'var(--flat)') : o ? 'var(--over)' : 'var(--under)';
+    const x = k * (bw + gap), yy = y(g.v), op = teamAbbr(sp, g.opp) || String(g.opp || '').slice(0, 3).toUpperCase();
+    return `<g><title>${esc(g.d)} vs ${esc(g.opp)}: ${g.v}</title>
+      <rect x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, base - yy).toFixed(1)}" rx="2.5" fill="${c}"/>
+      <text x="${(x + bw / 2).toFixed(1)}" y="${(yy - 3).toFixed(1)}" class="acv">${g.v}</text>
+      <text x="${(x + bw / 2).toFixed(1)}" y="${base + 12}" class="aco">${esc(op)}</text></g>`;
+  }).join('');
+  const ln = line == null ? '' : `<line x1="0" x2="${W - G + 2}" y1="${y(line).toFixed(1)}" y2="${y(line).toFixed(1)}" class="acl"/>
+    <text x="${W}" y="${(y(line) + 3).toFixed(1)}" class="acll">${line}</text>`;
+  return `<div class="achart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Last ${n} games">${bars}${ln}</svg>
+    <div class="dim achl">last ${n}, oldest left${line != null ? ' \u00b7 dashed = line' : ''}</div></div>`;
+}
+/* A small ring for a hit rate. */
+function hitRing(f, big, small){
+  const r = 26, c = 2 * Math.PI * r, col = f >= .6 ? 'var(--over)' : f >= .45 ? 'var(--mark)' : 'var(--under)';
+  return `<div class="aring"><svg viewBox="0 0 64 64" width="64" height="64">
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--raise)" stroke-width="7"/>
+    <circle cx="32" cy="32" r="${r}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round"
+      stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 32 32)"/>
+    <text x="32" y="36" text-anchor="middle" class="arn">${Math.round(100 * f)}%</text></svg>
+    <div><b>${esc(big)}</b><small>${esc(small)}</small></div></div>`;
+}
+const ASK_RECENT = 'green15.askrecent.v1';
+function askRecentGet(){ try { return JSON.parse(localStorage.getItem(ASK_RECENT) || '[]').slice(0, 8); } catch (_) { return []; } }
+function askRecentAdd(q){
+  q = String(q || '').trim(); if (q.length < 3) return;
+  const a = [q].concat(askRecentGet().filter(x => x.toLowerCase() !== q.toLowerCase())).slice(0, 8);
+  try { localStorage.setItem(ASK_RECENT, JSON.stringify(a)); } catch (_) {}
+  askRecentDraw();
+}
+function askRecentDraw(){
+  const el = $('askrecent'); if (!el) return;
+  const a = askRecentGet();
+  el.innerHTML = a.length ? `<span class="eyebrow">Recent</span>${a.map(x =>
+    `<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('')}<button class="chip askclr" data-askclr="1">clear</button>` : '';
+}
+const shortDay = d => { const t = new Date(String(d) + 'T12:00:00'); return isFinite(t) ? t.toLocaleDateString([], {month: 'short', day: 'numeric'}) : d; };
 function askForm(r, rows){
   if (!r.player || r.isTeam) return '';
   const sp = String(r.sp || (rows[0] || [])[9]
@@ -6914,20 +7502,16 @@ function askForm(r, rows){
     ? 'His last 5 are in line with the full span.'
     : `His last 5 run <b class="${l5 > all ? 'hit' : 'miss'}">${l5 > all ? '+' : ''}${(l5 - all).toFixed(1)}</b>
        ${l5 > all ? 'above' : 'below'} the full span \u2014 the recent number is the one to weigh.`;
-  const strip = games.slice(0, 10).reverse().map(g => {
-    const o = ok(g.v);
-    return `<b class="${o == null ? (line == null ? '' : 'push') : o ? 'hit' : 'miss'}"
-      title="${esc(g.d)} vs ${esc(g.opp)}">${g.v}</b>`;
-  }).join('');
+  const chart = askChart(games.slice(0, 15).reverse(), line, ok, sp);
+  const rk = Math.min(10, games.length), rc = cell(rk);
+  const ring = line != null && rc.dec ? hitRing(rc.hit / rc.dec, `${rc.hit}/${rc.dec}`, `L${rk} ${atl ? 'at least' : under ? 'under' : 'over'} ${line}`) : '';
+  const tiles = wins.map((k, j) => { const c = cells[j];
+    return `<div class="aft"><small>${j === wins.length - 1 ? `All ${k}` : `L${k}`}</small><b>${c.avg.toFixed(1)}</b>${
+      line != null && c.dec ? `<span class="${c.hit / c.dec >= .5 ? 'hit' : 'miss'}">${c.hit}/${c.dec}</span>` : ''}</div>`; }).join('');
   return `<div class="simbox askform"><h4>form \u00b7 ${esc(r.player)} \u00b7 ${esc(mkLabel(mk))}${
       notes.length ? ' \u00b7 ' + esc(notes.join(' \u00b7 ')) : ''}</h4>
-    <div class="tscroll"><table class="gtab"><thead><tr><th></th>${head}</tr></thead><tbody>
-      <tr><td>Average</td>${cells.map(c => `<td class="v"><b>${c.avg.toFixed(1)}</b></td>`).join('')}</tr>
-      ${line != null ? `<tr><td>${atl ? 'At least' : under ? 'Under' : 'Over'} ${line}</td>${cells.map(c =>
-        `<td class="v">${c.hit}/${c.dec}</td>`).join('')}</tr>` : ''}
-    </tbody></table></div>
-    <div class="rstrip"><span class="dim" style="font-size:11px">last ${Math.min(10, games.length)}, newest right</span>
-      <span class="rsg">${strip}</span></div>
+    <div class="aftop">${ring}<div class="aftiles">${tiles}</div></div>
+    ${chart}
     <div class="mnote">${trend} From every game in his saved box scores${
       total > games.length ? ` (${games.length} of ${total} match the filter)` : ` (${total})`},
       not only the nights a prop was priced.${haUnk ? ` ${haUnk} game${haUnk === 1 ? '' : 's'}
@@ -6939,22 +7523,24 @@ function drawAsk(){
   const eg = $('askeg');
   if (eg && !eg.dataset.on) {
     eg.dataset.on = '1';
-    eg.innerHTML = askExamples(A).map(x =>
+    eg.innerHTML = '<span class="eyebrow">Try</span>' + askExamples(A).map(x =>
       `<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('');
+    askRecentDraw();
   }
   const q = ($('askq') && $('askq').value) || '';
   const out = $('askout');
   if (!q.trim()) {
     const people = (A.players || []).filter(p => !isTeamName(p)).length;
     const src = A.sources || {};
-    out.innerHTML = `<div class="empty">${
-      A.n ? `${A.n.toLocaleString()} graded games on record,
-      ${A.from} to ${A.to}, across ${people.toLocaleString()} players and
-      their teams' spreads, moneylines and totals.${src.from_box ? ` ${
+    out.innerHTML = A.n ? `<div class="askstats">
+        <div class="pkt"><b>${A.n.toLocaleString()}</b><small>graded games</small></div>
+        <div class="pkt"><b>${people.toLocaleString()}</b><small>players</small></div>
+        <div class="pkt"><b>${esc(shortDay(A.from))}\u2013${esc(shortDay(A.to))}</b><small>span</small></div></div>
+      <div class="dim askmeta">Graded games on record across players and their teams' spreads, moneylines and totals.${src.from_box ? ` ${
         src.from_box.toLocaleString()} of the values were read back from the
         saved box scores and kept only where they reproduce the recorded
-        result.` : ''}`
-      : 'No graded history yet.'}</div>`;
+        result.` : ''}</div>`
+      : `<div class="empty">No graded history yet.</div>`;
     return;
   }
   const tonight = askIntent(q);
@@ -7073,14 +7659,14 @@ function drawAsk(){
     const d = A2.dates[x[2]], away = A2.teams[x[5]], home = A2.teams[x[6]];
     const venue = askVenue(x, A2);
     const opp = x[10] != null && !TEAM_MKS.has(A2.markets[x[1]])
-      ? `${venue === 'home' ? 'vs' : '@'} ${esc(A2.teams[x[10]])}`
+      ? `${venue === 'home' ? 'vs' : '@'} ${esc(teamAbbr(x[9], A2.teams[x[10]]) || A2.teams[x[10]])}`
       : `${esc(away || '')} @ ${esc(home || '')}`;
     const st = askSettle(x, A2);
     const alt = x[11] ? `<small class="dim"> \u00b7 also priced ${x[11]
       .filter(l => l !== x[4]).join(', ')}</small>` : '';
     const line = bx.length ? boxFor(bx, d, x[10] != null ? A2.teams[x[10]] : null) : null;
-    return `<tr class="${line ? 'askrow' : ''}" ${line ? `data-askbx="${k}"` : ''}>
-      <td>${esc(d)}</td><td class="dim">${opp}</td>
+    return `<tr class="${line ? 'askrow' : ''} ${st.ok == null ? 'ar-n' : st.ok ? 'ar-h' : 'ar-m'}" ${line ? `data-askbx="${k}"` : ''}>
+      <td title="${esc(d)}">${esc(shortDay(d))}</td><td class="dim">${opp}</td>
       <td><b>${esc(st.val)}</b></td>
       <td class="${st.ok == null ? 'dim' : st.ok ? 'hit' : 'miss'}">${esc(st.res)}${alt}</td>
       <td class="dim">${line ? '\u25be' : ''}</td></tr>${line ? `<tr class="askbx" hidden
@@ -7326,6 +7912,7 @@ $('trkcopy').onclick = async () => {
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 $('q').addEventListener('input', debounce(draw, 140));
 $('askq').addEventListener('input', debounce(drawAsk, 160));
+$('askq').addEventListener('change', e => askRecentAdd(e.target.value));
 $('bank').addEventListener('input', drawStakes);
 // Tapping a game filters the board to it.
 document.addEventListener('click', e => {
@@ -7879,6 +8466,13 @@ function checkAlerts(){
     try { if (window.Notification && Notification.permission === 'granted')
       new Notification('Green15', {body: msg, tag: k}); } catch (_) {}
   }
+  for (const pk of PSAVED.values()) {
+    const k = 'pk:' + pk.id; if (ALERTED.has(k)) continue;
+    const s = pkStatus(pk); if (s.changed) pkStore();
+    if (!['won', 'lost', 'push'].includes(s.st)) continue;
+    ALERTED.add(k); fresh++;
+    toast(`${PK_ST[s.st]}: your ${pk.legs.length}-leg parlay${s.pnl != null ? ' (' + pkU(s.pnl) + ')' : ''}`);
+  }
   if (fresh) {
     try { localStorage.setItem('g15alerted', JSON.stringify([...ALERTED].slice(-300))); } catch (_) {}
     if (tabOn('track')) drawTrack();
@@ -7891,6 +8485,7 @@ if (typeof document !== 'undefined') document.addEventListener('click', async ev
   // Already-settled props are marked as seen when alerts go on, so
   // turning them on does not fire a burst for last night's results.
   if (ALERTS) for (const [k, e] of TRK) if (trkSettle(e)) ALERTED.add(k);
+  if (ALERTS) for (const pk of PSAVED.values()) if (['won', 'lost', 'push'].includes(pkStatus(pk).st)) ALERTED.add('pk:' + pk.id);
   if (ALERTS && window.Notification && Notification.permission === 'default') {
     try { await Notification.requestPermission(); } catch (_) {}
   }
@@ -7902,7 +8497,7 @@ async function trkLiveFetch(force){
   if (LIVE_TRK_BUSY) return; LIVE_TRK_BUSY = 1;
   try {
     const want = new Map();
-    for (const e of TRK.values()) { const g = gameInfo({sp: e.sp, mu: e.mu});
+    for (const e of [...TRK.values(), ...pkOpenLegs()]) { const g = gameInfo({sp: e.sp, mu: e.mu});
       if (g && g.id && (g.st === 'in' || g.st === 'post')) want.set(g.id, String(e.sp || '').toUpperCase()); }
     if (!want.size) return 0;
     await Promise.all([...want].map(([id, sp]) => getLiveBox(sp, id, force)));
@@ -7913,7 +8508,7 @@ function tabOn(name){ const el = $('tab-' + name); return el && !el.hidden; }
 async function liveTick(){
   if (document.hidden || !D) return;
   const games = tabOn('games') && liveGames().some(lg => LIVEOPEN.has(lg.mu) && lg.g.st === 'in');
-  const inPlay = [...TRK.values()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
+  const inPlay = [...TRK.values(), ...pkOpenLegs()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
   // With alerts on, tracked games are read on every tick wherever the
   // reader is in the app, not only on the Tracked tab.
   const trk = (tabOn('track') || ALERTS) && inPlay;
@@ -8050,6 +8645,7 @@ function clockNote(){
   $('boardmeta').innerHTML =
     `${b.slate_size ?? 0} evaluated`;
   TRKOK = trkLoad();
+  PKOK = pkLoad();
   // The board first, everything else when the browser is idle. All
   // nine panels used to render before the first paint, which is the
   // long blank pause on open. A tab opened before its turn renders
