@@ -720,6 +720,43 @@ html.sheeton #totop,html.sheeton .tray{visibility:hidden}
 .lvp.up,.trklive .up{color:var(--over)} .lvp.dn{color:var(--under)}
 .trklive{font-size:12px;margin:2px 0 3px}
 .lvdot{color:var(--under)}
+.lvline{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.lvbar{display:inline-block;width:64px;height:6px;border-radius:999px;background:color-mix(in srgb,var(--ink,#888) 14%,transparent);
+  overflow:hidden;vertical-align:middle}
+.lvbar i{display:block;height:100%;border-radius:999px;background:var(--over);transition:width .4s}
+.lvbar.dn i{background:var(--under)} .lvbar.warn i{background:#d4a017}
+.lvchance{display:inline-flex;align-items:baseline;gap:3px;padding:1px 7px;border-radius:999px;font-family:var(--m);font-size:11px;
+  font-weight:600;border:1px solid color-mix(in srgb,currentColor 35%,transparent);white-space:nowrap}
+.lvchance small{font-size:9.5px;font-weight:500;opacity:.85}
+.lvchance.up{color:var(--over)} .lvchance.dn{color:var(--under)}
+.alttab{border-collapse:collapse;width:100%;font-family:var(--m);font-size:11.5px;margin:6px 0}
+.alttab th{font-weight:400;color:var(--ink-2);font-size:9.5px;text-align:right;padding:2px 5px;white-space:nowrap}
+.alttab td{padding:5px 4px;border-top:1px solid var(--rule);text-align:right;white-space:nowrap}
+.alttab td:last-child{padding-right:0}
+.alttab th:first-child,.alttab td:first-child{text-align:left}
+.alttab tr.altmain td{background:var(--clover-soft)}
+.alttab tr.alton td{box-shadow:inset 0 0 0 9999px color-mix(in srgb,var(--over) 8%,transparent)}
+.altpick{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.altpick input{width:16px;height:16px;accent-color:var(--clover)}
+.altrk{font-size:10px;padding:2px 6px;margin-left:2px;min-height:0}
+.altsub{display:block;font-size:9.5px;color:var(--ink-2);font-weight:400}
+.altsub.hit{color:var(--over)} .altsub.miss{color:var(--under)}
+.altlad{margin-top:8px;padding:9px 10px;border-radius:10px;border:1px solid var(--rule)}
+.altladhd{font-size:12px;margin-bottom:6px}
+.altstks{display:flex;flex-wrap:wrap;gap:6px 12px;font-family:var(--m);font-size:11.5px}
+.altstks input{width:52px;padding:4px 6px;border-radius:7px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);font:inherit}
+.altbands td:first-child{white-space:normal}
+.altev{font-size:12px;margin-top:4px}
+.sharerow{display:flex;justify-content:flex-end;margin:6px 0 2px}
+.sharebtn{font-size:11px}
+.shareov{position:fixed;inset:0;z-index:90;background:rgba(5,8,3,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.shareov[hidden]{display:none}
+.sharebox{background:var(--card);color:var(--ink);border-radius:16px;padding:14px;max-width:420px;width:100%;max-height:92vh;overflow:auto;text-align:center}
+.sharebox img{width:100%;height:auto;border-radius:10px;display:block;margin-bottom:10px}
+.sharebtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.sharebtns a.h2go{text-decoration:none}
+.sharebox p{font-size:11px;margin:8px 0 0}
+.pklive{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 4px;font-size:11px}
 .lvon{color:var(--under);font-weight:600}
 .livet td,.livet th{white-space:nowrap}
 .livet .lvnm{text-align:left;white-space:normal;min-width:118px}
@@ -1307,6 +1344,18 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 .lab-verdict.neu{background:color-mix(in srgb,var(--ink-2) 14%,transparent);color:var(--ink-2)}
 .lab-live{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;
   padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin:10px 0;font-size:12.5px}
+.pbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0 12px;padding:9px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:12px}
+.pbar label{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.pbar input[type="number"]{width:68px;padding:3px 7px;border-radius:7px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink);font-family:var(--m);font-size:12px}
+.ppresets{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.pbooks{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 6px;padding:7px 9px;
+  border-radius:8px;background:color-mix(in srgb,var(--ink) 4%,transparent);font-size:11.5px;font-family:var(--m)}
+.pbooks .pb-best{color:var(--over);font-weight:700}
+.pleg-go{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-family:var(--m);
+  font-size:10.5px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--over)}
+.pleg-go:hover{background:color-mix(in srgb,var(--over) 12%,transparent)}
 </style>
 </head>
 <body>
@@ -1393,8 +1442,10 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       chance is the calibrated one (the anchored probability, adjusted by how that
       range has actually landed), and same-game legs carry the correlation measured
       from the games both players logged. It is an estimate, not a promise.</p>
+    <div id="parlaybar"></div>
     <div id="parlayrec"></div>
     <h3 class="ph">Build your own</h3>
+    <div id="parlaypre" class="ppresets"></div>
     <div id="parlayfil" class="pfil"></div>
     <div id="parlayout"></div>
   </section>
@@ -3481,11 +3532,15 @@ function shopTag(p){
 }
 if (typeof document !== 'undefined') document.addEventListener('change', e => {
   const t = e.target.closest && e.target.closest('[data-mybook]');
-  if (!t) return;
+  if (!t) {
+    if (e.target && e.target.id === 'pstake') pstakeSet(e.target.value);
+    return;
+  }
   MYBOOK = t.value;
   try { localStorage.setItem('g15book', MYBOOK); } catch (_) {}
   for (const x of document.querySelectorAll('[data-mybook]')) x.value = MYBOOK;
   try { if (typeof draw === 'function') draw(); } catch (_) {}
+  try { if (typeof drawParlays === 'function' && tabOn('parlays')) { REC_SIG = ''; drawParlays(); } } catch (_) {}
   try { if (typeof drawLadder === 'function' && tabOn('ladder')) drawLadder(); } catch (_) {}
   try { if (typeof drawCompare === 'function' && tabOn('compare')) drawCompare(); } catch (_) {}
   try { const sh = $('sheet'); if (sh && !sh.hidden && SHEET != null) renderSheet(); } catch (_) {}
@@ -3597,6 +3652,7 @@ const SECTIONS = [
   ['matchup', 'Matchup'],
   ['market',  'Market'],
   ['leaves',  'Leaves'],
+  ['alt',     'Alt lines'],
   ['track',   'Tracked'],
 ];
 
@@ -4557,6 +4613,355 @@ function priceBox(p){
       The model is anchored to the market and moves at most 4 points from it.</div></div>`;
 }
 
+/* ================================================================
+   SHAREABLE CARDS
+   One PNG per pick or parlay, drawn on a canvas from the numbers the
+   app already shows -- no screenshot library, no outside images (a
+   headshot from another site would lock the canvas and block the
+   export). 1080 x 1350, the portrait size every feed accepts.
+   ================================================================ */
+const SHARE_C = {bg: '#101309', bg2: '#18210F', ink: '#EDEEE4', ink2: '#9BA391', rule: '#2A2F22',
+  clover: '#5FBF86', under: '#E0745F', mark: '#D8BE84'};
+const htmlText = h => { const d = document.createElement('div'); d.innerHTML = String(h || ''); return d.textContent; };
+const GRADE_COL = g => /^A/.test(g || '') ? SHARE_C.clover : /^B/.test(g || '') ? '#9FD7A8' : /^C/.test(g || '') ? SHARE_C.mark : SHARE_C.ink2;
+function shFit(x, txt, max, size, weight, fam){
+  let s = size;
+  do { x.font = `${weight} ${s}px ${fam}`; if (x.measureText(txt).width <= max) break; s -= 2; } while (s > 18);
+  return s;
+}
+function shWrap(x, txt, max){
+  const words = String(txt).split(/\s+/), out = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (x.measureText(t).width > max && line) { out.push(line); line = w; } else line = t; }
+  if (line) out.push(line);
+  return out;
+}
+function shRound(x, X, Y, W, H, r){ x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + W, Y, X + W, Y + H, r); x.arcTo(X + W, Y + H, X, Y + H, r);
+  x.arcTo(X, Y + H, X, Y, r); x.arcTo(X, Y, X + W, Y, r); x.closePath(); }
+function shFrame(x, W, H, sub){
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, SHARE_C.bg2); g.addColorStop(1, SHARE_C.bg);
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = SHARE_C.clover; x.font = `900 56px Archivo, system-ui, sans-serif`; x.textBaseline = 'alphabetic';
+  x.fillText('GREEN15', 72, 122);
+  x.fillStyle = SHARE_C.ink2; x.font = `600 26px "IBM Plex Mono", ui-monospace, monospace`; x.textAlign = 'right';
+  x.fillText(sub, W - 72, 120); x.textAlign = 'left';
+  x.fillStyle = SHARE_C.rule; x.fillRect(72, 150, W - 144, 2);
+  x.fillStyle = SHARE_C.ink2; x.font = `500 24px "IBM Plex Sans", system-ui, sans-serif`;
+  x.fillText('Model estimate, not a guarantee. 21+. Play responsibly.', 72, H - 64);
+  x.textAlign = 'right'; x.fillStyle = SHARE_C.clover; x.font = `600 24px "IBM Plex Mono", ui-monospace, monospace`;
+  x.fillText('green15', W - 72, H - 64); x.textAlign = 'left';
+}
+function shGrade(x, cx, cy, r, g, label){
+  x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fillStyle = 'rgba(95,191,134,.10)'; x.fill();
+  x.lineWidth = 6; x.strokeStyle = GRADE_COL(g); x.stroke();
+  x.fillStyle = GRADE_COL(g); x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = `900 ${Math.round(r * (String(g).length > 1 ? 0.8 : 1))}px Archivo, system-ui, sans-serif`; x.fillText(g || '\u2013', cx, cy + 4);
+  if (label) { x.fillStyle = SHARE_C.ink2; x.font = `600 22px "IBM Plex Mono", monospace`; x.fillText(label, cx, cy + r + 30); }
+  x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+}
+function shTile(x, X, Y, W, val, lab, col){
+  shRound(x, X, Y, W, 128, 18); x.fillStyle = 'rgba(237,238,228,.05)'; x.fill();
+  x.fillStyle = col || SHARE_C.ink; shFit(x, val, W - 28, 50, 800, 'Archivo, system-ui, sans-serif'); x.fillText(val, X + 22, Y + 66);
+  x.fillStyle = SHARE_C.ink2; x.font = `500 22px "IBM Plex Sans", system-ui, sans-serif`; x.fillText(lab, X + 22, Y + 104);
+}
+/* Last-ten strip, oldest on the left; newest five outlined, since
+   recent form leads and the longer run is context. */
+function shStrip(x, X, Y, W, H, vals, p){
+  if (!vals.length) return;
+  const v = vals.slice(0, 10).reverse(), n = v.length, mx = Math.max(p.ln || 0, ...v) * 1.15 || 1;
+  const bw = Math.min(70, (W - (n - 1) * 14) / n), gap = n > 1 ? (W - n * bw) / (n - 1) : 0;
+  const yL = Y + H - (p.ln / mx) * H;
+  v.forEach((val, k) => {
+    const bx = X + k * (bw + gap), bh = Math.max(4, (val / mx) * H), ok = won(p, val);
+    shRound(x, bx, Y + H - bh, bw, bh, 8);
+    x.fillStyle = ok === true ? SHARE_C.clover : ok === false ? SHARE_C.under : SHARE_C.ink2; x.fill();
+    if (k >= n - 5) { x.lineWidth = 3; x.strokeStyle = SHARE_C.ink; x.stroke(); }
+    x.fillStyle = SHARE_C.ink; x.font = `600 22px "IBM Plex Mono", monospace`; x.textAlign = 'center';
+    x.fillText(String(Math.round(val * 10) / 10), bx + bw / 2, Y + H - bh - 10); x.textAlign = 'left';
+  });
+  x.setLineDash([10, 8]); x.strokeStyle = SHARE_C.mark; x.lineWidth = 3;
+  x.beginPath(); x.moveTo(X - 6, yL); x.lineTo(X + W + 6, yL); x.stroke(); x.setLineDash([]);
+}
+function propVals(p){ const h = hist(p).map(g => g.v); return h.length ? h : recentVals(p); }
+function drawPropShare(p){
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const sp = String(p.sp || '').toUpperCase();
+  shFrame(x, W, H, `${sp} \u00b7 ${String(D.slate_day || '').slice(5).replace('-', '/')}`);
+  shGrade(x, W - 172, 300, 92, p.gr || '', 'PICK GRADE');
+  x.fillStyle = SHARE_C.ink;
+  const name = p.kd === 'team' ? htmlText(headline(p)) : p.pl;
+  const fs = shFit(x, name, 700, 84, 900, 'Archivo, system-ui, sans-serif');
+  const nl = shWrap(x, name, 700).slice(0, 2);
+  nl.forEach((t, k) => x.fillText(t, 72, 262 + k * (fs + 6)));
+  let y = 262 + nl.length * (fs + 6) + 30;
+  const pick = p.kd === 'team' ? `${(p.mkk || p.mk || '').replace(/_/g, ' ')}` : `${p.sd} ${p.ln} ${(p.mk || '').replace(/_/g, ' ')}`;
+  x.fillStyle = SHARE_C.clover; shFit(x, pick, 700, 58, 800, 'Archivo, system-ui, sans-serif'); x.fillText(pick, 72, y);
+  y += 56;
+  x.fillStyle = SHARE_C.ink2; x.font = `500 32px "IBM Plex Sans", system-ui, sans-serif`;
+  const mu = htmlText(gameLabel(p.mu));
+  x.fillText(shWrap(x, `${p.pr != null ? (p.pr > 0 ? '+' : '') + p.pr + ' \u00b7 ' : ''}${mu}`, W - 144)[0], 72, y);
+  y = Math.max(y + 50, 480);
+  const cal = calProb(p), tw = (W - 144 - 3 * 20) / 4;
+  shTile(x, 72, y, tw, pc(cal), 'model chance', SHARE_C.clover);
+  shTile(x, 72 + (tw + 20), y, tw, p.pj != null ? (+p.pj).toFixed(1) : '\u2014', 'projection');
+  shTile(x, 72 + 2 * (tw + 20), y, tw, p.pr != null ? pc(impProb(p.pr)) : '\u2014', 'break-even');
+  shTile(x, 72 + 3 * (tw + 20), y, tw, (p.lv || []).length ? `${p.sc ?? 0}/${p.lv.length}` : '\u2014', 'clover leaves');
+  y += 190;
+  const vals = p.kd === 'team' ? [] : propVals(p);
+  if (vals.length) {
+    const l5 = vals.slice(0, 5), l10 = vals.slice(0, 10), hit = a => a.filter(v => won(p, v) === true).length;
+    x.fillStyle = SHARE_C.ink; x.font = `800 40px Archivo, system-ui, sans-serif`;
+    x.fillText(`L5 ${hit(l5)}/${l5.length}`, 72, y);
+    x.fillStyle = SHARE_C.ink2; x.font = `600 30px "IBM Plex Mono", monospace`;
+    x.fillText(`L10 ${hit(l10)}/${l10.length} vs ${p.ln}`, 300, y);
+    shStrip(x, 90, y + 60, W - 180, 330, vals, p);
+    x.fillStyle = SHARE_C.ink2; x.font = `500 22px "IBM Plex Sans", system-ui, sans-serif`;
+    x.fillText('oldest \u2192 newest \u00b7 outlined: last 5 \u00b7 dashed: the line', 90, y + 440);
+    y += 480;
+  } else {
+    x.fillStyle = SHARE_C.ink2; x.font = `500 30px "IBM Plex Sans", system-ui, sans-serif`;
+    const why = p.kd === 'team' ? (p.pj != null ? `Model projection ${(+p.pj).toFixed(1)} \u00b7 \u00b1${p.sv ?? '?'} game to game` : '') : 'No saved box scores for this player yet.';
+    x.fillText(why, 72, y + 20); y += 80;
+  }
+  return c;
+}
+function drawParlayShare(legs, info){
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  shFrame(x, W, H, `${legs.length}-LEG PARLAY \u00b7 ${String(D.slate_day || '').slice(5).replace('-', '/')}`);
+  x.fillStyle = SHARE_C.ink; x.font = `900 120px Archivo, system-ui, sans-serif`;
+  x.fillText(am(info.d), 72, 300);
+  x.fillStyle = SHARE_C.ink2; x.font = `600 28px "IBM Plex Mono", monospace`;
+  x.fillText(info.tag ? info.tag.toUpperCase() : 'COMBINED ODDS', 72, 350);
+  const tw = 270;
+  shTile(x, W - 72 - tw, 196, tw, info.live != null ? pc(info.live) : pc(info.est), info.live != null ? 'live chance' : 'est. hit', SHARE_C.clover);
+  if (info.status) { x.fillStyle = info.status === 'Won' ? SHARE_C.clover : info.status === 'Lost' ? SHARE_C.under : SHARE_C.mark;
+    x.font = `900 40px Archivo, system-ui, sans-serif`; x.textAlign = 'right'; x.fillText(info.status.toUpperCase(), W - 72, 380); x.textAlign = 'left'; }
+  let y = 430; const rowH = Math.min(140, (H - 200 - y) / Math.max(1, legs.length));
+  legs.slice(0, 8).forEach(l => {
+    shRound(x, 72, y, W - 144, rowH - 16, 18); x.fillStyle = 'rgba(237,238,228,.05)'; x.fill();
+    const mid = y + (rowH - 16) / 2;
+    shGrade(x, 128, mid, 34, l.gr || '', null);
+    x.fillStyle = SHARE_C.ink; const nm = htmlText(legName(l));
+    shFit(x, nm, W - 144 - 330, 36, 700, 'Archivo, system-ui, sans-serif'); x.fillText(nm, 186, mid - 4);
+    x.fillStyle = SHARE_C.ink2; x.font = `500 24px "IBM Plex Sans", system-ui, sans-serif`;
+    const res = l.res ? ` \u00b7 ${l.res === 'hit' ? 'hit' : l.res === 'lost' ? 'lost' : l.res}` : '';
+    x.fillText(`${String(l.sp || '').toUpperCase()} \u00b7 ${htmlText(pkGame(l)).slice(0, 34)}${l.cal != null ? ' \u00b7 est ' + pc(l.cal) : ''}${res}`, 186, mid + 32);
+    x.fillStyle = SHARE_C.ink; x.font = `700 34px "IBM Plex Mono", monospace`; x.textAlign = 'right';
+    x.fillText(l.pr != null ? (l.pr > 0 ? '+' : '') + l.pr : '', W - 100, mid - 4);
+    // L5 dots for player legs, newest on the right.
+    const p = l.kd === 'team' ? null : (ALLP.find(q => q.pl === l.pl && q.mk === l.mk && q.sd === l.sd && q.ln === l.ln) || null);
+    const v = p ? propVals(p).slice(0, 5).reverse() : [];
+    v.forEach((val, k) => { x.beginPath(); x.arc(W - 100 - (v.length - 1 - k) * 26 - 9, mid + 26, 9, 0, Math.PI * 2);
+      x.fillStyle = won(p, val) === true ? SHARE_C.clover : won(p, val) === false ? SHARE_C.under : SHARE_C.ink2; x.fill(); });
+    x.textAlign = 'left';
+    y += rowH;
+  });
+  if (legs.length > 8) { x.fillStyle = SHARE_C.ink2; x.font = `500 26px "IBM Plex Sans", sans-serif`; x.fillText(`+${legs.length - 8} more legs`, 72, y + 10); y += 50; }
+  const stake = typeof PSTAKE !== 'undefined' && PSTAKE > 0 ? PSTAKE : 10;
+  x.fillStyle = SHARE_C.ink; x.font = `800 40px Archivo, system-ui, sans-serif`;
+  x.fillText(`$${stake} pays $${(stake * info.d).toFixed(2)}`, 72, y + 40);
+  return c;
+}
+let SHARE_URL = null;
+async function openShare(c, fname, text){
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  if (!blob) { toast('Could not draw the card on this device.'); return; }
+  if (SHARE_URL) URL.revokeObjectURL(SHARE_URL);
+  SHARE_URL = URL.createObjectURL(blob);
+  const file = typeof File === 'function' ? new File([blob], fname, {type: 'image/png'}) : null;
+  const canShare = !!(file && navigator.canShare && navigator.canShare({files: [file]}));
+  let ov = $('shareov');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'shareov'; ov.className = 'shareov'; ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-label', 'Share card'); document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="sharebox"><img src="${SHARE_URL}" alt="${esc(text)}">
+    <div class="sharebtns">${canShare ? '<button class="h2go" data-shgo="1">Share</button>' : ''}
+      <a class="h2go" href="${SHARE_URL}" download="${esc(fname)}">Download PNG</a>
+      <button class="chip" data-shclose="1">Close</button></div>
+    <p class="dim">On a phone you can also press and hold the picture to save it.</p></div>`;
+  ov.hidden = false;
+  ov._file = file; ov._text = text;
+}
+function sharePayload(key){
+  const [kind, rest] = [key.slice(0, 2), key.slice(2)];
+  if (kind === 'p:') {
+    const p = PROPS.find(q => q.i === +rest) || ALLP.find(q => q.i === +rest); if (!p) return null;
+    return {c: drawPropShare(p), f: `green15-${String(p.pl || 'pick').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`,
+      t: `${htmlText(headline(p))} ${p.kd === 'team' ? '' : (p.mk || '').replace(/_/g, ' ')} \u00b7 Green15 ${p.gr || ''}`.trim()};
+  }
+  if (kind === 'k:') {
+    const [ids, tag] = rest.split('|');
+    const props = ids.split(',').map(Number).map(i => PROPS.find(q => q.i === i)).filter(Boolean);
+    if (props.length < 2) return null;
+    const j = jointProb(props), d = props.reduce((a, p) => a * dec(p.pr), 1);
+    return {c: drawParlayShare(props.map(pkLegOf), {d, est: j.est, tag: tag || ''}), f: 'green15-parlay.png',
+      t: `${props.length}-leg parlay ${am(d)} \u00b7 Green15`};
+  }
+  if (kind === 's:') {
+    const pk = PSAVED.get(rest); if (!pk) return null;
+    const s = pkStatus(pk);
+    return {c: drawParlayShare(pk.legs, {d: pk.d, est: pk.est, tag: pk.tag, live: s.lpc,
+      status: ['won', 'lost', 'push'].includes(s.st) ? PK_ST[s.st] : s.st === 'live' ? 'Live' : ''}),
+      f: 'green15-parlay.png', t: `${pk.legs.length}-leg parlay ${am(pk.d)} \u00b7 Green15`};
+  }
+  return null;
+}
+const shareBtn = (key, label) => `<button class="chip sharebtn" data-share="${esc(key)}" aria-label="Share as picture">${label || 'Share card'}</button>`;
+if (typeof document !== 'undefined') document.addEventListener('click', async e => {
+  const t = e.target.closest && e.target.closest('[data-share],[data-shgo],[data-shclose],#shareov');
+  if (!t) return;
+  if (t.dataset.share != null) {
+    const s = sharePayload(t.dataset.share); if (!s) { toast('Nothing to share for this card.'); return; }
+    await openShare(s.c, s.f, s.t); return;
+  }
+  const ov = $('shareov'); if (!ov) return;
+  if (t.dataset.shgo != null) { try { await navigator.share({files: [ov._file], title: 'Green15', text: ov._text}); } catch (_) {} return; }
+  if (t.dataset.shclose != null || e.target === ov) ov.hidden = true;
+});
+/* ---------- alt lines and ladder builder ----------
+   Every rung reads the SAME fitted curve as the live hit chance
+   (propCurve), anchored so the main line returns exactly the
+   calibrated chance on the card. A rung is therefore never a second
+   opinion about the player -- only the same opinion at another line.
+   Book prices appear only when the alt feed is on (MMAL_FETCH_ALTS=1
+   in the daily run); without it the rungs are priced by the model and
+   the table says there is no book price, rather than inventing one. */
+const ALT_STEP = {points: {NBA: 5, NHL: 1}, rebounds: 2, assists: {NBA: 2, NHL: 1}, '3-pointers_made': 1,
+  pra: 5, points_rebounds: 4, points_assists: 4, rebounds_assists: 2, blocks: 1, steals: 1,
+  passing_yards: 25, rush_yards: 10, receiving_yards: 10, receptions: 1, rush_attempts: 2,
+  shots_on_goal: 1, goals: 1, blocked_shots: 1, saves: 3};
+function altStep(p){
+  const s = ALT_STEP[p.mk], sp = String(p.sp || '').toUpperCase();
+  const v = typeof s === 'object' ? s[sp] ?? Object.values(s)[0] : s;
+  return v || Math.max(1, Math.round((p.ln || 5) * 0.2));
+}
+const ALTSEL = new Map();   // prop index -> Map(line -> stake)
+function altBook(p){ return (((D && D.board) || {}).alts || {})[`${p.sp}|${p.pl}|${p.mk}|${p.mu}`] || []; }
+/* The rungs for a prop: model chance, fair price, book price and the
+   saved-box hit rate at each line, all on the prop's own side. */
+function altRungs(p){
+  if (!p || p.kd === 'team' || p.ln == null) return null;
+  const c = calProb(p), d = c == null ? null : propCurve(p, c);
+  if (!d) return null;
+  const over = !/^under$/i.test(p.sd || ''), s = altStep(p), feed = altBook(p);
+  // Rungs sit on the round numbers books post (15+, 20+, 25+ for
+  // points; 50+, 60+ for receiving yards), kept only where the curve
+  // gives between 3% and 97% -- a -2500 or +9000 rung is a number, not
+  // a bet. Too few on the coarse grid, and the grid halves.
+  const inRange = l => { const m = distSide(d, l, over); return m >= 0.03 && m <= 0.97; };
+  const grid = st => { const out = []; for (let n = st; n <= Math.max(p.ln * 3, st * 8); n += st) { const l = n - 0.5; if (l > 0 && l !== p.ln && inRange(l)) out.push(l); } return out; };
+  let pts = grid(s);
+  if (pts.length < 3 && s > 1) pts = grid(Math.max(1, Math.round(s / 2)));
+  pts.sort((a, b) => Math.abs(a - p.ln) - Math.abs(b - p.ln));
+  const lines = new Set([p.ln, ...pts.slice(0, 6)]);
+  for (const r of feed) if (r[1] === (over ? 'Over' : 'Under')) lines.add(+r[0]);
+  const H = hist(p), L5 = H.slice(0, 5), L10 = H.slice(0, 10);
+  const hitAt = (v, l) => over ? v > l : v < l;
+  return [...lines].sort((a, b) => over ? a - b : b - a).slice(0, 10).map(l => {
+    const m = l === p.ln ? c : distSide(d, l, over);
+    const bk = feed.filter(r => +r[0] === l && r[1] === (over ? 'Over' : 'Under'));
+    const best = bk.reduce((a, r) => !a || dec(r[3]) > dec(a[3]) ? r : a, null);
+    const mine = bk.find(r => r[2] === MYBOOK) || null;
+    const px = l === p.ln ? p.pr : best ? best[3] : null;
+    return {l, main: l === p.ln, m, fair: m >= 0.02 && m <= 0.98 ? am(1 / m) : null,
+      px, book: l === p.ln ? null : best ? best[2] : null, mine, link: (mine && slipUrl(mine[4]) ? mine : best && slipUrl(best[4]) ? best : null),
+      edge: px != null ? m - 1 / dec(px) : null,
+      h5: L5.length ? [L5.filter(g => hitAt(g.v, l)).length, L5.length] : null,
+      h10: L10.length ? [L10.filter(g => hitAt(g.v, l)).length, L10.length] : null};
+  });
+}
+const rungName = (p, l) => /^under$/i.test(p.sd || '') ? `U ${l}` : `${Math.floor(l) + 1}+`;
+/* Ladder outcome bands: the final stat decides which nested rungs
+   cash. Each band's chance comes from the fitted curve. */
+function ladderBands(p, picks){
+  const c = calProb(p), d = propCurve(p, c), over = !/^under$/i.test(p.sd || '');
+  if (!d || !picks.length) return null;
+  const rs = picks.slice().sort((a, b) => over ? a.l - b.l : b.l - a.l);   // easiest first
+  const cost = rs.reduce((a, r) => a + r.stk, 0);
+  const bands = [];
+  let prevP = 1;
+  for (let k = 0; k <= rs.length; k++) {
+    const pk = k < rs.length ? distSide(d, rs[k].l, over) : 0;
+    const prob = Math.max(0, prevP - pk);
+    const win = rs.slice(0, k).reduce((a, r) => a + r.stk * dec(r.px ?? +r.fair), 0);
+    bands.push({k, prob, pnl: win - cost,
+      txt: k === 0 ? `misses ${rungName(p, rs[0].l)}` : k === rs.length ? `${rungName(p, rs[k - 1].l)} or better`
+        : `${rungName(p, rs[k - 1].l)} but not ${rungName(p, rs[k].l)}`});
+    prevP = pk;
+  }
+  const ev = bands.reduce((a, b) => a + b.prob * b.pnl, 0);
+  return {bands, cost, ev, anyHit: 1 - bands[0].prob, priced: rs.every(r => r.px != null)};
+}
+function altBox(p){
+  if (p.kd === 'team') return `<div class="empty">Alt lines are for player props. Team spreads and totals keep the posted line.</div>`;
+  const R = altRungs(p);
+  if (!R) return `<div class="empty">${p.ln == null ? 'No line to build from.' : 'Not enough to fit this prop: there is no model chance or no measured spread for it. Pass on alt rungs here.'}</div>`;
+  const feed = altBook(p).length > 0, sel = ALTSEL.get(p.i) || new Map();
+  const rows = R.map(r => {
+    const on = sel.has(r.l), ec = r.edge == null ? '' : r.edge > 0.02 ? 'hit' : r.edge < -0.02 ? 'miss' : '';
+    return `<tr class="${r.main ? 'altmain' : ''}${on ? ' alton' : ''}">
+      <td><label class="altpick"><input type="checkbox" data-altpick="${p.i}" data-altl="${r.l}"${on ? ' checked' : ''}>
+        <b>${rungName(p, r.l)}</b></label>${r.main ? '<small class="altsub">main line</small>' : ''}</td>
+      <td><b>${pc(r.m)}</b><small class="altsub">${r.fair ? 'fair ' + r.fair : ''}</small></td>
+      <td>${r.px != null ? `${r.px > 0 ? '+' : ''}${r.px}` : '<span class="dim">\u2014</span>'}<small class="altsub ${ec}">${
+        r.edge != null ? 'edge ' + (r.edge > 0 ? '+' : '') + (100 * r.edge).toFixed(1) : ''}${r.book ? ` ${esc(BOOK[r.book] || BOOK_NAME[r.book] || r.book)}` : ''}</small></td>
+      <td>${r.h5 ? `${r.h5[0]}/${r.h5[1]}` : '\u2014'}</td>
+      <td class="dim">${r.h10 ? `${r.h10[0]}/${r.h10[1]}` : '\u2014'}</td>
+      <td>${r.link ? `<a class="pleg-go" href="${esc(r.link[4])}" target="_blank" rel="noopener" title="open at ${esc(BOOK_NAME[r.link[2]] || r.link[2])}">\u2197</a>` : ''}
+        <button class="chip altrk" data-alttrk="${p.i}" data-altl="${r.l}" title="track this rung">track</button></td></tr>`;
+  }).join('');
+  const picks = R.filter(r => sel.has(r.l)).map(r => ({...r, stk: sel.get(r.l)}));
+  const lb = ladderBands(p, picks);
+  const ladder = !picks.length ? `<p class="trknote">Tick two or three rungs to build a ladder: one bet per rung, each paying on its own.
+      The table below then shows what you take home for every way the game can finish.</p>`
+    : `<div class="altlad"><div class="altladhd"><b>Your ladder</b> \u00b7 ${picks.length} rung${picks.length > 1 ? 's' : ''} \u00b7 cost ${lb.cost.toFixed(2)}u
+        \u00b7 at least one cashes ${pc(lb.anyHit)}</div>
+      <div class="altstks">${picks.map(r => `<label>${rungName(p, r.l)} <input type="text" inputmode="decimal" data-altstk="${p.i}" data-altl="${r.l}" value="${r.stk}"> u</label>`).join('')}</div>
+      <table class="alttab altbands"><thead><tr><th>If he finishes</th><th>chance</th><th>you net</th></tr></thead><tbody>${
+        lb.bands.map(b => `<tr><td>${esc(b.txt)}</td><td>${pc(b.prob)}</td><td class="${b.pnl > 0 ? 'hit' : b.pnl < 0 ? 'miss' : ''}">${pkU(b.pnl)}</td></tr>`).join('')}</tbody></table>
+      <div class="altev">Expected result <b class="${lb.ev > 0 ? 'hit' : lb.ev < 0 ? 'miss' : ''}">${pkU(lb.ev)}</b>${
+        lb.priced ? ' at the listed prices' : ' \u2014 rungs without a book price use fair odds, which nets 0 by construction, so this is only a payout map until real prices arrive'}.</div></div>`;
+  return `<div class="simbox altbox"><h4>alt lines and ladder</h4>
+    <p class="trknote">Model chance at each line from one curve fitted to this prop's calibrated ${pc(calProb(p))} at ${p.ln}${
+      p.pj != null ? ` (projection ${(+p.pj).toFixed(1)})` : ''}. L5 and L10 are his last five and ten saved box scores at that line.
+      ${feed ? 'Book prices are alternate-line quotes from tonight\u2019s odds feed.' : 'No alternate-line prices in tonight\u2019s feed, so book and edge are blank except on the main line.'}</p>
+    <div class="tscroll"><table class="alttab"><thead><tr><th>line</th><th>model</th><th>book</th><th>L5</th><th>L10</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    ${ladder}
+    <p class="trknote">Estimates, not promises. Rungs far from the main line lean hardest on the curve's shape.</p></div>`;
+}
+function altTrack(p, l){
+  const r = (altRungs(p) || []).find(x => x.l === l); if (!r) return;
+  if (r.main) { trkMark(p, 'watch'); return; }
+  const fake = {...p, ln: l, pr: r.px ?? null, mp: r.m, fp: null, ap: null, gr: null, ti: null, sc: null,
+    bcp: r.m, alt: 1, bl: []};
+  trkMark(fake, 'watch');
+  toast(`Tracking ${p.pl} ${rungName(p, l)} ${(p.mk || '').replace(/_/g, ' ')} (alt line). See the Tracked tab.`);
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('[data-alttrk]');
+    if (!t) return;
+    const p = PROPS.find(x => x.i === +t.dataset.alttrk) || ALLP.find(x => x.i === +t.dataset.alttrk);
+    if (p) { altTrack(p, +t.dataset.altl); t.textContent = 'tracked \u2713'; }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target; if (!t || !t.dataset) return;
+    if (t.dataset.altpick != null) {
+      const i = +t.dataset.altpick, l = +t.dataset.altl, m = ALTSEL.get(i) || new Map();
+      if (t.checked) m.set(l, 1); else m.delete(l);
+      ALTSEL.set(i, m); renderSheet(); return;
+    }
+    if (t.dataset.altstk != null) {
+      const m = ALTSEL.get(+t.dataset.altstk); if (!m) return;
+      const v = Number(String(t.value).replace(/[,$\s]/g, ''));
+      if (Number.isFinite(v) && v > 0) m.set(+t.dataset.altl, v);
+      renderSheet();
+    }
+  });
+}
+
 function detail(p, p0){
   const cur = SEC[p.i] || 'read';
   // card() writes this prop's Why box. Built first, so the Why section
@@ -4564,7 +4969,7 @@ function detail(p, p0){
   const cardHtml = card(p);
   // The prop switcher sits right on top of the big bar, so another
   // line on this player is one tap away without leaving the card.
-  const nav = `<div class="secnav"><div class="secrow">${SECTIONS.map(([k, label]) =>
+  const nav = `<div class="secnav"><div class="secrow">${SECTIONS.filter(([k]) => k !== 'alt' || p.kd !== 'team').map(([k, label]) =>
     `<button class="secbtn ${k === cur ? 'on' : ''}"
       data-sec="${p.i}:${k}">${label}</button>`).join('')}</div></div>`;
 
@@ -4586,12 +4991,14 @@ function detail(p, p0){
     : cur === 'market' ? `${moveNote(p)}${priceBox(p)}${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
+    : cur === 'alt'    ? altBox(p)
     : leavesSection(p);
 
   return `<div class="detail">
     ${propSwitch(p, p0 || p)}
     ${ruleNote(p)}
     ${cardHtml}
+    <div class="sharerow">${shareBtn('p:' + p.i)}</div>
     ${nav}
     <div class="secbody">${body}</div>
     <button class="closecard" data-shut="1">close ${esc(p.pl)}</button>
@@ -5400,14 +5807,25 @@ function jointProb(legs){
 // Same-game legs allowed by default, up to three per game.
 // Legs graded B or better by default (owner request 2026-11-26). The
 // grade chip still lets you widen it to C or Any.
+// minN defaults to 'auto' (4 games for NFL/NCAAF, 8 for NBA/NHL/MLB)
+// so NFL slates with 5-6 game windows are never wiped out.
 const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', minMp: 0.55, minEd: -1,
   l3: '', minPr: -400, maxPr: 400, grade: 'B', upcoming: 1, stale: 1, onePl: 1, corr: 'any',
-  maxGame: 3, sort: 'prob', minN: 8, games: new Set(), starts: new Set(), within: 0,
+  maxGame: 3, sort: 'prob', minN: 'auto', games: new Set(), starts: new Set(), within: 0,
   lock: 0, oneGame: 0};
+let PSTAKE = (() => { try { const v = +localStorage.getItem('g15pstake'); return v > 0 ? v : 10; } catch (_) { return 10; } })();
 const GR_ORDER = {'A+': 6, A: 5, 'B+': 4, B: 3, C: 2, D: 1};
+function minNFor(p, v){
+  if (v === 'auto' || v == null) {
+    const s = String(p.sp || '').toUpperCase();
+    return (s === 'NFL' || s === 'NCAAF') ? 4 : 8;
+  }
+  return +v || 0;
+}
 function legPool(F){
   return PROPS.filter(p => {
-    if (p.mp == null || p.pr == null || p.ln == null || p.data_error) return false;
+    const isMl = p.mkk === 'moneyline' || p.mk === 'moneyline';
+    if (p.mp == null || p.pr == null || (p.ln == null && !isMl) || p.data_error) return false;
     // Started and finished games never reach PROPS; this is the belt
     // to that brace, for a game that tipped since the last clock check.
     if (F.upcoming && (gameFinal(p) || startedNow(p))) return false;
@@ -5431,7 +5849,7 @@ function legPool(F){
     if (F.minEd > -1 && (p.ed == null || p.ed < F.minEd)) return false;
     if (p.pr < F.minPr || p.pr > F.maxPr) return false;
     if (F.grade && (GR_ORDER[p.gr] || 0) < GR_ORDER[F.grade]) return false;
-    if (p.kd !== 'team' && (p.n || 0) < F.minN) return false;
+    if (p.kd !== 'team' && (p.n || 0) < minNFor(p, F.minN)) return false;
     if (F.l3 && p.kd !== 'team') {
       const v = recentVals(p).slice(0, 3); if (v.length < 3) return false;
       const h = v.filter(x => won(p, x)).length;
@@ -5441,6 +5859,37 @@ function legPool(F){
     }
     return calProb(p) != null;
   });
+}
+function parlayBookCompare(legs, myBook = MYBOOK){
+  if (!legs || !legs.length) return {best: null, mine: null, list: []};
+  const books = new Set(SLIP_BOOKS);
+  for (const p of legs) for (const b of (p.bl || [])) if (b && b.b) books.add(b.b);
+  const list = [];
+  for (const bk of books) {
+    let d = 1, ok = true;
+    for (const p of legs) {
+      const m = (p.bl || []).find(b => b && b.b === bk && b.p != null && (b.l == null || p.ln == null || b.l === p.ln));
+      if (!m) { ok = false; break; }
+      d *= dec(m.p);
+    }
+    if (ok) list.push({book: bk, name: BOOK_NAME[bk] || BOOK[bk] || bk, d});
+  }
+  list.sort((a, b) => b.d - a.d);
+  return {best: list[0] || null, mine: list.find(x => x.book === myBook) || null, list};
+}
+function poolDiag(F){
+  const total = PROPS.length;
+  const up = PROPS.filter(p => !F.upcoming || (!gameFinal(p) && !startedNow(p)));
+  const kd = up.filter(p => !F.kind || p.kd === F.kind);
+  const gr = kd.filter(p => (!F.grade || (GR_ORDER[p.gr] || 0) >= GR_ORDER[F.grade]) && (p.mp || 0) >= F.minMp);
+  const mn = gr.filter(p => p.kd === 'team' || (p.n || 0) >= minNFor(p, F.minN));
+  const finalPool = legPool(F);
+  const ng = new Set(finalPool.map(p => p.mu)).size;
+  if (!up.length) return `All ${total} props on the board have already started or finished.`;
+  if (!gr.length) return `${kd.length} upcoming props, but 0 meet grade ${F.grade || 'Any'} & model \u2265 ${Math.round(F.minMp * 100)}%.`;
+  if (!mn.length) return `${gr.length} props meet grade & model, but 0 meet min games (${F.minN === 'auto' ? 'Auto' : F.minN + '+'}). Try "Any" or "4+" min games.`;
+  if (F.corr === 'diff' && ng < F.legs) return `${finalPool.length} legs pass across ${ng} game${ng === 1 ? '' : 's'}, and "Different games" needs ${F.legs}. Switch correlation to "Allow same game" or lower legs.`;
+  return `${finalPool.length} legs pass across ${ng} game${ng === 1 ? '' : 's'}. Loosen the model threshold, odds range, min games, or correlation rule.`;
 }
 function legScore(p, sort){
   return sort === 'edge' ? (p.ed ?? 0) : sort === 'pay' ? calProb(p) * dec(p.pr) : calProb(p);
@@ -5702,25 +6151,43 @@ function parlayCard(r, tag){
   const first = cts.length ? Math.min(...cts) : null;
   const firstTxt = first ? new Date(first).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
   const lockN = PF.lock ? r.legs.filter(p => SEL.has(p.i)).length : 0;
+  const cmp = parlayBookCompare(r.legs);
+  const dispD = (cmp.mine && cmp.mine.d) || r.d;
+  const stake = PSTAKE > 0 ? PSTAKE : 10;
+  const payout = stake * dispD;
+  const profit = payout - stake;
+  const bookCmpHtml = cmp.list.length ? `<div class="pbooks">${
+    cmp.mine ? `<span>Your book (${esc(cmp.mine.name)}): <b>${am(cmp.mine.d)}</b> ($${(stake * cmp.mine.d).toFixed(2)})</span>`
+             : `<span>${esc(BOOK_NAME[MYBOOK] || MYBOOK)}: not all legs posted</span>`
+  }${cmp.best && (!cmp.mine || cmp.best.book !== cmp.mine.book && cmp.best.d > cmp.mine.d + 0.01)
+    ? `<span class="dim">\u00b7</span><span class="pb-best">Best: ${esc(cmp.best.name)} ${am(cmp.best.d)} ($${(stake * cmp.best.d).toFixed(2)})</span>`
+    : ''}</div>` : '';
   return `<div class="pcard">
     <div class="pchead">${tag ? `<span class="ptag">${esc(tag)}</span>` : ''}
       <span class="pcp"><b>${pc(r.j.est)}</b><small>est. hit</small></span>
       <span class="pcp"><b>${am(r.d)}</b><small>${sgp ? 'naive price' : 'combined'}</small></span>
+      <span class="pcp"><b>$${payout.toFixed(2)}</b><small>+$${profit.toFixed(2)} on $${stake}</small></span>
       <span class="pcp ${gap > 0 ? 'hit' : 'miss'}"><b>${gap > 0 ? '+' : ''}${(100 * gap).toFixed(1)}</b><small>vs break-even</small></span>
       ${firstTxt ? `<span class="pcp"><b>${esc(firstTxt)}</b><small>first start</small></span>` : ''}
     </div>
-    <ol class="plegs">${r.legs.map(p => `<li><span class="sp sp-${esc(String(p.sp).toUpperCase())}">${esc(String(p.sp).toUpperCase())}</span>
+    <ol class="plegs">${r.legs.map(p => {
+      const sl = slipFor(p);
+      return `<li><span class="sp sp-${esc(String(p.sp).toUpperCase())}">${esc(String(p.sp).toUpperCase())}</span>
       <b>${esc(p.pl)}</b> ${esc(p.sd)} ${spreadSign(p, p.ln)} ${esc((p.mk || '').replace(/_/g, ' '))}${
         lockN && SEL.has(p.i) ? ' <span class="ptag">locked</span>' : ''}
       <span class="dim">${esc(gameLabel(p.mu))} \u00b7 ${p.pr > 0 ? '+' : ''}${p.pr} \u00b7 model ${pc(p.mp)} \u00b7 cal ${pc(calProb(p))}${
-        recentVals(p).length >= 3 ? ` \u00b7 L3 ${recentVals(p).slice(0, 3).filter(x => won(p, x)).length}/3` : ''}</span></li>`).join('')}</ol>
+        recentVals(p).length >= 3 ? ` \u00b7 L3 ${recentVals(p).slice(0, 3).filter(x => won(p, x)).length}/3` : ''}</span>${
+        sl ? `<a class="pleg-go" href="${esc(sl.u)}" target="_blank" rel="noopener" title="Open in ${esc(BOOK_NAME[MYBOOK] || MYBOOK)}">${esc(BOOK[MYBOOK] || MYBOOK)} \u2197</a>` : ''}</li>`;
+    }).join('')}</ol>
+    ${bookCmpHtml}
     <div class="pfoot">independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
       ${shade == null ? '' : `\u00b7 if each leg is ${cg.toFixed(1)} pts worse (largest measured miss): ${pc(shade)} `}\u00b7 break-even ${pc(be)}${
       sgp ? ' \u00b7 same game: the book will price this lower than shown' : ''}${
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
       stale ? ` \u00b7 <span class="miss">${stale} price${stale > 1 ? 's' : ''} old \u2014 re-check</span>` : ''}
       <div class="pfbtn"><button class="h2go" data-padd="${ids}">Add to slip</button>
-      <button class="h2go${pkSaved(r.legs) ? ' saved' : ''}" data-psave="${ids}" data-ptag="${esc(tag || '')}">${pkSaved(r.legs) ? 'Saved \u2713' : 'Save parlay'}</button></div></div>
+      <button class="h2go${pkSaved(r.legs) ? ' saved' : ''}" data-psave="${ids}" data-ptag="${esc(tag || '')}">${pkSaved(r.legs) ? 'Saved \u2713' : 'Save parlay'}</button>
+      ${shareBtn('k:' + ids + '|' + (tag || ''), 'Share')}</div></div>
     ${r.legs.some(coldOf) ? `<div class="pwarn">${r.legs.filter(coldOf).map(q =>
       `<div><b>Cold market</b>: ${esc(q.sd)} ${q.ln} ${esc(q.mu ? gameLabel(q.mu) : '')} \u2014 ${coldText(coldOf(q))}</div>`).join('')}</div>` : ''}
     ${(r.j.warn || []).length ? `<div class="pwarn">${r.j.warn.map(w => {
@@ -5738,10 +6205,46 @@ document.addEventListener('toggle', e => {
   const d = e.target; if (!d || !d.dataset || d.dataset.preason == null) return;
   d.open ? POPEN.add(d.dataset.preason) : POPEN.delete(d.dataset.preason);
 }, true);
-let REC_DONE = 0;
+let REC_DONE = 0, REC_SIG = '';
+function ppresetClick(t){
+  const k = t.dataset.ppreset;
+  PF.sp.clear(); PF.mk.clear(); PF.games.clear(); PF.starts.clear();
+  PF.kind = 'player'; PF.side = ''; PF.minEd = -1; PF.l3 = '';
+  PF.minPr = -400; PF.maxPr = 400; PF.grade = 'B'; PF.upcoming = 1; PF.stale = 1;
+  PF.onePl = 1; PF.within = 0; PF.lock = 0; PF.oneGame = 0; PF.minN = 'auto';
+  if (k === 'safe2') { PF.legs = 2; PF.minMp = 0.6; PF.corr = 'diff'; PF.maxGame = 1; PF.sort = 'prob'; }
+  else if (k === 'bal3') { PF.legs = 3; PF.minMp = 0.55; PF.corr = 'any'; PF.maxGame = 2; PF.sort = 'prob'; }
+  else if (k === 'val4') { PF.legs = 4; PF.minMp = 0.55; PF.corr = 'noneg'; PF.maxGame = 2; PF.sort = 'pay'; }
+  else if (k === 'sgp3') { PF.legs = 3; PF.minMp = 0.55; PF.corr = 'noneg'; PF.maxGame = 3; PF.oneGame = 1; PF.sort = 'prob'; }
+  else { PF.legs = 3; PF.minMp = 0.55; PF.corr = 'any'; PF.maxGame = 3; PF.sort = 'prob'; }
+  drawParlays();
+}
+function pstakeSet(val){
+  const n = Math.max(1, Math.min(100000, Math.round((+val || 10) * 100) / 100));
+  PSTAKE = n;
+  try { localStorage.setItem('g15pstake', String(n)); } catch (_) {}
+  REC_SIG = '';
+  drawParlays();
+}
 function drawParlays(){
   const el = $('parlayout'); if (!el || !D) return;
   const F = PF;
+  const bar = $('parlaybar');
+  if (bar) {
+    bar.innerHTML = `<div class="pbar">
+      <label>Your book ${bookPick()}</label>
+      <label>Stake $<input id="pstake" type="number" min="1" step="5" value="${PSTAKE}" aria-label="parlay stake"></label>
+      <div class="chips">${[10, 25, 50, 100].map(v =>
+        `<button class="chip" data-pstake="${v}" aria-pressed="${PSTAKE === v ? 'true' : 'false'}">$${v}</button>`).join('')}</div>
+    </div>`;
+  }
+  const pre = $('parlaypre');
+  if (pre) {
+    pre.innerHTML = [
+      ['safe2', 'Safe 2-Leg'], ['bal3', 'Balanced 3-Leg'],
+      ['val4', 'Value 4-Leg'], ['sgp3', 'Same-Game 3-Leg'], ['reset', 'Reset'],
+    ].map(([k, lab]) => `<button class="chip" data-ppreset="${k}">${lab}</button>`).join('');
+  }
   const sports = [...new Set(PROPS.map(p => String(p.sp).toUpperCase()))].sort();
   const mks = [...new Set(PROPS.filter(p => !F.kind || p.kd === F.kind).map(p => p.mk))].sort();
   const ch = (k, v, lab, on) => `<button class="chip" data-pf="${k}|${v}" aria-pressed="${on ? 'true' : 'false'}">${lab}</button>`;
@@ -5759,6 +6262,8 @@ function drawParlays(){
     row('side', ch('side', '', 'Any', !F.side) + ch('side', 'Over', 'Over', F.side === 'Over') + ch('side', 'Under', 'Under', F.side === 'Under')),
     row('model \u2265', [0.5, 0.55, 0.6, 0.65, 0.7].map(v => ch('minMp', v, Math.round(v * 100) + '%', F.minMp === v)).join('')),
     row('edge \u2265', [[-1, 'Any'], [0, '0'], [0.02, '2 pts'], [0.04, '4 pts']].map(([v, l]) => ch('minEd', v, l, F.minEd === v)).join('')),
+    row('min games', [['auto', 'Auto (4 NFL / 8 NBA)'], ['0', 'Any'], ['4', '4+'], ['6', '6+'], ['8', '8+']]
+      .map(([v, l]) => ch('minN', v, l, String(F.minN) === v)).join('')),
     row('last 3', [['', 'Any'], ['avg', 'Avg beats line'], ['2', '2 of 3'], ['3', '3 of 3']].map(([v, l]) => ch('l3', v, l, F.l3 === v)).join('')),
     row('leg odds', [['-400|400', 'Any'], ['-200|400', '\u2265 -200'], ['-150|400', '\u2265 -150'], ['-130|200', '-130 to +200']]
       .map(([v, l]) => ch('odds', v, l, `${F.minPr}|${F.maxPr}` === v)).join('')),
@@ -5774,12 +6279,16 @@ function drawParlays(){
   const {out, pool} = generateParlays(F, 8);
   // Recommended: fixed recipes, always on model probability.
   const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: 'B', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400,
-    games: new Set(), starts: new Set(), within: 0, lock: 0, oneGame: 0});
-  const recipes = REC_DONE ? [] : [
+    minN: 'auto', games: new Set(), starts: new Set(), within: 0, lock: 0, oneGame: 0});
+  const sig = `${PROPS.length}|${PSEED}|${MYBOOK}|${PSTAKE}`;
+  const needRec = !REC_DONE || REC_SIG !== sig;
+  const baseGames = needRec ? new Set(legPool(base).map(p => p.mu)).size : 0;
+  const val4Corr = baseGames >= 4 ? {corr: 'diff', maxGame: 1} : {corr: 'noneg', maxGame: 2};
+  const recipes = !needRec ? [] : [
     ['Safest 2-leg', Object.assign({}, base, {legs: 2, minMp: 0.6})],
     ['Best 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55})],
     ['Form + model 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, l3: '2'})],
-    ['Value 4-leg', Object.assign({}, base, {legs: 4, minMp: 0.55, sort: 'pay'})],
+    ['Value 4-leg', Object.assign({}, base, {legs: 4, minMp: 0.55, sort: 'pay'}, val4Corr)],
     // Three legs from one game, never a measured-negative pair.
     ['Same-game 3-leg', Object.assign({}, base, {legs: 3, minMp: 0.55, corr: 'noneg', maxGame: 3, oneGame: 1})],
   ];
@@ -5792,21 +6301,17 @@ function drawParlays(){
     return [t, r];
   }).filter(x => x[1]);
   const seen = new Set(), recs = rec.filter(([t, r]) => { const k = r.legs.map(p => p.i).sort().join(); if (seen.has(k)) return false; seen.add(k); return true; });
-  if (!REC_DONE) { REC_DONE = 1;
+  if (needRec) { REC_DONE = 1; REC_SIG = sig;
     $('cParlays') && ($('cParlays').textContent = recs.length || '');
     $('parlayrec').innerHTML = `<div class="pshuf"><button class="h2go" data-pshuf="1">Shuffle \u2014 new mix</button>${
       PSEED ? `<button class="h2go" data-pshuf="0">Back to best</button><span class="dim">mix ${PSEED}</span>` : ''}</div>
-    <h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 grade B or better \u00b7 games not started</span></h3>
-    ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
+    <h3 class="ph">Recommended <span class="dim">model \u2265 55% \u00b7 grade B or better \u00b7 games not started</span></h3>
+    ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : `<div class="empty">No legs pass the recommended filters on the current board. ${esc(poolDiag(base))}</div>`}`; }
   PSHOWN = new Set([...out, ...recs.map(x => x[1])].flatMap(r => r.legs.map(p => p.i)).concat([...PSHOWN_REC]));
   if (recs.length) PSHOWN_REC = new Set(recs.flatMap(x => x[1].legs.map(p => p.i)));
   el.innerHTML = `<h3 class="ph">Your parlays <span class="dim">${pool} legs in pool${PSEED ? ` \u00b7 mix ${PSEED}` : ''}</span></h3>
     <div class="pshuf"><button class="h2go" data-pshuf="1">Shuffle \u2014 new mix</button></div>
-    ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. ${(() => {
-      const ng = new Set(legPool(F).map(p => p.mu)).size;
-      return F.corr === 'diff' && ng < F.legs
-        ? `The legs that pass come from ${ng} game${ng === 1 ? '' : 's'}, and "different games" needs ${F.legs}. Allow same-game legs or widen the sport or prop filter.`
-        : 'Loosen the model threshold, the odds range or the correlation rule.'; })()}</div>`}`;
+    ${out.length ? out.map(r => parlayCard(r)).join('') : `<div class="empty">No ${F.legs}-leg parlay fits these filters. ${esc(poolDiag(F))}</div>`}`;
 }
 let PSHOWN = new Set(), PSHOWN_REC = new Set();
 /* New mix: set back what is on screen, reseed, rebuild both lists. When
@@ -5819,13 +6324,14 @@ function pshufClick(t){
     if (n && PAVOID.size >= 0.7 * n) { PAVOID.clear(); PSHOWN.forEach(i => PAVOID.add(i)); }
     PSEED++;
   }
-  REC_DONE = 0; drawParlays();
+  REC_DONE = 0; REC_SIG = ''; drawParlays();
 }
 function pfClick(t){
   const [k, v] = t.dataset.pf.split('|').length > 2 ? [t.dataset.pf.split('|')[0], t.dataset.pf.split('|').slice(1).join('|')] : t.dataset.pf.split('|');
   if (k === 'sp' || k === 'mk' || k === 'games' || k === 'starts') { if (!v) PF[k].clear(); else PF[k].has(v) ? PF[k].delete(v) : PF[k].add(v); }
   else if (k === 'odds') { const [a, b] = v.split('|'); PF.minPr = +a; PF.maxPr = +b; }
   else if (k === 'upcoming' || k === 'stale' || k === 'onePl' || k === 'oneGame' || k === 'lock') PF[k] = PF[k] ? 0 : 1;
+  else if (k === 'minN') PF.minN = v === 'auto' ? 'auto' : +v;
   else if (['legs', 'minMp', 'minEd', 'maxGame', 'within'].includes(k)) PF[k] = +v;
   else { PF[k] = v; if (k === 'kind') PF.mk.clear(); }
   drawParlays();
@@ -5934,6 +6440,11 @@ function trkMark(p, st){
       bpr: p.pr ?? null, bmp: p.mp ?? null, bfp: p.fp ?? null,
       bgr: p.gr ?? null, bti: p.ti ?? null, bsc: p.sc ?? null,
       fpr: null, fat: null, stk: null,
+      // Pregame model inputs for the live hit chance, frozen at the
+      // moment of tracking (new entries only; older ones look the prop
+      // up on the board).
+      bcp: p.bcp ?? calProb(p), bpj: p.pj ?? null, bsv: p.sv ?? null,
+      bkd: p.kd || 'player', bmkk: p.mkk || null, ...(p.alt ? {alt: 1} : {}),
     });
   }
   trkCommit();
@@ -6200,7 +6711,7 @@ function drawTrack(){
         <div>
           <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}${pill}</div>${
           lv ? `<div class="trklive">${lv.g.st === 'in' ? '<b class="lvdot">live</b> ' : ''}${lv.html}</div>` : ''}
-          <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}
+          <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}${e.alt ? ' · <b>alt line</b>' : ''}
             · ${sico(e.sp)}${esc(e.sp)}${e.mu ? ' · ' + esc(e.mu) : ''}
             · ${esc(e.day || 'undated')}<br>
             board ${e.bpr != null ? (e.bpr > 0 ? '+' : '') + e.bpr : '—'}${
@@ -6299,7 +6810,7 @@ function pkLegOf(p){
   return {sp: String(p.sp || '').toUpperCase(), pl: p.pl || '', mk: p.mk || '', mkk: p.mkk || '',
     kd: p.kd || 'player', sd: p.sd || '', ln: p.ln ?? null, mu: p.mu || '', gd: p.gd || null,
     ct: p.ct || null, pr: p.pr ?? null, cal: calProb(p), mp: p.mp ?? null, gr: p.gr ?? null,
-    res: null, val: null};
+    pj: p.pj ?? null, sv: p.sv ?? null, res: null, val: null};
 }
 function pkIdOf(legs){
   return (D.slate_day || 'undated') + '|' + legs.map(l =>
@@ -6389,7 +6900,22 @@ function pkStatus(pk){
   const last = pk.legs.map(l => l.gd).filter(Boolean).sort().pop() || pk.day;
   const today = String(D.data_at || D.generated_at || '').slice(0, 10);
   const overdue = open > 0 && last && today && pkAdd(last, 2) < today;
-  return {S, st, open, hits, pnl, price, changed, overdue};
+  // Live parlay chance: settled legs are 1 (hit, push, void) or 0
+  // (lost); open legs use their live chance once the game is on and
+  // the chance from when it was saved before that. Multiplied as if
+  // independent, which same-game legs are not -- shown as an estimate.
+  let lpc = null, anyLive = false;
+  if (open && !lost) {
+    lpc = 1;
+    pk.legs.forEach((l, k) => {
+      const x = S[k]; if (x.res) return;
+      const lp = x.live && x.live.pc != null ? x.live.pc : null;
+      if (lp != null) anyLive = true;
+      const v = lp ?? l.cal;
+      lpc = v == null || lpc == null ? null : lpc * v;
+    });
+  }
+  return {S, st, open, hits, pnl, price, changed, overdue, lpc: anyLive ? lpc : null};
 }
 function pkOpenLegs(){
   const out = [];
@@ -6494,6 +7020,7 @@ function pkCard(pk, s){
     <div class="pkhead"><span class="pkst">${PK_ST[s.st]}</span>
       <b>${pk.legs.length}-leg</b>${pk.tag ? ` <span class="dim">${esc(pk.tag)}</span>` : ''}
       <span class="pkpx">${am(pk.d)}</span>${pnl}</div>
+    ${s.lpc != null ? `<div class="pklive">${chanceChip(s.lpc, pk.est, null)}<span class="dim">live estimate, legs treated as independent</span></div>` : ''}
     <div class="pksub">est. hit ${pc(pk.est)} when saved \u00b7 ${s.hits}/${pk.legs.length} legs hit${s.open ? ` \u00b7 ${s.open} to go` : ''}${
       pk.placed ? ' \u00b7 <b>placed</b>' : ''}${s.overdue ? ' \u00b7 <span class="miss">no box score found yet</span>' : ''}</div>
     <ol class="pklegs">${legs}</ol>
@@ -6502,6 +7029,7 @@ function pkCard(pk, s){
       <label>odds you got <input type="text" inputmode="numeric" data-pkfill="${esc(pk.id)}"
         value="${pk.fill != null ? (pk.fill > 0 ? '+' : '') + pk.fill : ''}" placeholder="${am(pk.d)}"></label>
       <button class="chip${pk.placed ? ' on' : ''}" data-pkplaced="${esc(pk.id)}">${pk.placed ? 'Placed \u2713' : 'Mark placed'}</button>
+      ${shareBtn('s:' + pk.id, 'Share')}
       <button class="chip" data-pkdel="${esc(pk.id)}">remove</button></div>
   </div>`;
 }
@@ -9798,7 +10326,9 @@ function labBoardMatches(props, lab, flt = LAB){
     if (reqIdx.length) {
       const lv = p.lv || [];
       for (const idx of reqIdx) {
-        if (!lv[idx] || lv[idx].s !== 'G') return false;
+        const leaf = lv[idx];
+        const ok = Array.isArray(leaf) ? leaf[1] === 'green' : !!(leaf && leaf.s === 'G');
+        if (!ok) return false;
       }
     }
     return true;
@@ -9950,6 +10480,10 @@ document.addEventListener('click', e => {
   if (cf) { chfClick(cf); return; }
   const pf = e.target.closest('[data-pf]');
   if (pf) { pfClick(pf); return; }
+  const pp = e.target.closest('[data-ppreset]');
+  if (pp) { ppresetClick(pp); return; }
+  const pk = e.target.closest('[data-pstake]');
+  if (pk) { pstakeSet(pk.dataset.pstake); return; }
   const pa = e.target.closest('[data-padd]');
   if (pa) { paddClick(pa); return; }
   const ps = e.target.closest('[data-pshuf]');
@@ -10471,7 +11005,11 @@ function parseLiveBox(j, sp){
   }
   const comp = (((j.header || {}).competitions) || [])[0] || {};
   const st = ((comp.status || {}).type) || {};
+  // Period and clock drive the live hit chance: how much of the game
+  // is left is the whole difference between 18 of 22.5 in the first
+  // quarter and 18 of 22.5 with two minutes to play.
   return {teams, state: st.state || null, det: st.shortDetail || '',
+    per: (comp.status || {}).period ?? null, clk: (comp.status || {}).displayClock || '',
     score: (comp.competitors || []).map(c => ({ab: ((c.team || {}).abbreviation) || '', ha: c.homeAway, s: c.score}))
       .sort((a, b) => (a.ha === 'away' ? 0 : 1) - (b.ha === 'away' ? 0 : 1))};
 }
@@ -10528,6 +11066,200 @@ function liveProgress(cur, sd, ln, done){
   else { if (cur > ln) { cls = 'dn'; tag = 'over the line'; } else { cls = done ? 'up' : ''; tag = done ? 'stayed under' : `${Math.round((ln - cur) * 10) / 10} to spare`; } }
   return `<span class="lvp ${cls}"><b>${cur}</b> of ${ln} · ${tag}</span>`;
 }
+/* ================================================================
+   LIVE HIT CHANCE AND ALT-LINE PRICING
+   One distribution per prop, fitted so its chance at the posted line
+   equals the calibrated pregame chance the card shows. Everything
+   else reads off that same curve:
+     - an alt rung (25+ instead of 22.5) is the same curve at another
+       line, so the two numbers can never disagree about the player;
+     - the live chance is the curve for the time that is LEFT, scaled
+       by the fraction of the game still to play, added to what he
+       already has.
+   Counts (points, shots, receptions) are negative binomial with the
+   prop's own spread (Poisson when there is no spread to read);
+   yardage and team scores are normal. It is an estimate: it assumes
+   the pregame pace holds for the rest of the game and cannot see
+   foul trouble, an injury or a blowout benching until the box does.
+   ================================================================ */
+const CONT_MK = new Set(['passing_yards', 'rush_yards', 'receiving_yards']);
+const GAME_LEN = {NBA: {n: 4, len: 12, ot: 5}, NFL: {n: 4, len: 15, ot: 10},
+  NHL: {n: 3, len: 20, ot: 5}, MLB: {n: 9, inn: true}};
+function normCdf(z){
+  const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989422804 * Math.exp(-z * z / 2);
+  const q = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z > 0 ? 1 - q : q;
+}
+/* P(X <= k) for a count with mean mu and variance phi * mu. */
+function cntCdf(mu, phi, k){
+  if (k < 0) return 0;
+  if (!(mu > 0)) return 1;
+  let lp, tot = 0;
+  if (phi <= 1.0001) { lp = -mu; for (let i = 0; i <= k; i++) { if (i) lp += Math.log(mu / i); tot += Math.exp(lp); } }
+  else {
+    const r = mu / (phi - 1), lq = Math.log(1 - 1 / phi);
+    lp = -r * Math.log(phi);
+    for (let i = 0; i <= k; i++) { if (i) lp += Math.log((i - 1 + r) / i) + lq; tot += Math.exp(lp); }
+  }
+  return Math.min(1, tot);
+}
+/* Chance the selected side wins against `ln` for one draw of d. */
+function distSide(d, ln, over){
+  if (d.k === 'n') {
+    const whole = d.int && Math.abs(ln - Math.round(ln)) < 1e-9;
+    const t = whole ? (over ? ln + 0.5 : ln - 0.5) : ln;
+    if (!(d.sd > 0)) return over ? (d.mu > t ? 1 : 0) : (d.mu < t ? 1 : 0);
+    const z = (t - d.mu) / d.sd;
+    return over ? 1 - normCdf(z) : normCdf(z);
+  }
+  return over ? 1 - cntCdf(d.mu, d.phi, Math.floor(ln)) : cntCdf(d.mu, d.phi, Math.ceil(ln) - 1);
+}
+/* The shape of a prop's outcome, before its centre is fitted. */
+function propDist(x){
+  const mk = String(x.mkk || x.mk || '');
+  if (x.kd === 'team' || TEAM_MKS.has(x.mk)) return x.sv > 0 ? {k: 'n', sd: +x.sv, int: !/moneyline/.test(mk)} : null;
+  if (CONT_MK.has(x.mk)) return x.sv > 0 ? {k: 'n', sd: +x.sv, int: true} : null;
+  const phi = x.pj > 0 && x.sv > 0 ? Math.min(6, Math.max(1, x.sv * x.sv / x.pj)) : 1;
+  return {k: 'c', phi};
+}
+/* The line the outcome is measured against: a spread is the side's
+   margin against minus the spread, a moneyline the margin against 0. */
+function legLine(x){
+  const mk = String(x.mkk || x.mk || '');
+  if ((x.kd === 'team' || TEAM_MKS.has(x.mk)) && !/total/.test(mk))
+    return /moneyline/.test(mk) ? {ln: 0, over: true} : x.ln == null ? {ln: null} : {ln: -x.ln, over: true};
+  return {ln: x.ln, over: !/^under$/i.test(x.sd || '')};
+}
+/* Centre of the distribution that gives chance c at line ln. */
+function fitDist(base, ln, over, c){
+  if (!base || ln == null || c == null || !Number.isFinite(+c)) return null;
+  c = Math.min(0.99, Math.max(0.01, +c));
+  let lo, hi;
+  if (base.k === 'n') { lo = ln - 10 * base.sd; hi = ln + 10 * base.sd; }
+  else { lo = 1e-3; hi = Math.max(12, Math.abs(ln) * 4 + 12); }
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2, f = distSide({...base, mu: mid}, ln, over) - c;
+    if ((f < 0) === over) lo = mid; else hi = mid;
+  }
+  return {...base, mu: (lo + hi) / 2};
+}
+/* The fitted curve for a prop, or null when it cannot be fitted. */
+function propCurve(x, c){
+  const base = propDist(x), L = legLine(x);
+  return base && L.ln != null ? fitDist(base, L.ln, L.over, c) : null;
+}
+/* Chance the selected side hits with `cur` banked and `left` of the
+   game (0..1) still to play. */
+function liveChance(x, cur, left, c){
+  if (cur == null || left == null || c == null) return null;
+  const d0 = propCurve(x, c), L = legLine(x);
+  if (!d0) return null;
+  const r = Math.max(0, Math.min(1, left));
+  const dR = d0.k === 'n' ? {...d0, mu: d0.mu * r, sd: d0.sd * Math.sqrt(r)} : {...d0, mu: d0.mu * r};
+  return distSide(dR, L.ln - cur, L.over);
+}
+/* Minutes on a display clock: "4:12" or, under a minute, "42.3". */
+function clockMin(s){
+  s = String(s || '').trim();
+  if (/^\d+:\d{2}/.test(s)) { const [m, x] = s.split(':').map(parseFloat); return m + x / 60; }
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n / 60 : 0;
+}
+/* Fraction of regulation still to play, 0..1. Overtime counts as a
+   sliver of a game; a final is 0 and a game not started is 1. */
+function liveLeft(sp, box){
+  if (!box) return null;
+  if (box.state === 'post') return 0;
+  if (box.state !== 'in') return 1;
+  const G = GAME_LEN[String(sp || '').toUpperCase()], per = +box.per;
+  if (!G || !(per >= 1)) return null;
+  const det = String(box.det || '').toLowerCase();
+  if (G.inn) {
+    const half = /^(bot|mid)/.test(det) ? 0.5 : /^end/.test(det) ? 1 : 0;
+    return Math.max(0.02, 1 - Math.min(9, per - 1 + half) / 9);
+  }
+  const T = G.n * G.len;
+  if (/half/.test(det) && G.n === 4) return 0.5;
+  const cl = clockMin(box.clk);
+  if (per > G.n) return Math.max(0.01, Math.min(G.ot, cl) / T);
+  const el = (per - 1) * G.len + (G.len - Math.min(G.len, cl));
+  return Math.max(0.01, Math.min(1, (T - el) / T));
+}
+/* Pregame inputs for a tracked entry or a saved leg. New records
+   carry them; older ones read the prop off tonight's board. */
+const PRE_CACHE = new Map();
+function legPre(e){
+  const own = {c: e.bcp ?? e.cal ?? null, pj: e.bpj ?? e.pj ?? null, sv: e.bsv ?? e.sv ?? null,
+    kd: e.bkd || e.kd || (TEAM_MKS.has(e.mk) ? 'team' : 'player'), mkk: e.bmkk || e.mkk || null};
+  if (own.c != null && own.sv != null) return own;
+  const key = [e.sp, e.pl, e.mk, e.sd, e.ln, e.mu].join('|');
+  let p = PRE_CACHE.get(key);
+  if (p === undefined) {
+    const sp = String(e.sp || '').toUpperCase();
+    p = (typeof ALLP !== 'undefined' ? ALLP : []).find(q => String(q.sp || '').toUpperCase() === sp && q.pl === e.pl
+      && q.mk === e.mk && q.sd === e.sd && q.ln === e.ln && (!e.mu || q.mu === e.mu)) || null;
+    PRE_CACHE.set(key, p);
+  }
+  if (!p) return {...own, c: own.c ?? e.bfp ?? e.bmp ?? null};
+  return {c: own.c ?? calProb(p), pj: own.pj ?? p.pj ?? null, sv: own.sv ?? p.sv ?? null,
+    kd: own.kd || p.kd, mkk: own.mkk || p.mkk || null};
+}
+/* Which side of the score a team leg is on: 'a', 'h' or null. */
+function teamSideOf(e){
+  const {away, home} = matchSides(e), who = nick(e.sd && !/^(over|under)$/i.test(e.sd) ? e.sd : e.pl);
+  return who === nick(away) ? 'a' : who === nick(home) ? 'h' : null;
+}
+function teamCur(e, box){
+  const sc = box.score || [], a = sc.find(c => c.ha === 'away'), h = sc.find(c => c.ha === 'home');
+  if (!a || !h || a.s == null || h.s == null) return null;
+  const as = +a.s, hs = +h.s;
+  if (/total/.test(String(e.mkk || e.mk || ''))) return as + hs;
+  const side = teamSideOf(e);
+  return side ? (side === 'a' ? as - hs : hs - as) : null;
+}
+/* Everything the tracker shows for one open leg in a started game. */
+function liveRead(e, box){
+  if (!box) return null;
+  const pre = legPre(e), x = {...e, ...pre}, team = pre.kd === 'team' || TEAM_MKS.has(e.mk);
+  const left = liveLeft(e.sp, box);
+  let cur = null, dnp = false, inBox = true;
+  if (team) cur = teamCur(e, box);
+  else { const hit = livePlayer(box, e.pl); if (hit) { cur = liveStat(hit.r, e.mk); dnp = !!hit.r.dnp; } else inBox = false; }
+  let st = null; try { st = trkSettle(e); } catch (_) {}
+  let pct = st === 'hit' ? 1 : st === 'lost' ? 0 : null;
+  if (st == null && !dnp && cur != null) pct = liveChance(x, cur, left, pre.c);
+  return {cur, pct, pre: pre.c, left, st, dnp, inBox, team, done: box.state === 'post'};
+}
+/* Progress bar toward the line, for Over/Under props and totals. */
+function liveBar(cur, sd, ln){
+  if (cur == null || ln == null || !(ln > 0)) return '';
+  const over = !/^under$/i.test(sd || ''), f = Math.max(0, Math.min(1, cur / ln));
+  const cls = over ? (cur > ln ? 'up' : '') : (cur > ln ? 'dn' : f > 0.85 ? 'warn' : '');
+  return `<span class="lvbar ${cls}" role="img" aria-label="${cur} of ${ln}"><i style="width:${Math.round(f * 100)}%"></i></span>`;
+}
+/* "63% to hit" chip, with the pregame number beside it. */
+function chanceChip(pct, pre, left){
+  if (pct == null) return '';
+  const v = Math.round(pct * 100), cls = v >= 60 ? 'up' : v <= 35 ? 'dn' : '';
+  const d = pre != null ? v - Math.round(pre * 100) : null;
+  const arrow = d == null || Math.abs(d) < 1 ? '' : d > 0 ? ` \u25b2${d}` : ` \u25bc${-d}`;
+  const tip = pct === 1 || pct === 0 ? 'Settled from the live box.'
+    : `Live estimate. Pregame ${pre != null ? Math.round(pre * 100) + '%' : 'n/a'}${
+      left != null ? `, about ${Math.round(left * 100)}% of the game left` : ''}. Assumes the pregame pace holds for the time left; it cannot see foul trouble, injuries or a blowout until the box does.`;
+  return `<span class="lvchance ${cls}" title="${esc(tip)}">${v}% to hit<small>${arrow}</small></span>`;
+}
+/* One leg's live line: progress text, bar and chance. */
+function liveLegHtml(e, box){
+  const r = liveRead(e, box); if (!r) return {html: '', r};
+  let body;
+  if (r.team) {
+    const mk = String(e.mkk || e.mk || '');
+    body = /total/.test(mk) ? liveProgress(r.cur, e.sd, e.ln, r.done) + liveBar(r.cur, e.sd, e.ln) : teamLive(e, box).replace(/^ \u00b7 /, '');
+  } else if (!r.inBox) body = '<span class="trksub">not in the box yet</span>';
+  else if (r.dnp) body = '<span class="trksub">did not play</span>';
+  else body = liveProgress(r.cur, e.sd, e.ln, r.done) + liveBar(r.cur, e.sd, e.ln);
+  return {html: body + (r.done && r.pct == null ? '' : chanceChip(r.pct, r.pre, r.left)), r};
+}
 /* Every game on this slate that has started, with its scoreboard. */
 function liveGames(){
   const seen = new Map();
@@ -10563,7 +11295,9 @@ function liveMarks(lg, box){
   for (const e of TRK.values()) {
     if (e.mu !== lg.mu || !e.pl || TEAM_MKS.has(e.mk)) continue;
     const hit = livePlayer(box, e.pl); if (!hit) continue;
-    add(hit.r.name, `${esc(e.sd)} ${e.ln} ${esc((e.mk || '').replace(/_/g, ' '))} · ${liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post')}`);
+    const rd = liveRead(e, box);
+    add(hit.r.name, `${esc(e.sd)} ${e.ln} ${esc((e.mk || '').replace(/_/g, ' '))} · ${liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post')}${
+      rd ? chanceChip(rd.pct, rd.pre, rd.left) : ''}`);
   }
   return mark;
 }
@@ -10610,10 +11344,9 @@ function trkLive(e){
   if (!g || !g.id || (g.st !== 'in' && g.st !== 'post')) return null;
   const c = LIVEBOX.get(g.id), box = c && c.box;
   if (!box) return {g, html: `<span class="trksub">${esc(g.det || 'live')} · loading box</span>`, need: true};
-  if (TEAM_MKS.has(e.mk)) return {g, html: `<span class="trksub">${esc(box.det)} · ${liveTeamLine(box, {g})}</span>${teamLive(e, box)}`};
-  const hit = livePlayer(box, e.pl);
-  return {g, html: `<span class="trksub">${esc(box.det)} · </span>${hit
-    ? liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post') : '<span class="trksub">not in the box yet</span>'}`};
+  const L = liveLegHtml(e, box), r = L.r || {};
+  const head = TEAM_MKS.has(e.mk) || r.team ? `${esc(box.det)} \u00b7 ${liveTeamLine(box, {g})}` : esc(box.det);
+  return {g, html: `<span class="lvline"><span class="trksub">${head}</span>${L.html}</span>`, pc: r.pct ?? null, pre: r.pre ?? null};
 }
 /* Team props: the score against the line. Total = both scores; spread
    and moneyline need the side, matched by nickname to the matchup. */
@@ -10717,7 +11450,8 @@ function checkAlerts(){
       if (p.outNow) say('out:' + k, `Listed ${p.outNow}: ${e.pl}`);
       if (e.bpr != null && p.pr != null && Math.abs(100 / dec(p.pr) - 100 / dec(e.bpr)) >= 3)
         say(`mv:${k}:${p.pr}`, `Price moved: ${who} ${e.ln ?? ''} now ${p.pr > 0 ? '+' : ''}${p.pr} (was ${e.bpr > 0 ? '+' : ''}${e.bpr})`);
-    } else if (e.ln != null) {
+    } else if (e.ln != null && !e.alt) {
+      // An alt rung is SUPPOSED to sit off the main line; that is not a move.
       const q = PROPS.find(x => x.sp === e.sp && x.pl === e.pl && x.mk === e.mk && x.sd === e.sd && x.mu === e.mu && x.ln !== e.ln);
       if (q) say(`ln:${k}:${q.ln}`, `Line moved: ${who} ${e.ln} is now ${q.ln} (${q.pr > 0 ? '+' : ''}${q.pr})`);
     }
