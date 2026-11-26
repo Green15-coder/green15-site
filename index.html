@@ -825,6 +825,64 @@ tr.sub td{font-size:11.5px;color:var(--ink-2)}
 .bknote{font-size:11px;margin-top:6px}
 .bksel{font:inherit;font-size:11.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--rule);
   background:var(--card);color:var(--ink)}
+
+/* ---- Player comparison panel -------------------------------------- */
+.cmprow{margin:6px 0 4px}
+.cmpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
+.cmpbar select{font:inherit;font-size:12.5px;color:var(--ink);background:var(--card);
+  border:1px solid var(--rule);border-radius:999px;padding:5px 10px;max-width:190px}
+.cmppick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+.cmpslot{background:var(--card);border:1px solid var(--rule);border-radius:11px;padding:9px 10px;min-width:0}
+.cmpslot .eyebrow{margin:0 0 5px}
+.cmpslot input{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;color:var(--ink);
+  background:var(--raise);border:1px solid var(--rule);border-radius:7px;padding:5px 8px;margin-bottom:6px}
+.cmpslot select{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:7px;padding:6px 7px}
+.cmpcards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.cmpcard{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:11px;
+  display:flex;flex-direction:column;gap:7px;min-width:0}
+.cmpcard .cmphd{display:flex;align-items:center;gap:8px;min-width:0}
+.cmpcard .cmptx{flex:1 1 auto;min-width:0}
+.cmpcard .nm{font-weight:700;font-size:14px;line-height:1.2;word-break:break-word}
+.cmpcard .sub{font-size:11.5px;line-height:1.3;margin-top:2px}
+.cmpcard .cmpmeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--m);font-size:12px}
+.cmpcard .cmpacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:4px}
+.cmpcard .slipbtn{font-size:11.5px;padding:5px 10px}
+.cmptbl{background:var(--card);border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:12px 0}
+.cmpr{display:grid;grid-template-columns:1fr minmax(92px,auto) 1fr;align-items:center;gap:8px;
+  padding:8px 11px;border-top:1px solid var(--rule);font-size:12.5px}
+.cmpr:first-child{border-top:none}
+.cmpr.cmphdrow{background:var(--raise);font-weight:700;font-size:11.5px;padding:7px 11px}
+.cmpr .ca{font-family:var(--m);text-align:left;word-break:break-word}
+.cmpr .cb{font-family:var(--m);text-align:right;word-break:break-word}
+.cmpr .cm{font-family:var(--m);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--ink-2);text-align:center}
+.cmpr .win{color:var(--up-ink);font-weight:700}
+.cmpsec{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:16px 0 8px}
+.cmpsec h3{margin:0;font-family:var(--d);font-size:15px}
+.cmpwin{display:inline-flex;gap:5px}
+.peer-tag{font-size:11px;color:var(--ink-2);display:block;margin-top:1px}
+.peer-sim{display:inline-block;white-space:nowrap;font-family:var(--m);font-size:10px;padding:1px 5px;border-radius:999px;background:var(--raise);
+  border:1px solid var(--rule);color:var(--ink-2);margin-left:5px;vertical-align:middle}
+.peer-btn{font-family:var(--m);font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--rule);
+  background:var(--card);color:var(--ink);cursor:pointer;margin-left:6px}
+.peer-btn:hover{border-color:var(--clover)}
+.cmppeers{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}
+.cmppeers .simbox{margin:0}
+.cmpbars{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.cmpbox{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:11px;min-width:0}
+.cmpbox .eyebrow{margin:0 0 8px;display:flex;justify-content:space-between;gap:6px}
+.cmpplot{position:relative;display:flex;align-items:flex-end;gap:4px;height:108px;padding-top:16px}
+.cmpline{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink-2);opacity:.65;pointer-events:none}
+.cmpb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.cmpb .bv{font-family:var(--m);font-size:9.5px;color:var(--ink-2);margin-bottom:2px;line-height:1}
+.cmpb .bf{width:100%;max-width:22px;border-radius:3px 3px 0 0;min-height:3px;background:var(--flat)}
+.cmpb .bf.hit{background:var(--clover)} .cmpb .bf.miss{background:var(--under);opacity:.78}
+.cmpb .bo{font-family:var(--m);font-size:9px;color:var(--ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:560px){
+  .cmppick,.cmpcards,.cmpbars{grid-template-columns:1fr}
+  .cmpr{grid-template-columns:1fr 86px 1fr;padding:7px 9px;font-size:12px}
+}
 .fanbox{border:1px solid var(--rule);border-radius:10px;padding:8px;margin:8px 0;display:grid;gap:5px}
 .fanhd{display:flex;justify-content:space-between;align-items:baseline}
 .fanleg{display:flex;align-items:center;gap:7px;padding:8px;border-radius:8px;
@@ -1228,6 +1286,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 
   <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="board">Board<span class="cnt" id="cBoard"></span></button>
+  <button role="tab" aria-selected="false" data-tab="compare">Compare</button>
   <button role="tab" aria-selected="false" data-tab="parlays">Parlays<span class="cnt" id="cParlays"></span></button>
   <button role="tab" aria-selected="false" data-tab="ladder">Ladder<span class="cnt" id="cLadder"></span></button>
   <button role="tab" aria-selected="false" data-tab="trending">Trending<span class="cnt" id="cTrend"></span></button>
@@ -1274,6 +1333,18 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   <p class="eyebrow" id="finnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
+</div>
+
+<!-- ───────────────────────── COMPARE ─────────────────────── -->
+<div id="tab-compare" hidden>
+  <section>
+    <div class="hrow"><h2>Player comparison</h2></div>
+    <p class="traynote">Put any two player props on tonight's board side by side.
+      Compare grade, model chance, edge, projection, recent hit rate, and matchup
+      rank from the same numbers the board uses. Missing data stays blank.</p>
+    <div id="cmpctrl"></div>
+    <div id="cmpout"></div>
+  </section>
 </div>
 
 <!-- ───────────────────────── PARLAYS ─────────────────────── -->
@@ -3265,7 +3336,7 @@ function card(p){
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
-    </div><div class="sliprow">${slipBtn(p)}</div>${tiles}${whyChart(p) || chart}${strip}`;
+    </div><div class="sliprow">${slipBtn(p)}</div>${p.kd !== 'team' ? `<div class="cmprow"><button class="chip" data-cmp-open="${p.i}">Compare with another player</button></div>` : ''}${tiles}${whyChart(p) || chart}${strip}`;
 }
 
 const WHY_CACHE = {};
@@ -3334,6 +3405,7 @@ if (typeof document !== 'undefined') document.addEventListener('change', e => {
   try { localStorage.setItem('g15book', MYBOOK); } catch (_) {}
   for (const x of document.querySelectorAll('[data-mybook]')) x.value = MYBOOK;
   try { if (typeof drawLadder === 'function' && tabOn('ladder')) drawLadder(); } catch (_) {}
+  try { if (typeof drawCompare === 'function' && tabOn('compare')) drawCompare(); } catch (_) {}
   try { const sh = $('sheet'); if (sh && !sh.hidden && SHEET != null) renderSheet(); } catch (_) {}
 });
 
@@ -4426,7 +4498,7 @@ function detail(p, p0){
   ].join('');
 
   const body =
-      cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
+      cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}${typeof similarPlayersBox === 'function' ? similarPlayersBox(p) : ''}`
     : cur === 'games'  ? `${games(p)}${p.kd === 'team' ? teamExtra(p) : ''}${shotChart(p)}`
     : cur === 'matchup'? `${matchup(p)}${p.kd === 'team' ? teamExtra(p) + teamZones(p) : ''}${injuryBox(p)}${researchLinks(p)}`
     : cur === 'market' ? `${moveNote(p)}${priceBox(p)}${evBox(p)}${bookRow(p)}
@@ -6775,6 +6847,692 @@ if (typeof document !== 'undefined') document.addEventListener('change', async e
   catch (err) { toast('That file could not be imported: ' + (err.message || err)); }
   e.target.value = '';
 });
+
+/* ---- Player comparison panel --------------------------------------
+   Side-by-side comparison of any two player props on tonight's board.
+   Reads only numbers already on the board -- never invents a pick or
+   fills in missing data. */
+const CMP = {sp: 'ALL', mk: 'ALL', qa: '', qb: '', a: null, b: null, win: 'all'};
+
+function cmpPlayers(){
+  return (PROPS || []).filter(p => p && p.kd !== 'team' && !p.data_error);
+}
+function cmpPool(sp = CMP.sp, mk = CMP.mk){
+  return cmpPlayers()
+    .filter(p => (sp === 'ALL' || p.sp === sp) && (mk === 'ALL' || p.mk === mk))
+    .sort((a, b) => ((GR_ORDER[b.gr] || 0) - (GR_ORDER[a.gr] || 0))
+      || ((b.ed ?? -9) - (a.ed ?? -9))
+      || ((b.mp ?? -9) - (a.mp ?? -9))
+      || String(a.pl || '').localeCompare(String(b.pl || '')));
+}
+function cmpDefaultPair(pool){
+  if (!pool.length) return [null, null];
+  const a = pool[0];
+  const same = pool.find(p => p.i !== a.i && p.pl !== a.pl && p.sp === a.sp && p.mk === a.mk);
+  const diff = same || pool.find(p => p.i !== a.i && p.pl !== a.pl) || pool.find(p => p.i !== a.i) || null;
+  return [a.i, diff ? diff.i : null];
+}
+function cmpHit(p, k){
+  const rec = ((p && p.ev) || {}).recent || [];
+  const slice = rec.slice(0, k).filter(r => r && r.v != null);
+  if (!slice.length) return {hits: 0, n: 0, rate: null, avg: null};
+  const hits = slice.filter(r => r.c === true).length;
+  const avg = slice.reduce((a, r) => a + r.v, 0) / slice.length;
+  return {hits, n: slice.length, rate: hits / slice.length, avg};
+}
+function cmpClearance(p){
+  if (!p || p.pj == null || p.ln == null) return null;
+  return p.sd === 'Under' ? p.ln - p.pj : p.pj - p.ln;
+}
+function cmpDefRank(p){
+  const ev = (p && p.ev) || {};
+  const d = ev.def_rank_pos || ev.def_rank || null;
+  if (!d || d.rank == null || !d.of) return null;
+  // scale is 1 = concedes least. Higher rank favors Over; lower rank favors Under.
+  const fav = p.sd === 'Under' ? (d.of - d.rank + 1) / d.of : d.rank / d.of;
+  return {rank: d.rank, of: d.of, pos: d.position || '', band: d.band || '', fav};
+}
+function cmpWinner(va, vb, eps = 1e-4){
+  if (va == null || vb == null || !isFinite(va) || !isFinite(vb)) return '';
+  if (Math.abs(va - vb) <= eps) return '';
+  return va > vb ? 'a' : 'b';
+}
+function cmpRows(a, b){
+  const fmtPr = p => p.pr == null ? '\u2014' : `${p.pr > 0 ? '+' : ''}${p.pr}${p.bb ? ' ' + (BOOK[p.bb] || p.bb) : ''}${p.bk ? ` (${p.bk})` : ''}`;
+  const fmtPct = v => v == null ? '\u2014' : Math.round(v * 100) + '%';
+  const fmtEd = v => v == null ? '\u2014' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts`;
+  const fmtEv = v => v == null ? '\u2014' : `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`;
+  const fmtProj = p => {
+    if (p.pj == null) return '\u2014';
+    const cl = cmpClearance(p);
+    return `${r1(p.pj)}${cl != null ? ` (${cl >= 0 ? '+' : ''}${r1(cl)})` : ''}`;
+  };
+  const season = p => {
+    if (!p.dc) return {txt: '\u2014', rate: null};
+    const won = p.sd === 'Under' ? p.dc - (p.cl || 0) : (p.cl || 0);
+    return {txt: `${won}/${p.dc} (${Math.round(100 * won / p.dc)}%)`, rate: won / p.dc};
+  };
+  const fmtRec = h => h.n ? `${h.hits}/${h.n} · avg ${r1(h.avg)}` : '\u2014';
+  const fmtDef = d => d ? `#${d.rank}/${d.of}${d.pos ? ' ' + d.pos : ''}${d.band ? ' · ' + d.band : ''}` : '\u2014';
+  const fmtH2h = p => {
+    const ev = (p && p.ev) || {};
+    const raw = Array.isArray(ev.vs_opp) ? ev.vs_opp : [];
+    const items = raw.map(x => typeof x === 'number' ? {v: x, c: null} : x)
+      .filter(x => x && typeof x.v === 'number' && isFinite(x.v));
+    if (!items.length) return '\u2014';
+    const avg = items.reduce((x, y) => x + y.v, 0) / items.length;
+    const hasC = items.some(x => typeof x.c === 'boolean');
+    if (hasC) {
+      const hits = items.filter(x => x.c === true).length;
+      return `${hits}/${items.length} · avg ${r1(avg)}`;
+    }
+    return `${r1(avg)} avg (${items.length}g)`;
+  };
+  const sa = season(a), sb = season(b);
+  const a5 = cmpHit(a, 5), b5 = cmpHit(b, 5);
+  const a10 = cmpHit(a, 10), b10 = cmpHit(b, 10);
+  const da = cmpDefRank(a), db = cmpDefRank(b);
+  return [
+    {label: 'Pick grade', av: a.gr || '\u2014', bv: b.gr || '\u2014',
+      win: cmpWinner(GR_ORDER[a.gr] ?? null, GR_ORDER[b.gr] ?? null, 0)},
+    {label: 'Model chance', av: fmtPct(a.mp), bv: fmtPct(b.mp), win: cmpWinner(a.mp, b.mp, 0.005)},
+    {label: 'No-vig market', av: fmtPct(a.fp), bv: fmtPct(b.fp), win: ''},
+    {label: 'Edge', av: fmtEd(a.ed), bv: fmtEd(b.ed), win: cmpWinner(a.ed, b.ed, 0.002)},
+    {label: 'EV per unit', av: fmtEv(a.evu), bv: fmtEv(b.evu), win: cmpWinner(a.evu, b.evu, 0.002)},
+    {label: 'Projection', av: fmtProj(a), bv: fmtProj(b), win: cmpWinner(cmpClearance(a), cmpClearance(b), 0.05)},
+    {label: 'Clover score', av: a.sc != null ? `${a.sc}/15${a.ti ? ' · ' + a.ti : ''}` : '\u2014',
+      bv: b.sc != null ? `${b.sc}/15${b.ti ? ' · ' + b.ti : ''}` : '\u2014', win: cmpWinner(a.sc, b.sc, 0)},
+    {label: 'Season hit', av: sa.txt, bv: sb.txt, win: cmpWinner(sa.rate, sb.rate, 0.005)},
+    {label: 'Last 5', av: fmtRec(a5), bv: fmtRec(b5), win: cmpWinner(a5.rate, b5.rate, 0.005)},
+    {label: 'Last 10', av: fmtRec(a10), bv: fmtRec(b10), win: cmpWinner(a10.rate, b10.rate, 0.005)},
+    {label: 'Games logged', av: a.n != null ? String(a.n) : '\u2014', bv: b.n != null ? String(b.n) : '\u2014', win: ''},
+    {label: 'Matchup rank', av: fmtDef(da), bv: fmtDef(db), win: cmpWinner(da && da.fav, db && db.fav, 0.03)},
+    {label: 'Head to head', av: fmtH2h(a), bv: fmtH2h(b), win: ''},
+    {label: 'Best price', av: fmtPr(a), bv: fmtPr(b),
+      win: cmpWinner(a.pr != null ? dec(a.pr) : null, b.pr != null ? dec(b.pr) : null, 0.005)},
+  ];
+}
+function cmpBoxAgg(p, win = 'all'){
+  const sp = String((p && p.sp) || '').toUpperCase();
+  const keys = (((typeof D !== 'undefined' && D && D.box) || {}).keys || {})[sp];
+  const all = typeof boxRows === 'function' ? boxRows(sp, p && p.pl) : [];
+  if (!keys || !all.length) return {n: 0, sp, sum: {}, avg: {}};
+  const lim = win === '5' ? 5 : win === '10' ? 10 : all.length;
+  const rows = all.slice(0, lim);
+  const sum = {}, cnt = {};
+  for (const r of rows) {
+    for (let j = 0; j < keys.length; j++) {
+      const v = r[j + 3];
+      if (typeof v === 'number' && isFinite(v)) {
+        const k = keys[j];
+        sum[k] = (sum[k] || 0) + v;
+        cnt[k] = (cnt[k] || 0) + 1;
+      }
+    }
+  }
+  const avg = {};
+  for (const k of Object.keys(sum)) avg[k] = sum[k] / (cnt[k] || rows.length);
+  return {n: rows.length, sp, sum, avg};
+}
+function cmpAdvRows(a, b, win = 'all'){
+  const f1 = v => v == null || !isFinite(v) ? '\u2014' : r1(v);
+  const f2 = v => v == null || !isFinite(v) ? '\u2014' : (Math.round(v * 100) / 100).toFixed(2);
+  const fp = v => v == null || !isFinite(v) ? '\u2014' : (v * 100).toFixed(1) + '%';
+  const fs = v => v == null || !isFinite(v) ? '\u2014' : `${v > 0 ? '+' : ''}${r1(v)}`;
+  const ratio = (num, den) => (num != null && den > 0) ? num / den : null;
+  const per = (num, mins, base) => (num != null && mins > 0) ? (num / mins) * base : null;
+  const loWin = (va, vb, eps = 1e-4) => {
+    const w = cmpWinner(va, vb, eps);
+    return w === 'a' ? 'b' : w === 'b' ? 'a' : '';
+  };
+  const archTxt = p => {
+    const arr = (typeof D !== 'undefined' && D && D.arch && typeof boxKey === 'function')
+      ? (D.arch[boxKey(p.sp, p.pl)] || []) : [];
+    return arr.length ? arr.map(x => x[0]).join(', ') : '\u2014';
+  };
+  const divOf = p => ((p && p.ev) || {}).divergence || null;
+  const fmtDiv = d => d && d.opportunity_pct != null ? `${d.opportunity_pct > 0 ? '+' : ''}${r1(d.opportunity_pct)}%` : '\u2014';
+  const fmtProd = d => d && d.production_pct != null ? `${d.production_pct > 0 ? '+' : ''}${r1(d.production_pct)}%` : '\u2014';
+  const fmtHA = p => {
+    const ha = ((p && p.ev) || {}).home_away;
+    if (!ha) return '\u2014';
+    const h = ha.home && ha.home.n ? `H ${r1(ha.home.mean)}` : '';
+    const aw = ha.away && ha.away.n ? `A ${r1(ha.away.mean)}` : '';
+    return [h, aw].filter(Boolean).join(' · ') || '\u2014';
+  };
+  const fmtRest = p => {
+    const ev = (p && p.ev) || {};
+    const bits = [];
+    if (ev.rested_mean != null) bits.push(`rest ${r1(ev.rested_mean)}`);
+    if (ev.b2b_mean != null) bits.push(`B2B ${r1(ev.b2b_mean)}`);
+    return bits.join(' · ') || '\u2014';
+  };
+  const da = divOf(a), db = divOf(b);
+  const rows = [
+    {label: 'Archetype', av: archTxt(a), bv: archTxt(b), win: ''},
+    {label: 'Usage trend', av: fmtDiv(da), bv: fmtDiv(db), win: cmpWinner(da && da.opportunity_pct, db && db.opportunity_pct, 1)},
+    {label: 'Output trend', av: fmtProd(da), bv: fmtProd(db), win: cmpWinner(da && da.production_pct, db && db.production_pct, 1)},
+    {label: 'Home / Away', av: fmtHA(a), bv: fmtHA(b), win: ''},
+    {label: 'Rest / B2B', av: fmtRest(a), bv: fmtRest(b), win: ''},
+  ];
+  const spA = String(a.sp || '').toUpperCase(), spB = String(b.sp || '').toUpperCase();
+  if (spA !== spB) return {sameSport: false, nA: 0, nB: 0, rows};
+  const A = cmpBoxAgg(a, win), B = cmpBoxAgg(b, win);
+  const add = (label, va, vb, fmt, mode = 'hi', eps = 1e-4) => {
+    if (va == null && vb == null) return;
+    const winSide = mode === 'hi' ? cmpWinner(va, vb, eps) : mode === 'lo' ? loWin(va, vb, eps) : '';
+    rows.push({label, av: fmt(va), bv: fmt(vb), win: winSide});
+  };
+  if (spA === 'NBA') {
+    const tsA = ratio(A.sum.points, 2 * ((A.sum.fieldgoalsattempted || 0) + 0.44 * (A.sum.freethrowsattempted || 0)));
+    const tsB = ratio(B.sum.points, 2 * ((B.sum.fieldgoalsattempted || 0) + 0.44 * (B.sum.freethrowsattempted || 0)));
+    const efgA = ratio((A.sum.fieldgoalsmade || 0) + 0.5 * (A.sum.threepointfieldgoalsmade || 0), A.sum.fieldgoalsattempted);
+    const efgB = ratio((B.sum.fieldgoalsmade || 0) + 0.5 * (B.sum.threepointfieldgoalsmade || 0), B.sum.fieldgoalsattempted);
+    const p3A = ratio(A.sum.threepointfieldgoalsmade, A.sum.threepointfieldgoalsattempted);
+    const p3B = ratio(B.sum.threepointfieldgoalsmade, B.sum.threepointfieldgoalsattempted);
+    const r3A = ratio(A.sum.threepointfieldgoalsattempted, A.sum.fieldgoalsattempted);
+    const r3B = ratio(B.sum.threepointfieldgoalsattempted, B.sum.fieldgoalsattempted);
+    const ftA = ratio(A.sum.freethrowsmade, A.sum.freethrowsattempted);
+    const ftB = ratio(B.sum.freethrowsmade, B.sum.freethrowsattempted);
+    const ftrA = ratio(A.sum.freethrowsattempted, A.sum.fieldgoalsattempted);
+    const ftrB = ratio(B.sum.freethrowsattempted, B.sum.fieldgoalsattempted);
+    const atA = ratio(A.sum.assists, A.sum.turnovers), atB = ratio(B.sum.assists, B.sum.turnovers);
+    add('MIN / g', A.avg.minutes, B.avg.minutes, f1, 'hi', 0.3);
+    add('PTS / g', A.avg.points, B.avg.points, f1, 'hi', 0.3);
+    add('REB / g', A.avg.rebounds, B.avg.rebounds, f1, 'hi', 0.2);
+    add('AST / g', A.avg.assists, B.avg.assists, f1, 'hi', 0.2);
+    add('True Shooting', tsA, tsB, fp, 'hi', 0.005);
+    add('Effective FG%', efgA, efgB, fp, 'hi', 0.005);
+    add('3P%', p3A, p3B, fp, 'hi', 0.005);
+    add('3P rate', r3A, r3B, fp, 'none');
+    add('FT%', ftA, ftB, fp, 'hi', 0.005);
+    add('FT rate', ftrA, ftrB, fp, 'hi', 0.005);
+    add('AST / TO', atA, atB, f2, 'hi', 0.05);
+    add('PTS / 36', per(A.sum.points, A.sum.minutes, 36), per(B.sum.points, B.sum.minutes, 36), f1, 'hi', 0.4);
+    add('REB / 36', per(A.sum.rebounds, A.sum.minutes, 36), per(B.sum.rebounds, B.sum.minutes, 36), f1, 'hi', 0.3);
+    add('AST / 36', per(A.sum.assists, A.sum.minutes, 36), per(B.sum.assists, B.sum.minutes, 36), f1, 'hi', 0.3);
+    add('Turnovers / g', A.avg.turnovers, B.avg.turnovers, f1, 'lo', 0.15);
+    add('Plus / Minus', A.avg.plusminus, B.avg.plusminus, fs, 'hi', 0.3);
+  } else if (spA === 'NHL') {
+    const icfA = A.n ? ((A.sum.shotstotal || 0) + (A.sum.shotsmissed || 0)) / A.n : null;
+    const icfB = B.n ? ((B.sum.shotstotal || 0) + (B.sum.shotsmissed || 0)) / B.n : null;
+    const accA = ratio(A.sum.shotstotal, (A.sum.shotstotal || 0) + (A.sum.shotsmissed || 0));
+    const accB = ratio(B.sum.shotstotal, (B.sum.shotstotal || 0) + (B.sum.shotsmissed || 0));
+    const shA = ratio(A.sum.goals, A.sum.shotstotal), shB = ratio(B.sum.goals, B.sum.shotstotal);
+    const foA = ratio(A.sum.faceoffswon, (A.sum.faceoffswon || 0) + (A.sum.faceoffslost || 0));
+    const foB = ratio(B.sum.faceoffswon, (B.sum.faceoffswon || 0) + (B.sum.faceoffslost || 0));
+    add('TOI / g', A.avg.timeonice, B.avg.timeonice, f1, 'hi', 0.3);
+    add('PP TOI / g', A.avg.powerplaytimeonice, B.avg.powerplaytimeonice, f1, 'hi', 0.2);
+    add('SOG / g', A.avg.shotstotal, B.avg.shotstotal, f2, 'hi', 0.1);
+    add('Shot att / g', icfA, icfB, f2, 'hi', 0.1);
+    add('Shot accuracy', accA, accB, fp, 'hi', 0.01);
+    add('Shooting %', shA, shB, fp, 'hi', 0.005);
+    add('SOG / 60', per(A.sum.shotstotal, A.sum.timeonice, 60), per(B.sum.shotstotal, B.sum.timeonice, 60), f1, 'hi', 0.3);
+    add('PTS / 60', per(A.sum._points, A.sum.timeonice, 60), per(B.sum._points, B.sum.timeonice, 60), f2, 'hi', 0.1);
+    add('PTS / g', A.avg._points, B.avg._points, f2, 'hi', 0.05);
+    add('Hits / g', A.avg.hits, B.avg.hits, f1, 'hi', 0.15);
+    add('Blocks / g', A.avg.blockedshots, B.avg.blockedshots, f1, 'hi', 0.15);
+    add('Takeaways / g', A.avg.takeaways, B.avg.takeaways, f2, 'hi', 0.08);
+    add('Giveaways / g', A.avg.giveaways, B.avg.giveaways, f2, 'lo', 0.08);
+    if (foA != null || foB != null) add('Faceoff %', foA, foB, fp, 'hi', 0.01);
+    add('Plus / Minus', A.avg.plusminus, B.avg.plusminus, fs, 'hi', 0.15);
+  } else if (spA === 'NFL') {
+    const passOn = (A.sum.passingattempts || 0) > 0 || (B.sum.passingattempts || 0) > 0;
+    const recOn = (A.sum.receivingtargets || 0) > 0 || (B.sum.receivingtargets || 0) > 0;
+    const rushOn = (A.sum.rushingattempts || 0) > 0 || (B.sum.rushingattempts || 0) > 0;
+    if (passOn) {
+      add('Completion %', ratio(A.sum.completions, A.sum.passingattempts), ratio(B.sum.completions, B.sum.passingattempts), fp, 'hi', 0.01);
+      add('Pass yds / g', A.avg.passingyards, B.avg.passingyards, f1, 'hi', 3);
+      add('Yds / attempt', ratio(A.sum.passingyards, A.sum.passingattempts), ratio(B.sum.passingyards, B.sum.passingattempts), f2, 'hi', 0.15);
+      add('Pass TD / g', A.avg.passingtouchdowns, B.avg.passingtouchdowns, f2, 'hi', 0.1);
+      add('Passer rating', A.avg.qbrating, B.avg.qbrating, f1, 'hi', 1);
+    }
+    if (recOn) {
+      add('Targets / g', A.avg.receivingtargets, B.avg.receivingtargets, f1, 'hi', 0.25);
+      add('Rec / g', A.avg.receptions, B.avg.receptions, f1, 'hi', 0.2);
+      add('Catch %', ratio(A.sum.receptions, A.sum.receivingtargets), ratio(B.sum.receptions, B.sum.receivingtargets), fp, 'hi', 0.01);
+      add('Rec yds / g', A.avg.receivingyards, B.avg.receivingyards, f1, 'hi', 2);
+      add('Yds / target', ratio(A.sum.receivingyards, A.sum.receivingtargets), ratio(B.sum.receivingyards, B.sum.receivingtargets), f2, 'hi', 0.2);
+      add('Yds / rec', ratio(A.sum.receivingyards, A.sum.receptions), ratio(B.sum.receivingyards, B.sum.receptions), f1, 'hi', 0.3);
+    }
+    if (rushOn) {
+      add('Carries / g', A.avg.rushingattempts, B.avg.rushingattempts, f1, 'hi', 0.3);
+      add('Rush yds / g', A.avg.rushingyards, B.avg.rushingyards, f1, 'hi', 2);
+      add('Yds / carry', ratio(A.sum.rushingyards, A.sum.rushingattempts), ratio(B.sum.rushingyards, B.sum.rushingattempts), f2, 'hi', 0.15);
+    }
+    if (recOn || rushOn) {
+      const tA = A.n ? ((A.sum.rushingattempts || 0) + (A.sum.receptions || 0)) / A.n : null;
+      const tB = B.n ? ((B.sum.rushingattempts || 0) + (B.sum.receptions || 0)) / B.n : null;
+      add('Touches / g', tA, tB, f1, 'hi', 0.3);
+    }
+  }
+  return {sameSport: true, nA: A.n, nB: B.n, rows};
+}
+const PEER_CACHE = {names: null, pools: new Map()};
+function cmpBoxNameMap(){
+  if (PEER_CACHE.names) return PEER_CACHE.names;
+  const m = new Map();
+  if (typeof boxKey !== 'function') return m;
+  for (const p of (typeof PROPS !== 'undefined' ? PROPS : []) || []) {
+    if (p && p.kd !== 'team' && p.pl && p.sp) m.set(boxKey(p.sp, p.pl), p.pl);
+  }
+  const tr = ((typeof D !== 'undefined' && D && D.trending) || {}).players || [];
+  for (const r of tr) if (r && r.player && r.sport) {
+    const k = boxKey(r.sport, r.player); if (!m.has(k)) m.set(k, r.player);
+  }
+  const ask = (typeof D !== 'undefined' && D && D.ask) || {};
+  const ps = ask.players || [];
+  for (const r of ask.rows || []) {
+    const nm = ps[r[0]], sp = r[9];
+    if (nm && sp) { const k = boxKey(sp, nm); if (!m.has(k)) m.set(k, nm); }
+  }
+  PEER_CACHE.names = m;
+  return m;
+}
+function cmpMarketVal(row, idx, sp, mk){
+  const g = k => { const j = idx[k]; const v = j == null ? null : row[j + 3]; return typeof v === 'number' && isFinite(v) ? v : null; };
+  const add = (...ks) => { const vs = ks.map(g); return vs.every(v => v != null) ? vs.reduce((a, b) => a + b, 0) : null; };
+  if (sp === 'NBA') {
+    if (mk === 'points') return g('points');
+    if (mk === 'rebounds') return g('rebounds');
+    if (mk === 'assists') return g('assists');
+    if (mk === '3-pointers_made') return g('threepointfieldgoalsmade');
+    if (mk === 'pra') return add('points', 'rebounds', 'assists');
+    if (mk === 'points_rebounds') return add('points', 'rebounds');
+    if (mk === 'points_assists') return add('points', 'assists');
+    if (mk === 'rebounds_assists') return add('rebounds', 'assists');
+    if (mk === 'steals') return g('steals');
+    if (mk === 'blocks') return g('blocks');
+    if (mk === 'turnovers') return g('turnovers');
+    if (mk === 'blocks_steals') return add('blocks', 'steals');
+  } else if (sp === 'NHL') {
+    if (mk === 'goals') return g('goals');
+    if (mk === 'assists') return g('assists');
+    if (mk === 'points') return g('_points');
+    if (mk === 'shots_on_goal') return g('shotstotal');
+    if (mk === 'blocked_shots') return g('blockedshots');
+    if (mk === 'saves') return g('saves');
+  } else if (sp === 'NFL') {
+    if (mk === 'passing_yards') return g('passingyards');
+    if (mk === 'passing_tds') return g('passingtouchdowns');
+    if (mk === 'pass_completions') return g('completions');
+    if (mk === 'pass_attempts') return g('passingattempts');
+    if (mk === 'receiving_yards') return g('receivingyards');
+    if (mk === 'receptions') return g('receptions');
+    if (mk === 'rush_yards') return g('rushingyards');
+    if (mk === 'rush_attempts') return g('rushingattempts');
+    if (mk === 'rush_rec_yards') return add('rushingyards', 'receivingyards');
+  }
+  return null;
+}
+function cmpRoleGroup(sp, mk){
+  if (sp !== 'NFL') return sp;
+  if (/^pass/.test(mk)) return 'NFL:pass';
+  if (/^(rec|receptions)/.test(mk)) return 'NFL:rec';
+  if (/^rush/.test(mk)) return 'NFL:rush';
+  return 'NFL:rec';
+}
+function cmpPeerProfile(rows, idx, sp, roleGrp){
+  if (!rows || rows.length < 4) return null;
+  const sum = {}, cnt = {};
+  for (const r of rows) {
+    for (const [k, j] of Object.entries(idx)) {
+      const v = r[j + 3];
+      if (typeof v === 'number' && isFinite(v)) { sum[k] = (sum[k] || 0) + v; cnt[k] = (cnt[k] || 0) + 1; }
+    }
+  }
+  const avg = k => cnt[k] ? sum[k] / cnt[k] : 0;
+  const rat = (a, b) => (sum[b] > 0) ? (sum[a] || 0) / sum[b] : 0;
+  if (sp === 'NBA') {
+    if ((sum.minutes || 0) < 40 || (sum.fieldgoalsattempted || 0) < 8) return null;
+    const ts = (sum.points || 0) / (2 * ((sum.fieldgoalsattempted || 0) + 0.44 * (sum.freethrowsattempted || 0)));
+    const r3 = rat('threepointfieldgoalsattempted', 'fieldgoalsattempted');
+    const vec = [avg('minutes'), avg('points'), avg('rebounds'), avg('assists'), ts, r3, avg('fieldgoalsattempted')];
+    const tag = `${r1(avg('minutes'))}m · ${Math.round(ts * 100)}% TS · ${Math.round(r3 * 100)}% 3Pr`;
+    return {vec, tag};
+  }
+  if (sp === 'NHL') {
+    if ((sum.timeonice || 0) < 25) return null;
+    const icf = ((sum.shotstotal || 0) + (sum.shotsmissed || 0)) / rows.length;
+    const hb = ((sum.hits || 0) + (sum.blockedshots || 0)) / rows.length;
+    const vec = [avg('timeonice'), avg('powerplaytimeonice'), avg('shotstotal'), icf, avg('_points'), hb];
+    const tag = `${r1(avg('timeonice'))} TOI · ${r1(avg('shotstotal'))} SOG · ${r1(avg('powerplaytimeonice'))} PP`;
+    return {vec, tag};
+  }
+  if (roleGrp === 'NFL:pass') {
+    if ((sum.passingattempts || 0) < 15) return null;
+    const cmp = rat('completions', 'passingattempts'), ypa = rat('passingyards', 'passingattempts');
+    const vec = [avg('passingattempts'), cmp, ypa, avg('passingyards')];
+    const tag = `${r1(avg('passingattempts'))} att · ${Math.round(cmp * 100)}% cmp · ${r1(ypa)} YPA`;
+    return {vec, tag};
+  }
+  if (roleGrp === 'NFL:rec') {
+    if ((sum.receivingtargets || 0) < 6) return null;
+    const ct = rat('receptions', 'receivingtargets'), yt = rat('receivingyards', 'receivingtargets');
+    const vec = [avg('receivingtargets'), avg('receptions'), ct, yt, avg('receivingyards')];
+    const tag = `${r1(avg('receivingtargets'))} tgt · ${Math.round(ct * 100)}% catch · ${r1(yt)} y/t`;
+    return {vec, tag};
+  }
+  if (roleGrp === 'NFL:rush') {
+    if ((sum.rushingattempts || 0) < 10) return null;
+    const ypc = rat('rushingyards', 'rushingattempts');
+    const vec = [avg('rushingattempts'), ypc, avg('rushingyards'), avg('receptions')];
+    const tag = `${r1(avg('rushingattempts'))} car · ${r1(ypc)} YPC · ${r1(avg('rushingyards'))} yd/g`;
+    return {vec, tag};
+  }
+  return null;
+}
+function cmpPeerPool(sp, roleGrp){
+  if (PEER_CACHE.pools.has(roleGrp)) return PEER_CACHE.pools.get(roleGrp);
+  const box = (typeof D !== 'undefined' && D && D.box) || {};
+  const keys = (box.keys || {})[sp];
+  const allP = box.p || {};
+  if (!keys) return null;
+  const idx = Object.fromEntries(keys.map((k, j) => [k, j]));
+  const items = [];
+  const pref = sp + '|';
+  for (const [k, rows] of Object.entries(allP)) {
+    if (!k.startsWith(pref)) continue;
+    const prof = cmpPeerProfile(rows, idx, sp, roleGrp);
+    if (!prof) continue;
+    items.push({key: k, rows, team: (rows[0] && rows[0][1]) || '', vec: prof.vec, tag: prof.tag});
+  }
+  if (items.length < 3) return null;
+  const dim = items[0].vec.length;
+  const mean = Array(dim).fill(0), sd = Array(dim).fill(0);
+  for (const it of items) for (let d = 0; d < dim; d++) mean[d] += it.vec[d];
+  for (let d = 0; d < dim; d++) mean[d] /= items.length;
+  for (const it of items) for (let d = 0; d < dim; d++) sd[d] += (it.vec[d] - mean[d]) ** 2;
+  for (let d = 0; d < dim; d++) sd[d] = Math.sqrt(sd[d] / items.length) || 1;
+  const out = {idx, items, mean, sd};
+  PEER_CACHE.pools.set(roleGrp, out);
+  return out;
+}
+function similarPeers(p, maxPeers = 5){
+  if (!p || p.kd === 'team' || p.ln == null || !p.mk || !p.sp || typeof boxKey !== 'function') return null;
+  const sp = String(p.sp).toUpperCase();
+  const roleGrp = cmpRoleGroup(sp, p.mk);
+  const pool = cmpPeerPool(sp, roleGrp);
+  if (!pool) return null;
+  const myKey = boxKey(sp, p.pl);
+  const me = pool.items.find(it => it.key === myKey);
+  if (!me) return null;
+  // Confirm this market maps to a box stat on at least one game.
+  if (cmpMarketVal(me.rows[0], pool.idx, sp, p.mk) == null) return null;
+  const names = cmpBoxNameMap();
+  const under = p.sd === 'Under';
+  const scored = [];
+  for (const it of pool.items) {
+    if (it.key === myKey) continue;
+    let sq = 0;
+    for (let d = 0; d < me.vec.length; d++) sq += ((me.vec[d] - it.vec[d]) / pool.sd[d]) ** 2;
+    const dist = Math.sqrt(sq / me.vec.length);
+    if (dist > 1.25) continue;
+    const vals = it.rows.map(r => cmpMarketVal(r, pool.idx, sp, p.mk)).filter(v => v != null);
+    if (vals.length < 4) continue;
+    let hits = 0, n = 0, l10Hits = 0, l10N = 0;
+    const l10Vals = vals.slice(0, 10);
+    for (const v of vals) {
+      if (v === p.ln) continue;
+      n++;
+      if (under ? v < p.ln : v > p.ln) hits++;
+    }
+    for (const v of l10Vals) {
+      if (v === p.ln) continue;
+      l10N++;
+      if (under ? v < p.ln : v > p.ln) l10Hits++;
+    }
+    if (!n) continue;
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const l10Avg = l10Vals.reduce((a, b) => a + b, 0) / l10Vals.length;
+    const nm = names.get(it.key) || it.key.split('|')[1];
+    const boardProp = ((typeof PROPS !== 'undefined' ? PROPS : []) || []).find(
+      x => x && x.kd !== 'team' && boxKey(x.sp, x.pl) === it.key && x.mk === p.mk
+    ) || ((typeof PROPS !== 'undefined' ? PROPS : []) || []).find(
+      x => x && x.kd !== 'team' && boxKey(x.sp, x.pl) === it.key
+    ) || null;
+    scored.push({key: it.key, name: nm, team: it.team, tag: it.tag, dist,
+      sim: Math.round(100 * Math.exp(-0.55 * dist)),
+      hits, n, rate: hits / n, avg,
+      l10Hits, l10N, l10Rate: l10N ? l10Hits / l10N : null, l10Avg, boardProp});
+  }
+  scored.sort((a, b) => a.dist - b.dist);
+  const peers = scored.slice(0, maxPeers);
+  if (!peers.length) return {sp, peers: [], totHits: 0, totN: 0, totRate: null, totAvg: null,
+    totL10Hits: 0, totL10N: 0, totL10Rate: null, totL10Avg: null};
+  const totHits = peers.reduce((a, x) => a + x.hits, 0);
+  const totN = peers.reduce((a, x) => a + x.n, 0);
+  const totAvg = peers.reduce((a, x) => a + x.avg * x.n, 0) / totN;
+  const totL10Hits = peers.reduce((a, x) => a + x.l10Hits, 0);
+  const totL10N = peers.reduce((a, x) => a + x.l10N, 0);
+  const totL10Avg = totL10N ? peers.reduce((a, x) => a + x.l10Avg * x.l10N, 0) / totL10N : null;
+  return {sp, peers, totHits, totN, totRate: totHits / totN, totAvg,
+    totL10Hits, totL10N, totL10Rate: totL10N ? totL10Hits / totL10N : null, totL10Avg};
+}
+function similarPlayersBox(p, inCompare = false){
+  const res = similarPeers(p, 5);
+  if (!res) return '';
+  const mk = esc(String(p.mk || '').replace(/_/g, ' '));
+  const head = `<h4>similar players${inCompare ? ' (L10)' : ''} — ${esc(p.pl)} · ${esc(p.sd)} ${p.ln} ${mk}</h4>`;
+  if (!res.peers.length) {
+    return inCompare ? `<div class="simbox">${head}<div class="dim" style="font-size:12px">No logged ${esc(res.sp)} players closely match ${esc(p.pl)}'s advanced profile yet.</div></div>` : '';
+  }
+  const useL10 = inCompare && res.totL10N > 0;
+  const th = useL10 ? res.totL10Hits : res.totHits;
+  const tn = useL10 ? res.totL10N : res.totN;
+  const pct = Math.round((th / tn) * 100);
+  const tavg = useL10 ? res.totL10Avg : res.totAvg;
+  const rows = res.peers.map(x => {
+    const h = useL10 ? x.l10Hits : x.hits;
+    const n = useL10 ? x.l10N : x.n;
+    const xp = n ? Math.round((h / n) * 100) : 0;
+    const av = useL10 ? x.l10Avg : x.avg;
+    const btn = x.boardProp ? `<button class="peer-btn" data-cmp-pair="${p.i}:${x.boardProp.i}">Compare</button>` : '';
+    const sub = inCompare && x.n > x.l10N ? `<span class="peer-tag">all: ${x.hits}/${x.n} (${Math.round(x.rate * 100)}%)</span>` : '';
+    return `<tr>
+      <td><b>${esc(x.name)}</b>${x.team ? ` <span class="dim">${esc(x.team)}</span>` : ''}<span class="peer-sim">${x.sim}% match</span><span class="peer-tag">${esc(x.tag)}</span></td>
+      <td class="v" style="text-align:right;white-space:nowrap"><b class="${xp >= 50 ? 'hit' : 'miss'}">${useL10 ? 'L10 ' : ''}${h}/${n} (${xp}%)</b> · avg ${r1(av)}${btn}${sub}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="simbox">${head}
+    <p style="font-size:12.5px;margin:0 0 8px">${res.peers.length} ${esc(res.sp)} player${res.peers.length === 1 ? '' : 's'} with the closest advanced stats to <b>${esc(p.pl)}</b> cleared ${esc(p.sd)} ${p.ln} in <b class="${pct >= 50 ? 'hit' : 'miss'}">${th} of ${tn} ${useL10 ? 'L10 ' : ''}games (${pct}%)</b>, averaging <b>${r1(tavg)}</b>.</p>
+    <table class="gtab"><tbody>${rows}</tbody></table>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">Matched on standardized box-score volume and efficiency across all logged ${esc(res.sp)} players (4+ games). Context only — does not change the model projection.</span></div>
+  </div>`;
+}
+function cmpBars(p){
+  const rec = (((p && p.ev) || {}).recent || []).slice(0, 10).filter(r => r && r.v != null).reverse();
+  const h = cmpHit(p, 10);
+  const head = `<div class="eyebrow"><span>${esc(p.pl)} · L${rec.length || 0}</span><span>${h.n ? `${h.hits}/${h.n} hit · line ${p.ln ?? '\u2014'}` : 'no log'}</span></div>`;
+  if (!rec.length) return `<div class="cmpbox">${head}<div class="dim">No recent game log for this prop.</div></div>`;
+  const max = Math.max(p.ln || 0, ...rec.map(r => r.v), 1);
+  const linePct = p.ln != null ? Math.min(100, Math.max(0, (p.ln / max) * 100)) : null;
+  const bars = rec.map(r => {
+    const pct = Math.max(4, Math.round((r.v / max) * 100));
+    const cls = r.c === true ? 'hit' : r.c === false ? 'miss' : '';
+    return `<div class="cmpb" title="${esc(r.d || '')} vs ${esc(r.o || '')}: ${r.v}">
+      <span class="bv">${r1(r.v)}</span>
+      <span class="bf ${cls}" style="height:${pct}%"></span>
+      <span class="bo">${esc(r.o || '')}</span>
+    </div>`;
+  }).join('');
+  return `<div class="cmpbox">${head}<div class="cmpplot">${linePct != null ? `<div class="cmpline" style="bottom:calc(${linePct}% * 0.72 + 16px)"></div>` : ''}${bars}</div></div>`;
+}
+function cmpSummary(a, b){
+  const notes = [];
+  const ga = GR_ORDER[a.gr] || 0, gb = GR_ORDER[b.gr] || 0;
+  if (ga !== gb) notes.push(`${ga > gb ? a.pl : b.pl} holds the higher pick grade (${ga > gb ? a.gr : b.gr} vs ${ga > gb ? b.gr : a.gr})`);
+  const wEd = cmpWinner(a.ed, b.ed, 0.002);
+  if (wEd) notes.push(`${wEd === 'a' ? a.pl : b.pl} has the larger edge (${((wEd === 'a' ? a.ed : b.ed) * 100).toFixed(1)} vs ${((wEd === 'a' ? b.ed : a.ed) * 100).toFixed(1)} pts)`);
+  const wMp = cmpWinner(a.mp, b.mp, 0.01);
+  if (wMp) notes.push(`${wMp === 'a' ? a.pl : b.pl} carries the higher model chance (${Math.round((wMp === 'a' ? a.mp : b.mp) * 100)}% vs ${Math.round((wMp === 'a' ? b.mp : a.mp) * 100)}%)`);
+  const a10 = cmpHit(a, 10), b10 = cmpHit(b, 10);
+  const w10 = cmpWinner(a10.rate, b10.rate, 0.05);
+  if (w10) notes.push(`${w10 === 'a' ? a.pl : b.pl} cleared more often in the last 10 (${w10 === 'a' ? `${a10.hits}/${a10.n}` : `${b10.hits}/${b10.n}`} vs ${w10 === 'a' ? `${b10.hits}/${b10.n}` : `${a10.hits}/${a10.n}`})`);
+  const sameMk = a.sp === b.sp && a.mk === b.mk;
+  const intro = sameMk
+    ? `Same sport and market (${a.sp} ${(a.mk || '').replace(/_/g, ' ')}). `
+    : `Different markets (${a.sp} ${(a.mk || '').replace(/_/g, ' ')} vs ${b.sp} ${(b.mk || '').replace(/_/g, ' ')}). `;
+  return intro + (notes.length ? notes.join('; ') + '.' : 'Both props sit close on grade, edge, and chance.');
+}
+function cmpOptLabel(p){
+  const mk = String(p.mk || '').replace(/_/g, ' ');
+  const pr = p.pr == null ? '' : ` (${p.pr > 0 ? '+' : ''}${p.pr})`;
+  return `${p.pl} — ${p.sd} ${p.ln ?? ''} ${mk}${pr}${p.gr ? ' · ' + p.gr : ''}`;
+}
+function cmpOptionsHtml(pool, selId, q){
+  const qq = String(q || '').trim().toLowerCase();
+  const list = qq ? pool.filter(p => (p.pl + ' ' + p.mk + ' ' + p.mu).toLowerCase().includes(qq)) : pool;
+  if (!list.length) return '<option value="">No matching player</option>';
+  return list.slice(0, 250).map(p =>
+    `<option value="${p.i}"${p.i === selId ? ' selected' : ''}>${esc(cmpOptLabel(p))}</option>`
+  ).join('');
+}
+function cmpCard(p, tag){
+  const mk = esc(String(p.mk || '').replace(/_/g, ' '));
+  const face = typeof avatar === 'function' ? avatar(p, 42) : '';
+  const pr = p.pr == null ? '\u2014' : (p.pr > 0 ? '+' : '') + p.pr;
+  const on = typeof SEL !== 'undefined' && SEL.has(p.i);
+  const when = typeof startTxt === 'function' && startTxt(p) ? ` · ${clockHtml(p)}` : '';
+  return `<div class="cmpcard">
+    <div class="eyebrow">${esc(tag)}</div>
+    <div class="cmphd">${face}<div class="cmptx">
+      <div class="nm">${esc(p.pl)}</div>
+      <div class="sub dim">${esc(p.sd)} ${p.ln ?? ''} ${mk}</div>
+      <div class="sub dim">${sico(p.sp)}${esc(p.sp)} ${typeof vs === 'function' ? vs(p) : ''}${when}</div>
+    </div></div>
+    <div class="cmpmeta">${p.gr ? `<b class="grade ${gcls(p.gr)}">${esc(p.gr)}</b>` : ''}
+      <span>${pr}${p.bb ? ' ' + esc(BOOK[p.bb] || p.bb) : ''}</span></div>
+    <div class="cmpacts">
+      ${typeof slipBtn === 'function' ? slipBtn(p) : ''}
+      <button class="chip" data-open="${p.i}">Open the case</button>
+      <button class="chip" data-sel="${p.i}" aria-pressed="${on}">${on ? '\u2713 in slip' : '+ slip'}</button>
+    </div>
+  </div>`;
+}
+function drawCompare(keepCtrl = false){
+  const ctrl = $('cmpctrl'), out = $('cmpout');
+  if (!ctrl || !out) return;
+  const all = cmpPlayers();
+  if (all.length < 2) {
+    ctrl.innerHTML = '';
+    out.innerHTML = '<div class="empty">Need at least two player props on the board to compare.</div>';
+    return;
+  }
+  const sports = [...new Set(all.map(p => p.sp).filter(Boolean))].sort();
+  if (CMP.sp !== 'ALL' && !sports.includes(CMP.sp)) CMP.sp = 'ALL';
+  const spList = CMP.sp === 'ALL' ? all : all.filter(p => p.sp === CMP.sp);
+  const markets = [...new Set(spList.map(p => p.mk).filter(Boolean))].sort();
+  if (CMP.mk !== 'ALL' && !markets.includes(CMP.mk)) CMP.mk = 'ALL';
+  const pool = cmpPool(CMP.sp, CMP.mk);
+  const hasA = pool.some(p => p.i === CMP.a), hasB = pool.some(p => p.i === CMP.b);
+  if (!hasA || !hasB) {
+    const [da, db] = cmpDefaultPair(pool);
+    if (!hasA) CMP.a = da;
+    if (!hasB) CMP.b = (db != null && db !== CMP.a) ? db : (pool.find(p => p.i !== CMP.a) || pool[0] || {}).i ?? null;
+  }
+  if (!keepCtrl) {
+    ctrl.innerHTML = `<div class="cmpbar">
+      <button class="chip${CMP.sp === 'ALL' ? ' on' : ''}" data-cmp-sp="ALL">All</button>
+      ${sports.map(sp => `<button class="chip${CMP.sp === sp ? ' on' : ''}" data-cmp-sp="${esc(sp)}">${sico(sp)}${esc(sp)}</button>`).join('')}
+      <select id="cmpmk" aria-label="Filter by market">
+        <option value="ALL"${CMP.mk === 'ALL' ? ' selected' : ''}>All markets</option>
+        ${markets.map(m => `<option value="${esc(m)}"${CMP.mk === m ? ' selected' : ''}>${esc(m.replace(/_/g, ' '))}</option>`).join('')}
+      </select>
+      <button class="chip" data-cmpswap="1" title="Swap Player A and Player B">\u21C4 Swap</button>
+    </div>
+    <div class="cmppick">
+      <div class="cmpslot"><div class="eyebrow">Player A</div>
+        <input id="cmpqa" type="search" placeholder="Filter player A…" value="${esc(CMP.qa)}" autocomplete="off" spellcheck="false">
+        <select id="cmpa" aria-label="Player A">${cmpOptionsHtml(pool, CMP.a, CMP.qa)}</select></div>
+      <div class="cmpslot"><div class="eyebrow">Player B</div>
+        <input id="cmpqb" type="search" placeholder="Filter player B…" value="${esc(CMP.qb)}" autocomplete="off" spellcheck="false">
+        <select id="cmpb" aria-label="Player B">${cmpOptionsHtml(pool, CMP.b, CMP.qb)}</select></div>
+    </div>`;
+  }
+  const a = pool.find(p => p.i === CMP.a), b = pool.find(p => p.i === CMP.b);
+  if (!a || !b) {
+    out.innerHTML = '<div class="empty">Pick two players above to compare them side by side.</div>';
+    return;
+  }
+  const rows = cmpRows(a, b).map(r => `<div class="cmpr">
+    <div class="ca${r.win === 'a' ? ' win' : ''}">${esc(r.av)}</div>
+    <div class="cm">${esc(r.label)}</div>
+    <div class="cb${r.win === 'b' ? ' win' : ''}">${esc(r.bv)}</div>
+  </div>`).join('');
+  const adv = cmpAdvRows(a, b, CMP.win);
+  const advRows = adv.rows.map(r => `<div class="cmpr">
+    <div class="ca${r.win === 'a' ? ' win' : ''}">${esc(r.av)}</div>
+    <div class="cm">${esc(r.label)}</div>
+    <div class="cb${r.win === 'b' ? ' win' : ''}">${esc(r.bv)}</div>
+  </div>`).join('');
+  const advHead = `<div class="cmpsec"><h3>Advanced stats${adv.sameSport && (adv.nA || adv.nB) ? ` <span class="dim" style="font-weight:400;font-size:12px">(${adv.nA}g vs ${adv.nB}g)</span>` : ''}</h3>
+    <div class="cmpwin">${[['all', 'All logged'], ['10', 'L10'], ['5', 'L5']].map(([k, lbl]) =>
+      `<button class="chip${CMP.win === k ? ' on' : ''}" data-cmp-win="${k}">${lbl}</button>`).join('')}</div></div>`;
+  out.innerHTML = `<div class="cmpcards">${cmpCard(a, 'Player A')}${cmpCard(b, 'Player B')}</div>
+    <div class="callout">${esc(cmpSummary(a, b))}</div>
+    <div class="cmptbl"><div class="cmpr cmphdrow"><div class="ca">${esc(a.pl)}</div><div class="cm">Prop &amp; Model</div><div class="cb">${esc(b.pl)}</div></div>${rows}</div>
+    ${advHead}
+    <div class="cmptbl"><div class="cmpr cmphdrow"><div class="ca">${esc(a.pl)}</div><div class="cm">Advanced</div><div class="cb">${esc(b.pl)}</div></div>${advRows}</div>
+    ${!adv.sameSport ? '<p class="dim" style="font-size:12px;margin:4px 0 8px">Pick two players in the same sport to compare box-score efficiency and rate stats.</p>' : ''}
+    <div class="cmppeers">${similarPlayersBox(a, true)}${b.i !== a.i ? similarPlayersBox(b, true) : ''}</div>
+    <div class="cmpbars">${cmpBars(a)}${cmpBars(b)}</div>`;
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', e => {
+    const sp = e.target.closest && e.target.closest('[data-cmp-sp]');
+    if (sp) { CMP.sp = sp.dataset.cmpSp; CMP.mk = 'ALL'; CMP.a = CMP.b = null; drawCompare(); return; }
+    if (e.target.closest && e.target.closest('[data-cmpswap]')) {
+      [CMP.a, CMP.b] = [CMP.b, CMP.a]; drawCompare(); return;
+    }
+    const wn = e.target.closest && e.target.closest('[data-cmp-win]');
+    if (wn) { CMP.win = wn.dataset.cmpWin; drawCompare(true); return; }
+    const pr = e.target.closest && e.target.closest('[data-cmp-pair]');
+    if (pr) {
+      const [ia, ib] = pr.dataset.cmpPair.split(':').map(Number);
+      const pa = PROPS.find(x => x.i === ia), pb = PROPS.find(x => x.i === ib);
+      if (!pa || !pb) return;
+      if (typeof closeSheet === 'function') closeSheet();
+      CMP.sp = pa.sp || 'ALL'; CMP.mk = (pa.mk === pb.mk ? pa.mk : 'ALL'); CMP.qa = CMP.qb = '';
+      CMP.a = pa.i; CMP.b = pb.i;
+      showTab('compare'); drawCompare();
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      return;
+    }
+    const op = e.target.closest && e.target.closest('[data-cmp-open]');
+    if (op) {
+      const id = +op.dataset.cmpOpen;
+      const p = PROPS.find(x => x.i === id);
+      if (!p) return;
+      if (typeof closeSheet === 'function') closeSheet();
+      CMP.sp = p.sp || 'ALL'; CMP.mk = p.mk || 'ALL'; CMP.qa = CMP.qb = ''; CMP.a = p.i;
+      const pool = cmpPool(CMP.sp, CMP.mk);
+      const mate = pool.find(x => x.i !== p.i && x.pl !== p.pl) || cmpPool(CMP.sp, 'ALL').find(x => x.i !== p.i && x.pl !== p.pl);
+      if (!pool.some(x => x.i !== p.i && x.pl !== p.pl)) CMP.mk = 'ALL';
+      CMP.b = mate ? mate.i : null;
+      showTab('compare'); drawCompare();
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+  });
+  document.addEventListener('change', e => {
+    if (!e.target) return;
+    if (e.target.id === 'cmpmk') { CMP.mk = e.target.value; CMP.a = CMP.b = null; drawCompare(); }
+    else if (e.target.id === 'cmpa') { CMP.a = +e.target.value; drawCompare(true); }
+    else if (e.target.id === 'cmpb') { CMP.b = +e.target.value; drawCompare(true); }
+  });
+  document.addEventListener('input', e => {
+    if (!e.target || (e.target.id !== 'cmpqa' && e.target.id !== 'cmpqb')) return;
+    const isA = e.target.id === 'cmpqa';
+    CMP[isA ? 'qa' : 'qb'] = e.target.value;
+    const pool = cmpPool(CMP.sp, CMP.mk);
+    const sel = $(isA ? 'cmpa' : 'cmpb');
+    if (!sel) return;
+    sel.innerHTML = cmpOptionsHtml(pool, CMP[isA ? 'a' : 'b'], e.target.value);
+    const first = sel.value ? +sel.value : null;
+    if (first != null && first !== CMP[isA ? 'a' : 'b']) { CMP[isA ? 'a' : 'b'] = first; drawCompare(true); }
+  });
+}
+
 /* ---------- staking ---------- */
 function drawStakes(){
   const S = D.stakes || {rows:[], blocked:{}};
@@ -8767,7 +9525,7 @@ function drawRecord(){
 
 /* ---------- wiring ---------- */
 const TAB_DRAW = {
-  board: [], parlays: ['drawParlays'], ladder: ['drawLadder'], trending: ['drawTrending'], games: ['drawGames'],
+  board: [], compare: ['drawCompare'], parlays: ['drawParlays'], ladder: ['drawLadder'], trending: ['drawTrending'], games: ['drawGames'],
   stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
   'drawLeafValue', 'drawMvm', 'drawTeamRecord'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
 };
