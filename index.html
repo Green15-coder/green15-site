@@ -533,6 +533,13 @@ tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 .unv{color:var(--mark)}
 .pendrow{font-size:.78rem;color:var(--mark);padding:2px 14px 6px}
 .outnow{color:var(--under);font-weight:600}
+.pkcurve{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--rule);background:var(--card);border-radius:10px}
+.pkch{display:flex;justify-content:space-between;gap:8px;font-size:.9em;margin-bottom:6px}
+.pkcurve svg{width:100%;height:64px;display:block}
+.pkzero{stroke:var(--rule);stroke-dasharray:3 3;stroke-width:1}
+.pkline{fill:none;stroke-width:2;vector-effect:non-scaling-stroke}.pkline.up{stroke:var(--over)}.pkline.dn{stroke:var(--under)}
+.pkpt{fill:var(--mark)}.pkcx{font-size:.8em;color:var(--ink-2);margin-top:4px}
+.movetag{font-weight:600;white-space:nowrap}.movetag.up{color:var(--over)}.movetag.dn{color:var(--under)}
 .coldtag{color:var(--under);font-weight:600;border:1px solid currentColor;border-radius:4px;padding:0 4px;font-size:.88em}
 .trtag{font-family:var(--m);font-size:.9em;font-weight:600;white-space:nowrap}
 .trtag.tru{color:var(--over)}.trtag.trd{color:var(--under)}
@@ -1092,11 +1099,13 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       <button class="chip" data-view="top15">Top 15</button>
       <button class="chip" data-view="team">Team markets <span id="nteam"></span></button>
       <button class="chip" data-view="pending">Pending <span id="npend"></span></button>
+      <button class="chip" data-view="moving">Moving <span id="nmove"></span></button>
     </div>
     <span class="vcount" id="boardmeta"></span>
   </div>
   <div id="boardwhy"></div>
   <p class="eyebrow" id="topnote" hidden></p>
+  <p class="eyebrow" id="floornote" hidden></p>
   <p class="eyebrow" id="finnote" hidden></p>
   <div id="rows"></div>
   <div class="empty" id="norows" hidden></div>
@@ -1663,7 +1672,7 @@ function drawHero(){
     && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size && !F.def.size
     && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
-  const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team')
+  const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team' && (SHOWLOW || !belowFloor(p)))
                    .sort((a, b) => (a.nores ? 1 : 0) - (b.nores ? 1 : 0)
                                 || (b.sc || 0) - (a.sc || 0))[0];
   // Its case opens in the prop sheet like any row, so the hero stays
@@ -1877,7 +1886,7 @@ function matches(p){
     if (b === 'researched' && p.nores) return false;
     if (b === '8+ games'  && (p.n || 0) < 8) return false;
     if (b === 'edge 2%+'  && (p.ed || 0) < 0.02) return false;
-    if (b === 'no red leaf' && (p.lv || []).some(l => l[1] === 'red')) return false;
+    if (b === 'no red leaf' && (p.lv || []).some(l => l[1] === 'red' && !l[5])) return false;
   }
   return true;
 }
@@ -2028,8 +2037,13 @@ function gamesText(p){
 }
 
 function teamNorm(value){
-  return String(value || '').normalize('NFKD').toLowerCase()
-    .replace(/[^a-z0-9]/g,'');
+  const v = String(value || ''), TEAMNORM = teamNorm.memo || (teamNorm.memo = new Map());
+  let t = TEAMNORM.get(v);
+  if (t === undefined) {
+    t = v.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]/g,'');
+    TEAMNORM.set(v, t);
+  }
+  return t;
 }
 function matchupIdentity(p){
   const parts = String(p.mu || '').split(' @ ').map(x=>x.trim());
@@ -2082,10 +2096,20 @@ const BOX_MK = {
   passing_yards:['passingyards'], rush_yards:['rushingyards'],
   rush_attempts:['rushingattempts'], completions:['completions'],
 };
+/* Name folding (NFKD + two regexes) is the hot path of every board
+   check, and the same few thousand names are folded over and over.
+   The result depends only on the inputs, so each one is folded once. */
 function boxKey(sp, name){
-  return `${String(sp || '').toUpperCase()}|${String(name || '').toLowerCase()
-    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\p{L}\p{N}]/gu, '')}`;
+  const sk = String(sp || '').toUpperCase(), nk = String(name || '');
+  const ck = sk + '\u0001' + nk, BOXKEY = boxKey.memo || (boxKey.memo = new Map());
+  let k = BOXKEY.get(ck);
+  if (k === undefined) {
+    k = `${sk}|${nk.toLowerCase()
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\p{L}\p{N}]/gu, '')}`;
+    BOXKEY.set(ck, k);
+  }
+  return k;
 }
 function boxRows(sp, name){
   return (((D && D.box) || {}).p || {})[boxKey(sp, name)] || [];
@@ -2212,8 +2236,52 @@ function spreadSign(p, v){
     && Number(v) > 0 ? `+${v}` : v;
 }
 
+/* LINE MOVEMENT. The first quote a selection was seen at (p0/f0/t0)
+   against the current one. Measured on the no-vig chance, so a move is
+   the market changing its mind, not a book changing its vig. */
+const MOVE_PTS = 3;
+/* DISPLAY FLOOR. Player props under a 55% model chance are hidden from
+   the board views. Display only: the picks, the record and the bet
+   rules are untouched, and one tap shows the hidden rows again. A
+   player row with no model chance at all is a missing-data pass, so
+   it is hidden too. Team markets are scored on their own scale and
+   the Pending view exists to show unusable rows, so neither is
+   filtered. */
+const MP_FLOOR = 0.55;
+let SHOWLOW = false;
+function belowFloor(p){
+  return p.kd !== 'team' && !(p.mp != null && p.mp >= MP_FLOOR);
+}
+function moveOf(p){
+  if (!p || p.f0 == null || p.fp == null) return null;
+  const pts = Math.round((p.fp - p.f0) * 1000) / 10;
+  return Math.abs(pts) >= MOVE_PTS ? {pts, from: p.p0, at: p.t0} : null;
+}
+function moveTag(p){
+  const m = moveOf(p); if (!m) return '';
+  return ` · <span class="movetag ${m.pts > 0 ? 'up' : 'dn'}">${m.pts > 0 ? '\u25b2' : '\u25bc'} ${Math.abs(m.pts).toFixed(1)} pts${
+    m.from != null ? ` from ${m.from > 0 ? '+' : ''}${m.from}` : ''}</span>`;
+}
+function moveNote(p){
+  const m = moveOf(p); if (!m) return '';
+  const t = m.at ? new Date(m.at) : null;
+  const when = t && isFinite(t) ? ` (${sameDay(t, new Date()) ? '' : W_FMT.format(t) + ' '}${T_FMT.format(t)})` : '';
+  return `<div class="mnote">Price moved: first seen${m.from != null ? ` at ${m.from > 0 ? '+' : ''}${m.from}` : ''}${when},
+    now ${p.pr > 0 ? '+' : ''}${p.pr}. The no-vig chance ${m.pts > 0 ? 'rose' : 'fell'} ${Math.abs(m.pts).toFixed(1)} points.
+    Context only; the record has not shown that moves predict results.</div>`;
+}
+/* Owner-approved bet rules (generate.apply_bet_rules). The prop stays
+   on the board for research; the card says why it is not a bet. */
+const BET_RULE_TXT = {
+  nba_game_total: 'Pass: NBA game totals are not bet. They went 100-156 (-25% ROI) in the graded record.',
+  player_cap: 'Pass: this player already has two bets with bigger edges today. Same-player bets move together.',
+};
+function ruleNote(p){
+  const t = p && p.br && BET_RULE_TXT[p.br];
+  return t ? `<div class="mnote">${esc(t)}</div>` : '';
+}
 function pips(lv){
-  return `<div class="pips">${(lv||[]).filter(l => l[4] !== false).map(l =>
+  return `<div class="pips">${(lv||[]).filter(l => l[4] !== false && !l[5]).map(l =>
     `<i class="pip ${l[1]}"></i>`).join('')}</div>`;
 }
 function games(p){
@@ -3810,7 +3878,7 @@ function detail(p, p0){
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
     : cur === 'games'  ? `${games(p)}${p.kd === 'team' ? teamExtra(p) : ''}${shotChart(p)}`
     : cur === 'matchup'? `${matchup(p)}${p.kd === 'team' ? teamExtra(p) + teamZones(p) : ''}${injuryBox(p)}${researchLinks(p)}`
-    : cur === 'market' ? `${evBox(p)}${bookRow(p)}
+    : cur === 'market' ? `${moveNote(p)}${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
     : `${p.kd === 'team' ? `<div class="mnote">Team scale: ${p.mx ?? 5} applicable leaves.
@@ -3819,12 +3887,13 @@ function detail(p, p0){
       (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
         <i class="dot ${l[1]}"></i>
         <div><span class="lb">${esc(l[0])}${l[4] === false ? ' · not applicable'
-          : l[1] === 'dark' ? ' · missing evidence' : ''}</span>
+          : l[1] === 'dark' ? ' · missing evidence' : ''}${l[5] ? ' · not counted' : ''}</span>
           <div class="rs">${esc(l[2])}</div></div></div>`).join('')
       + injuryBox(p);
 
   return `<div class="detail">
     ${propSwitch(p, p0 || p)}
+    ${ruleNote(p)}
     ${cardHtml}
     ${nav}
     <div class="secbody">${body}</div>
@@ -3848,6 +3917,21 @@ function draw(){
   // immediately underneath reads as a rendering bug, not a feature.
   if (HEROID != null) list = list.filter(p => p.i !== HEROID);
   if (BVIEW !== 'team') list = list.filter(p => p.kd !== 'team');
+  let lowHidden = 0;
+  if (BVIEW !== 'team' && BVIEW !== 'pending') {
+    const kept = SHOWLOW ? list : list.filter(p => !belowFloor(p));
+    lowHidden = SHOWLOW ? list.filter(belowFloor).length : list.length - kept.length;
+    list = kept;
+  }
+  { const fl = $('floornote');
+    if (fl) {
+      fl.hidden = !lowHidden;
+      fl.innerHTML = !lowHidden ? '' : SHOWLOW
+        ? `showing ${lowHidden} player prop${lowHidden === 1 ? '' : 's'} under a ${Math.round(100 * MP_FLOOR)}% model chance \u00b7
+           <button class="chip" data-floor="1">hide them</button>`
+        : `${lowHidden} player prop${lowHidden === 1 ? '' : 's'} under a ${Math.round(100 * MP_FLOOR)}% model chance hidden
+           (display only, picks unchanged) \u00b7 <button class="chip" data-floor="1">show them</button>`;
+    } }
   // Top 15 is the head of the SAME ranking, not a separate shortlist
   // with its own rules. If only four rows are researched, it shows
   // four and says so, rather than padding to fifteen with rows that
@@ -3858,6 +3942,7 @@ function draw(){
   // as "usable but mediocre" is how something you cannot bet ends
   // up at the top of the board.
   $('npend').textContent = PROPS.filter(p => p.elig === false).length;
+  { const nm = $('nmove'); if (nm) nm.textContent = PROPS.filter(p => p.kd !== 'team' && moveOf(p) && (SHOWLOW || !belowFloor(p))).length || ''; }
   const fn = $('finnote');
   if (fn && !fn.dataset.sticky) {
     const t = clockNote();
@@ -3873,6 +3958,8 @@ function draw(){
     list = list.filter(p => p.kd === 'team');
   } else if (BVIEW === 'pending') {
     list = list.filter(p => p.elig === false);
+  } else if (BVIEW === 'moving') {
+    list = list.filter(p => moveOf(p)).sort((a, b) => Math.abs(moveOf(b).pts) - Math.abs(moveOf(a).pts));
   } else if (BVIEW === 'top15') {
     // Up to fifteen QUALIFIED selections, never an obligation to
     // fill fifteen slots.
@@ -3898,7 +3985,11 @@ function draw(){
     // view kept showing whichever list was on screen before.
     tn.hidden = BVIEW === 'all';
     const to = D.tier_outcomes || {};
-    tn.innerHTML = BVIEW === 'pending'
+    tn.innerHTML = BVIEW === 'moving'
+      ? `props whose no-vig chance moved ${MOVE_PTS}+ points since the app first saw the price, biggest first.
+         Up means the market now rates this side more likely. Shown for context: the graded record
+         has not shown that following or fading a move wins more than the price.`
+      : BVIEW === 'pending'
       ? `selections that cannot be acted on yet \u2014 stale price, no
          research attached, or too few games. Each row says which. They
          are held out of the ranking rather than scored against it.`
@@ -3968,7 +4059,7 @@ function rowHtml(p0){
             · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}${
             (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
             p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}${
-            coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}</span>
+            coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}${moveTag(p)}</span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
@@ -4607,6 +4698,8 @@ function legPool(F){
     // Listed Out / Doubtful after the price was taken: the leg is
     // likely void or dead, not a probability.
     if (p.outNow) return false;
+    // A market the record says to pass on is not a parlay leg either.
+    if (p.br === 'nba_game_total') return false;
     if (!F.stale && (p.elig === false || ageClass(p.at) === 'old')) return false;
     if (F.kind && p.kd !== F.kind) return false;
     if (F.sp.size && !F.sp.has(String(p.sp).toUpperCase())) return false;
@@ -4783,6 +4876,7 @@ function legReasonHtml(q, isWeak){
   }
   // Clover leaves: the named reasons for and against.
   for (const l of (q.lv || [])) {
+    if (l[5]) continue;               // demoted: shown on the card, not a reason
     if (l[1] === 'green') lines.push(['for', `<b>${esc(l[0])}</b>: ${esc(l[2])}`]);
     else if (l[1] === 'red') lines.push(['against', `<b>${esc(l[0])}</b>: ${esc(l[2])}`]);
   }
@@ -5468,6 +5562,28 @@ function pkDayLabel(d){
   const t = new Date(d + 'T12:00:00');
   return isFinite(t) ? t.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'}) : d;
 }
+/* Running profit and loss over settled slate days. Drawn once there
+   are two settled days to join; one point is a number, not a trend. */
+function pkCurve(done, ST){
+  const by = new Map();
+  for (const pk of done) { const d = pk.day || ''; if (!d) continue; by.set(d, (by.get(d) || 0) + (ST.get(pk.id).pnl || 0)); }
+  const days = [...by.keys()].sort();
+  if (days.length < 2) return '';
+  let run = 0;
+  const pts = days.map(d => (run += by.get(d)));
+  const lo = Math.min(0, ...pts), hi = Math.max(0, ...pts), span = hi - lo || 1;
+  const W = 300, H = 64, x = i => 6 + i * (W - 12) / (pts.length - 1), y = v => 6 + (hi - v) * (H - 12) / span;
+  const line = pts.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const best = days.reduce((a, d) => by.get(d) > by.get(a) ? d : a), worst = days.reduce((a, d) => by.get(d) < by.get(a) ? d : a);
+  const last = pts[pts.length - 1];
+  return `<div class="pkcurve"><div class="pkch"><b>Profit and loss by day</b>
+      <span class="${last > 0 ? 'hit' : last < 0 ? 'miss' : ''}">${pkU(last)} over ${days.length} days</span></div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Running units won, by slate day">
+      <line x1="0" x2="${W}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="pkzero"/>
+      <polyline points="${line}" class="pkline ${last >= 0 ? 'up' : 'dn'}"/>
+      ${pts.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.2" class="pkpt"/>`).join('')}</svg>
+    <div class="pkcx">Best day ${esc(pkDayLabel(best))} ${pkU(by.get(best))} \u00b7 worst ${esc(pkDayLabel(worst))} ${pkU(by.get(worst))}</div></div>`;
+}
 const pkU = v => (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2) + 'u';
 function drawSavedParlays(){
   const sec = $('pksec'); if (!sec) return;
@@ -5490,6 +5606,7 @@ function drawSavedParlays(){
       <div class="pkt"><b>${graded.length ? W + ' / ' + expW.toFixed(1) : '\u2014'}</b><small>won vs expected</small></div>
       <div class="pkt"><b>${legsDone.length ? Math.round(100 * legHit / legsDone.length) + '%' : '\u2014'}</b><small>legs hit (${legHit}/${legsDone.length})</small></div>
       <div class="pkt"><b>${open}</b><small>open</small></div></div>
+    ${pkCurve(done, ST)}
     <p class="pknote">Won vs expected adds up the hit chance each parlay had when you saved it. Winning more than expected
       over many tickets is the sign the estimates are fair; a handful of tickets says very little.</p>`
     : `<div class="empty">No saved parlays yet. Tap <b>Save parlay</b> on any card in the Parlays tab, or <b>save</b> on your slip.</div>`;
@@ -6346,6 +6463,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-askclr]')) { try { localStorage.removeItem(ASK_RECENT); } catch (_) {} askRecentDraw(); return; }
   const lvs = e.target.closest('[data-lvsport]');
   if (lvs) { LVSPORT = lvs.dataset.lvsport; drawLeafValue(); return; }
+  if (e.target.closest('[data-floor]')) { SHOWLOW = !SHOWLOW; return draw(); }
   const bv = e.target.closest('[data-view]');
   if (bv) {
     BVIEW = bv.dataset.view;
@@ -7996,21 +8114,55 @@ async function loadData() {
       const r = await fetch('./green15_data.json.gz' + bust, {cache:'no-store'});
       if (r.ok) {
         const buf = new Uint8Array(await r.arrayBuffer());
-        let text;
-        if (buf[0] === 0x1f && buf[1] === 0x8b) {
-          const s = new Blob([buf]).stream()
-            .pipeThrough(new DecompressionStream('gzip'));
-          text = await new Response(s).text();
-        } else {
-          text = new TextDecoder().decode(buf);
-        }
-        return expandShared(JSON.parse(text));
+        const d = expandShared(JSON.parse(await gunzipText(buf)));
+        offlineSave(buf);
+        return d;
       }
     } catch (e) { /* fall through to the plain file */ }
   }
   const r = await fetch('./green15_data.json' + bust, {cache:'no-store'});
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return expandShared(await r.json());
+}
+
+/* OFFLINE MODE. The last board this phone downloaded is kept in the
+   Cache API. Startup falls back to it only when the network fails, and
+   says so in the header; a fresh download always wins. Prices on a
+   saved board are as old as the stamp says -- nothing is re-dated. */
+const OFF_CACHE = 'green15-board-v1', OFF_KEY = './green15_last_board.json.gz';
+function offlineSave(buf){
+  try {
+    if (!('caches' in window)) return;
+    caches.open(OFF_CACHE).then(c => c.put(OFF_KEY, new Response(buf,
+      {headers: {'content-type': 'application/octet-stream', 'x-saved-at': new Date().toISOString()}})))
+      .catch(() => {});
+  } catch (_) { /* private mode or no storage: no offline copy */ }
+}
+async function gunzipText(buf){
+  if (buf[0] === 0x1f && buf[1] === 0x8b) {
+    const s = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return await new Response(s).text();
+  }
+  return new TextDecoder().decode(buf);
+}
+async function offlineLoad(){
+  if (!('caches' in window) || !('DecompressionStream' in window)) return null;
+  const c = await caches.open(OFF_CACHE), r = await c.match(OFF_KEY);
+  if (!r) return null;
+  const buf = new Uint8Array(await r.arrayBuffer());
+  const d = expandShared(JSON.parse(await gunzipText(buf)));
+  d.__offline = r.headers.get('x-saved-at') || true;
+  return d;
+}
+/* Startup only: the network first, the saved board when it fails. */
+async function loadBoard() {
+  try { return await loadData(); }
+  catch (e) {
+    let d = null;
+    try { d = await offlineLoad(); } catch (_) { d = null; }
+    if (d) return d;
+    throw e;
+  }
 }
 // Evidence that is identical across props -- a team's trend windows,
 // the opponent's recent log -- is stored once in board.ev_shared and
@@ -8119,10 +8271,22 @@ function checkResearch(p){
     : `opponent splits attached to this prop were against a different team \u2014 removed`;
 }
 /* A player listed Out / Doubtful / IR on the newest injury report. */
+/* Injury rows indexed by folded name, built once per report. The first
+   row for a name wins, exactly as the linear find() did. */
+const INJ_IDX = new WeakMap();
+function injIndex(rows){
+  let m = INJ_IDX.get(rows);
+  if (!m) {
+    m = new Map();
+    for (const x of rows) if (x && x.name) { const k = normName(x.name); if (!m.has(k)) m.set(k, x); }
+    INJ_IDX.set(rows, m);
+  }
+  return m;
+}
 function listedOut(p){
   if (p.kd === 'team') return null;
   const lg = String(p.sp || '').toUpperCase(), me = normName(p.pl);
-  const r = (((D.injuries || {})[lg] || {}).rows || []).find(x => x.name && normName(x.name) === me);
+  const r = injIndex((((D.injuries || {})[lg] || {}).rows || [])).get(me);
   return r && OUT_RX.test(String(r.status || '')) ? r.status : null;
 }
 /* ================================================================
@@ -8630,7 +8794,7 @@ async function refreshBoard(btn){
     // 1. A newer board published? Reload onto it.
     try {
       const nd = await loadData();
-      if (nd && (nd.generated_at || '') !== (D.generated_at || '')) { location.reload(); return; }
+      if (nd && ((nd.generated_at || '') !== (D.generated_at || '') || D.__offline)) { location.reload(); return; }
     } catch (e) { msg.push('could not check for a newer board'); }
     // 2. Which games have started, from ESPN.
     const ok = await readScoreboards();
@@ -8655,7 +8819,7 @@ function clockNote(){
 
 (async () => {
   try {
-    D = await loadData();
+    D = await loadBoard();
   } catch (err) {
     $('stamp').textContent = 'data unavailable';
     $('loadfail').hidden = false;
@@ -8675,6 +8839,14 @@ function clockNote(){
   // Amber past the point the eligibility gate starts rejecting on
   // staleness, so the header and the gate agree.
   $('stamp').className = dAge != null && dAge > 90 ? 'stale' : '';
+  if (D.__offline) {
+    // Saved copy: say so where the freshness claim lives.
+    $('stamp').textContent = `offline \u00b7 saved board, ${$('stamp').textContent}`;
+    $('stamp').className = 'stale';
+    const fn = $('finnote');
+    if (fn) { fn.hidden = false; fn.dataset.sticky = '1';
+      fn.textContent = 'No connection. Showing the last board this phone downloaded. Prices may have moved; tap refresh when you are back online.'; }
+  }
   const dot = document.querySelector('.dot');
   if (dot) dot.style.background = dAge != null && dAge > 90
     ? 'var(--hold)' : 'var(--up)';
