@@ -722,6 +722,38 @@ tr.sub td{font-size:11.5px;color:var(--ink-2)}
 .leaf .lb{font-family:var(--m);font-size:11px;letter-spacing:.04em;
   text-transform:uppercase;color:var(--ink-2)}
 .leaf .rs{font-size:13.5px}
+.leaf .lt{font-family:var(--m);font-size:10.5px;color:var(--ink-2);margin-top:2px}
+.leaf .lt.hit{color:var(--over)} .leaf .lt.miss{color:var(--under)}
+.lgrp{font-family:var(--m);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);margin:6px 0 -2px;padding-top:8px;border-top:1px solid var(--rule)}
+.ltally{display:flex;flex-wrap:wrap;gap:6px}
+.ltally span{font-family:var(--m);font-size:11px;padding:3px 8px;border-radius:999px;
+  border:1px solid var(--rule);color:var(--ink-2)}
+.ltally b{color:var(--ink)}
+.gtop{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
+.gtop span{font-family:var(--m);font-size:12px;color:var(--ink-2)}
+.gtop span b{font-size:16px;color:var(--ink)}
+.gpart{margin:6px 0}
+.gprow{display:flex;justify-content:space-between;font-size:12.5px}
+.gprow span{color:var(--ink-2)} .gprow b{font-family:var(--m);font-variant-numeric:tabular-nums}
+.gtrack{height:6px;border-radius:3px;background:var(--rule);overflow:hidden;margin:3px 0 2px}
+.gtrack i{display:block;height:100%;background:var(--clover);border-radius:3px}
+.gnote{font-size:11px;color:var(--ink-2);line-height:1.4}
+.gcuts{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-top:6px}
+.pscale{position:relative;height:34px;margin:6px 8px 2px}
+.evline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  font-size:12.5px;padding:4px 0;border-top:1px solid var(--rule)}
+.evline span{color:var(--ink-2)}
+.evline b{font-family:var(--m);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.evline b.hit{color:var(--over)} .evline b.miss{color:var(--under)}
+.pscale .ax{position:absolute;left:0;right:0;top:15px;height:4px;border-radius:2px;background:var(--rule)}
+.pscale .mk{position:absolute;top:8px;width:2px;height:18px;margin-left:-1px;border-radius:1px}
+.pscale .mk.be{background:var(--ink-2)} .pscale .mk.fa{background:var(--mark)}
+.pscale .mk.mo{background:var(--clover)}
+.pscale .tk{position:absolute;top:24px;font-family:var(--m);font-size:9px;color:var(--ink-2);transform:translateX(-50%)}
+.pkey{display:flex;flex-wrap:wrap;gap:10px;font-family:var(--m);font-size:10.5px;color:var(--ink-2);margin-bottom:4px}
+.pkey i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.pkey i.be{background:var(--ink-2)} .pkey i.fa{background:var(--mark)} .pkey i.mo{background:var(--clover)}
 .leaf.dark .rs{color:var(--ink-2)}
 .facts{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--m);
   font-size:11.5px;color:var(--ink-2);padding:8px 0;border-top:1px solid var(--rule)}
@@ -2873,7 +2905,7 @@ function evBox(p){
   if (p.evu == null) return '';
   const used = p.ap ?? p.mp;
   const pc = (100 * p.evu).toFixed(1);
-  return `<div class="reqbox"><h4>estimated value</h4>
+  return `<div class="reqbox simbox"><h4>estimated value</h4>
     <div class="evline"><span>EV per unit at ${p.pr > 0 ? '+' : ''}${p.pr}</span>
       <b class="${p.evu > 0 ? 'hit' : 'miss'}">${p.evu > 0 ? '+' : ''}${pc}%</b></div>
     <div class="evline"><span>win probability used</span>
@@ -3852,6 +3884,118 @@ function researchLinks(p){
       opened in a new tab. Their numbers are not pulled into this page.</span></div></div>`;
 }
 
+/* GRADE, LEAVES AND MARKET SECTIONS.
+
+   The letter is clover.pick_grade: win chance (40), edge over the
+   no-vig price (35) and counted leaves (25), on 100 points. gradeBox
+   shows each part, so a letter is never a black box. */
+const GW = {prob: 40, edge: 35, leaves: 25};
+const g1 = v => v == null ? '\u2014' : (100 * v).toFixed(1) + '%';
+const gs1 = v => v == null ? '\u2014' : (v > 0 ? '+' : '') + (100 * v).toFixed(1) + ' pts';
+function gAm(prob){
+  if (prob == null || !(prob > 0 && prob < 1)) return null;
+  const a = prob >= 0.5 ? -100 * prob / (1 - prob) : 100 * (1 - prob) / prob;
+  return Math.round(a);
+}
+const gAmTxt = a => a == null ? '\u2014' : (a > 0 ? '+' : '') + a;
+function gImp(pr){
+  if (pr == null || !isFinite(pr) || pr === 0) return null;
+  return pr > 0 ? 100 / (pr + 100) : -pr / (-pr + 100);
+}
+function gradeBox(p){
+  const g = p.gp;
+  if (!g || !p.gr) return `<div class="reqbox simbox"><h4>grade</h4><div class="mnote">No grade:
+    this pick has no model chance or no edge, so it is a missing-data pass.</div></div>`;
+  const used = p.ap ?? p.mp;
+  const bar = (lab, v, max, note) => `<div class="gpart"><div class="gprow"><span>${lab}</span>
+    <b>${Math.round(v || 0)}/${max}</b></div><div class="gtrack"><i style="width:${
+    Math.max(0, Math.min(100, Math.round(100 * (v || 0) / max)))}%"></i></div><div class="gnote">${note}</div></div>`;
+  return `<div class="reqbox simbox gradebox"><h4>how the grade is built</h4>
+    <div class="gtop"><b class="grade ${gcls(p.gr)}">${esc(p.gr)}</b><span><b>${g.pts}</b> / 100</span></div>
+    ${bar('Win chance', g.prob, GW.prob, `${g1(used)} used. 40% scores 0, 70% or more scores full.`)}
+    ${bar('Edge over the price', g.edge, GW.edge, `${gs1(p.ed)} against the no-vig market. -4 scores 0, +4 scores full.`)}
+    ${bar('Leaves', g.leaves, GW.leaves, p.kd === 'team'
+      ? `${g.net > 0 ? '+' : ''}${g.net} green minus red, rescaled from ${p.mx ?? 5} team leaves to the 12-leaf scale. -4 scores 0, +4 scores full.`
+      : `${g.net > 0 ? '+' : ''}${g.net} counted green minus red. -4 scores 0, +4 scores full.`)}
+    ${g.capped ? `<div class="mnote">Capped at B: the model has no positive edge over the price.</div>` : ''}
+    <div class="gcuts">A+ 84 \u00b7 A 76 \u00b7 B+ 67 \u00b7 B 54 \u00b7 C 39 \u00b7 D below 39</div>
+    <div class="simcrit" style="margin:7px 0 0"><span class="unv">The grade describes the pick; it is
+      not a proven winner. Over 55,517 graded player rows, higher grades hit more often
+      (A+ 65%, B 55%, D 45%), but every grade still lost to the price (-2.4% to -6.1% ROI).</span></div></div>`;
+}
+/* One leaf's graded record, from the Leaf value table on the Record
+   tab. The PRICED lift: how much better green picks did than red
+   ones after the price is accounted for. */
+function leafTrack(l){
+  const ls = ((D && D.leaf_value) || {}).leaves || [];
+  const r = ls.find(x => x.id === l[3]);
+  if (!r || !r.enough || r.adj_lift == null) return '';
+  const v = r.adj_lift, sig = r.adj_signal;
+  const cls = sig ? (v > 0 ? 'hit' : 'miss') : '';
+  const what = !sig ? 'no proven effect' : v > 0 ? 'has helped' : 'has run backwards';
+  const how = Math.abs(v) < 0.05 ? 'did the same as red ones'
+    : `${v > 0 ? 'beat' : 'trailed'} red ones by ${Math.abs(v).toFixed(1)} pts`;
+  return `<div class="lt ${cls}">record: green picks ${how} after the price
+    (\u00b1${(r.adj_se || 0).toFixed(1)}, ${what})</div>`;
+}
+function leafRow(p, l){
+  return `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
+    <i class="dot ${l[1]}"></i>
+    <div><span class="lb">${esc(l[0])}${l[4] === false ? ' · not applicable'
+      : l[1] === 'dark' ? ' · missing evidence' : ''}${l[5] ? ' · not counted' : ''}</span>
+      <div class="rs">${esc(l[2])}</div>${p.kd === 'team' || l[4] === false ? '' : leafTrack(l)}</div></div>`;
+}
+function leavesSection(p){
+  const lv = p.lv || [];
+  const live = lv.filter(l => l[4] !== false && !l[5]);
+  const n = st => live.filter(l => l[1] === st).length;
+  const groups = [
+    ['Against this pick', live.filter(l => l[1] === 'red')],
+    ['For this pick', live.filter(l => l[1] === 'green')],
+    ['Neutral', live.filter(l => l[1] === 'yellow')],
+    ['Missing evidence', live.filter(l => l[1] === 'dark')],
+    ['Shown, not counted', lv.filter(l => l[4] !== false && l[5])],
+    ['Not applicable', lv.filter(l => l[4] === false)],
+  ].filter(([, ls]) => ls.length);
+  return gradeBox(p)
+    + `<div class="ltally"><span><b>${n('green')}</b> for</span><span><b>${n('red')}</b> against</span>
+        <span><b>${n('yellow')}</b> neutral</span><span><b>${n('dark')}</b> missing</span></div>`
+    + (p.kd === 'team' ? `<div class="mnote">Team scale: ${p.mx ?? 5} applicable leaves.
+        Player-only leaves and inputs already used in the projection are not scored.
+        Missing evidence never earns a green leaf.</div>` : '')
+    + groups.map(([h, ls]) => `<div class="lgrp">${h} \u00b7 ${ls.length}</div>` + ls.map(l => leafRow(p, l)).join('')).join('')
+    + injuryBox(p);
+}
+/* Where the price, the market and the model sit on one scale. */
+function priceBox(p){
+  const be = gImp(p.pr), fa = p.fp, used = p.ap ?? p.mp;
+  if (be == null && fa == null && used == null) return '';
+  const pts = [be, fa, used, p.mp].filter(v => v != null);
+  const lo = Math.max(0, Math.floor((Math.min(...pts) - 0.05) * 20) / 20);
+  const hi = Math.min(1, Math.ceil((Math.max(...pts) + 0.05) * 20) / 20);
+  const x = v => (100 * (v - lo) / ((hi - lo) || 1)).toFixed(1);
+  const mk = (v, c) => v == null ? '' : `<i class="mk ${c}" style="left:${x(v)}%"></i>`;
+  const ticks = [];
+  for (let t = lo + 0.05; t < hi - 1e-9; t += 0.05) ticks.push(`<span class="tk" style="left:${x(t)}%">${Math.round(100 * t)}</span>`);
+  const fairAm = gAm(used), vig = be != null && fa != null ? be - fa : null;
+  const better = fairAm != null && p.pr != null ? (gImp(p.pr) < gImp(fairAm)) : null;
+  const line = (a, b, c) => `<div class="evline"><span>${a}</span><b${c ? ` class="${c}"` : ''}>${b}</b></div>`;
+  return `<div class="reqbox simbox"><h4>price check</h4>
+    <div class="pkey"><span><i class="be"></i>break-even ${g1(be)}</span><span><i class="fa"></i>market ${g1(fa)}</span>
+      <span><i class="mo"></i>model ${g1(used)}</span></div>
+    <div class="pscale"><div class="ax"></div>${mk(be, 'be')}${mk(fa, 'fa')}${mk(used, 'mo')}${ticks.join('')}</div>
+    ${line(`to break even at ${gAmTxt(p.pr)}`, `win ${g1(be)}`)}
+    ${line('book margin on this side', vig == null ? '\u2014' : gs1(vig))}
+    ${line('fair price on the model chance', gAmTxt(fairAm), better == null ? '' : better ? 'hit' : 'miss')}
+    ${line('edge (model minus market)', gs1(p.ed), p.ed == null ? '' : p.ed > 0 ? 'hit' : 'miss')}
+    ${p.mp != null && p.ap != null && Math.abs(p.mp - p.ap) >= 0.0005 ? line('raw model before the anchor', g1(p.mp)) : ''}
+    ${p.rg && p.rg.length === 2 && p.rg[0] !== p.rg[1] ? line(`price range across ${p.bk || 'the'} books`, `${gAmTxt(p.rg[0])} to ${gAmTxt(p.rg[1])}`) : ''}
+    <div class="reqnote">${better == null ? '' : better
+      ? `The price pays better than the model's fair ${gAmTxt(fairAm)}.`
+      : `The price pays worse than the model's fair ${gAmTxt(fairAm)}, so even with ${p.ed > 0 ? 'a positive edge over the no-vig market' : 'this edge'} the book's margin eats it. It would take ${gAmTxt(fairAm)} or better.`}
+      The model is anchored to the market and moves at most 4 points from it.</div></div>`;
+}
+
 function detail(p, p0){
   const cur = SEC[p.i] || 'read';
   // card() writes this prop's Why box. Built first, so the Why section
@@ -3878,18 +4022,10 @@ function detail(p, p0){
       cur === 'read'   ? `${WHY_CACHE[p.i] || ''}${reqBox(p)}${roleBox(p)}${similar(p)}`
     : cur === 'games'  ? `${games(p)}${p.kd === 'team' ? teamExtra(p) : ''}${shotChart(p)}`
     : cur === 'matchup'? `${matchup(p)}${p.kd === 'team' ? teamExtra(p) + teamZones(p) : ''}${injuryBox(p)}${researchLinks(p)}`
-    : cur === 'market' ? `${moveNote(p)}${evBox(p)}${bookRow(p)}
+    : cur === 'market' ? `${moveNote(p)}${priceBox(p)}${evBox(p)}${bookRow(p)}
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
-    : `${p.kd === 'team' ? `<div class="mnote">Team scale: ${p.mx ?? 5} applicable leaves.
-        Player-only leaves and inputs already used in the projection are not scored.
-        Missing evidence never earns a green leaf.</div>` : ''}` +
-      (p.lv || []).map(l => `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
-        <i class="dot ${l[1]}"></i>
-        <div><span class="lb">${esc(l[0])}${l[4] === false ? ' · not applicable'
-          : l[1] === 'dark' ? ' · missing evidence' : ''}${l[5] ? ' · not counted' : ''}</span>
-          <div class="rs">${esc(l[2])}</div></div></div>`).join('')
-      + injuryBox(p);
+    : leavesSection(p);
 
   return `<div class="detail">
     ${propSwitch(p, p0 || p)}
@@ -4678,11 +4814,13 @@ function jointProb(legs){
   return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs, warn};
 }
 // Same-game legs allowed by default, up to three per game.
+// Legs graded B or better by default (owner request 2026-11-26). The
+// grade chip still lets you widen it to C or Any.
 const PF = {legs: 3, sp: new Set(), mk: new Set(), kind: 'player', side: '', minMp: 0.55, minEd: -1,
-  l3: '', minPr: -400, maxPr: 400, grade: '', upcoming: 1, stale: 1, onePl: 1, corr: 'any',
+  l3: '', minPr: -400, maxPr: 400, grade: 'B', upcoming: 1, stale: 1, onePl: 1, corr: 'any',
   maxGame: 3, sort: 'prob', minN: 8, games: new Set(), starts: new Set(), within: 0,
   lock: 0, oneGame: 0};
-const GR_ORDER = {A: 4, B: 3, C: 2, D: 1};
+const GR_ORDER = {'A+': 6, A: 5, 'B+': 4, B: 3, C: 2, D: 1};
 function legPool(F){
   return PROPS.filter(p => {
     if (p.mp == null || p.pr == null || p.ln == null || p.data_error) return false;
@@ -4943,7 +5081,7 @@ function parlayReason(r, tag){
   for (let k = 0; k <= 30; k += 0.5) { if (q.reduce((a, x) => a * Math.max(0.01, x - k / 100), 1) < be) { flip = k; break; } }
   const fair = r.j.est > 0 ? am(1 / r.j.est) : '\u2014';
   const sgp = new Set(L.map(p => p.mu)).size < L.length;
-  const why = tag ? `Built by the "${esc(tag)}" recipe: model chance at least ${tag === 'Safest 2-leg' ? 60 : 55}%, games not started, prices -250 to +400${
+  const why = tag ? `Built by the "${esc(tag)}" recipe: model chance at least ${tag === 'Safest 2-leg' ? 60 : 55}%, grade B or better, games not started, prices -250 to +400${
       tag === 'Form + model 3-leg' ? ', cleared tonight\u2019s line in at least 2 of the last 3' : ''}${
       tag === 'Value 4-leg' ? ', ranked on chance \u00d7 payout' : ', ranked on hit chance'}${
       tag === 'Same-game 3-leg' ? ', one game, no measured-negative pair' : ', one leg per game'}.`
@@ -5040,7 +5178,7 @@ function drawParlays(){
     row('last 3', [['', 'Any'], ['avg', 'Avg beats line'], ['2', '2 of 3'], ['3', '3 of 3']].map(([v, l]) => ch('l3', v, l, F.l3 === v)).join('')),
     row('leg odds', [['-400|400', 'Any'], ['-200|400', '\u2265 -200'], ['-150|400', '\u2265 -150'], ['-130|200', '-130 to +200']]
       .map(([v, l]) => ch('odds', v, l, `${F.minPr}|${F.maxPr}` === v)).join('')),
-    row('grade', [['', 'Any'], ['C', 'C+'], ['B', 'B+']].map(([v, l]) => ch('grade', v, l, F.grade === v)).join('')),
+    row('grade', [['', 'Any'], ['C', 'C or better'], ['B', 'B or better'], ['A', 'A or better']].map(([v, l]) => ch('grade', v, l, F.grade === v)).join('')),
     row('correlation', [['diff', 'Different games'], ['any', 'Allow same game'], ['noneg', 'Avoid negative'], ['pos', 'Positive only']]
       .map(([v, l]) => ch('corr', v, l, F.corr === v)).join('')),
     row('per game', [1, 2, 3, 4, 5].map(n => ch('maxGame', n, `max ${n}`, F.maxGame === n)).join('')),
@@ -5051,7 +5189,7 @@ function drawParlays(){
   ].join('');
   const {out, pool} = generateParlays(F, 8);
   // Recommended: fixed recipes, always on model probability.
-  const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: '', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400,
+  const base = Object.assign({}, PF, {sp: new Set(), mk: new Set(), kind: 'player', side: '', minEd: -1, l3: '', grade: 'B', corr: 'diff', maxGame: 1, sort: 'prob', minPr: -250, maxPr: 400,
     games: new Set(), starts: new Set(), within: 0, lock: 0, oneGame: 0});
   const recipes = REC_DONE ? [] : [
     ['Safest 2-leg', Object.assign({}, base, {legs: 2, minMp: 0.6})],
@@ -5074,7 +5212,7 @@ function drawParlays(){
     $('cParlays') && ($('cParlays').textContent = recs.length || '');
     $('parlayrec').innerHTML = `<div class="pshuf"><button class="h2go" data-pshuf="1">Shuffle \u2014 new mix</button>${
       PSEED ? `<button class="h2go" data-pshuf="0">Back to best</button><span class="dim">mix ${PSEED}</span>` : ''}</div>
-    <h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 games not started</span></h3>
+    <h3 class="ph">Recommended <span class="dim">model ≥ 55% \u00b7 grade B or better \u00b7 games not started</span></h3>
     ${recs.length ? recs.map(([t, r]) => parlayCard(r, t)).join('') : '<div class="empty">No legs pass the recommended filters on the current board.</div>'}`; }
   PSHOWN = new Set([...out, ...recs.map(x => x[1])].flatMap(r => r.legs.map(p => p.i)).concat([...PSHOWN_REC]));
   if (recs.length) PSHOWN_REC = new Set(recs.flatMap(x => x[1].legs.map(p => p.i)));
