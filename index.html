@@ -778,6 +778,53 @@ details.shbgd{margin:2px 0 6px} details.shbgd>summary{cursor:pointer;font-family
 .dz tr.least td{background:color-mix(in srgb,var(--under) 14%,transparent)}
 tr.sub td{font-size:11.5px;color:var(--ink-2)}
 .adjl{font-size:11px;margin-top:2px}
+/* Ladder */
+.ladcard{border:1px solid var(--rule);background:var(--card);border-radius:14px;padding:12px;margin:0 0 12px}
+.ladtop{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+.ladbal{font-family:var(--d);font-weight:900;font-size:34px;letter-spacing:-.02em;line-height:1.05;margin:2px 0}
+.ladder{position:relative;margin:12px 4px 4px;padding:0 14px;display:grid;gap:6px}
+.ladder::before,.ladder::after{content:"";position:absolute;top:0;bottom:0;width:4px;border-radius:2px;background:var(--rule)}
+.ladder::before{left:0} .ladder::after{right:0}
+.rung{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:8px;
+  border:1px solid var(--rule);background:var(--raise);font-family:var(--m);font-size:12px}
+.rung.done{background:var(--clover-soft);border-color:var(--clover)}
+.rung.here{background:var(--clover);border-color:var(--clover);color:#fff;font-weight:700}
+.rung .rk{opacity:.8}
+.ladnext{margin:10px 0 0;font-size:13px}
+.ladstart{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+.ladstart input{width:80px;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--rule);background:var(--card);color:var(--ink)}
+.ladtk{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border:1px solid var(--clover);
+  border-radius:12px;padding:10px 12px;margin:6px 0 10px;background:var(--clover-soft)}
+.ladtkn{font-weight:700;font-size:15px;margin:2px 0}
+.lpick{border:1px solid var(--rule);border-radius:12px;padding:10px 12px;margin:0 0 8px;background:var(--card)}
+.lpick.on{border-color:var(--clover);box-shadow:inset 3px 0 0 var(--clover)}
+.lphd{display:flex;gap:10px;align-items:center}
+.lptx{flex:1;min-width:0} .lptx .nm{font-weight:600;font-size:14px} .lptx .sub{font-family:var(--m);font-size:11px;margin-top:2px}
+.lpgr{text-align:right;font-family:var(--m);font-size:12px;display:grid;gap:3px;justify-items:end}
+.lpnums{font-family:var(--m);font-size:11.5px;margin-top:8px;color:var(--ink-2)}
+.lpnums b{color:var(--ink)}
+.ltag{border:1px solid var(--clover);color:var(--clover);border-radius:999px;padding:1px 7px;font-size:10.5px}
+.lres{font-family:var(--m);font-size:11px;padding:2px 8px;border-radius:999px;background:var(--raise)}
+.lres.hit{background:var(--clover);color:#fff} .lres.miss{background:var(--under);color:#fff}
+.lres.live{background:var(--mark);color:#111}
+.ladodds{font-size:12px;margin:4px 0 12px}
+.ladrec{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:760px){.ladrec{grid-template-columns:1fr 1fr}}
+.ladrec>div{border:1px solid var(--rule);border-radius:12px;padding:10px 12px;background:var(--card)}
+.ladrec b{font-size:20px}
+.ldots{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.ldot{width:12px;height:12px;border-radius:50%;background:var(--rule);display:inline-block}
+.ldot.hit{background:var(--clover)} .ldot.miss{background:var(--under)} .ldot.pass{background:transparent;border:1.5px dashed var(--rule)}
+.ldot.open{background:var(--mark)}
+.sliprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0 2px}
+.slipbtn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 13px;
+  background:var(--clover);color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+.slipbtn.alt{background:var(--raise);color:var(--ink);border:1px solid var(--rule)}
+.slipwhy{font-size:11px}
+.bchip.lk{text-decoration:none;color:inherit;border-style:solid;cursor:pointer}
+.bknote{font-size:11px;margin-top:6px}
+.bksel{font:inherit;font-size:11.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--rule);
+  background:var(--card);color:var(--ink)}
 .fanbox{border:1px solid var(--rule);border-radius:10px;padding:8px;margin:8px 0;display:grid;gap:5px}
 .fanhd{display:flex;justify-content:space-between;align-items:baseline}
 .fanleg{display:flex;align-items:center;gap:7px;padding:8px;border-radius:8px;
@@ -1182,6 +1229,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="board">Board<span class="cnt" id="cBoard"></span></button>
   <button role="tab" aria-selected="false" data-tab="parlays">Parlays<span class="cnt" id="cParlays"></span></button>
+  <button role="tab" aria-selected="false" data-tab="ladder">Ladder<span class="cnt" id="cLadder"></span></button>
   <button role="tab" aria-selected="false" data-tab="trending">Trending<span class="cnt" id="cTrend"></span></button>
   <button role="tab" aria-selected="false" data-tab="games">Today<span class="cnt" id="cGames"></span></button>
   <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
@@ -1240,6 +1288,20 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     <h3 class="ph">Build your own</h3>
     <div id="parlayfil" class="pfil"></div>
     <div id="parlayout"></div>
+  </section>
+</div>
+
+<!-- ───────────────────────── LADDER ─────────────────────── -->
+<div id="tab-ladder" hidden>
+  <section>
+    <div class="hrow"><h2>Ladder challenge</h2></div>
+    <p class="traynote">Every slate: the three best picks on the board, and one flip ticket
+      built from them, the mix of those picks that pays at least double with the best
+      chance. Win and everything rolls up a rung. Lose and the ladder starts again
+      from what you began with.</p>
+    <div id="ladme"></div>
+    <div id="ladtoday"></div>
+    <div id="ladrec"></div>
   </section>
 </div>
 
@@ -1499,7 +1561,8 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     had been made with information it did not have.</p>
     <div class="chips" id="trkviews"></div>
     <div class="trkalert"><button class="chip" id="trkalert" aria-pressed="false">Alerts off</button>
-      <span class="dim" id="trkalertnote">Turn on to be told when a tracked prop hits or is lost.
+      <span class="dim" id="trkalertnote">Turn on to be told when a tracked prop hits or is lost, when its
+      price or line moves before the game, when its player is listed out, and when the ladder ticket settles.
       Free: it reads the same ESPN box score as the live view. Works while the app is open;
       on iPhone, system alerts need the app added to the Home Screen.</span></div>
     <div id="trkrows"></div>
@@ -1508,7 +1571,13 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     <div class="trkbar">
       <button class="add" id="trkexp">download JSON</button>
       <button class="add" id="trkcopy">copy</button>
+      <button class="add" id="trkimp">import</button>
+      <button class="add" id="trklink">link for another device</button>
+      <input type="file" id="trkfile" accept="application/json,.json" hidden>
     </div>
+    <p class="trknote" id="syncnote">Your picks live on this device. To carry them to another, make a
+      link here and open it there: tracked props, saved parlays, your ladder and your book come across
+      and merge with what that device already has. Nothing is uploaded; the link itself holds the data.</p>
     <p class="trknote" id="trkwhere"></p>
   </section>
 </div>
@@ -3196,7 +3265,7 @@ function card(p){
         ${esc((p.mk || '').replace(/_/g, ' ').toUpperCase())}</span>
       <span class="bb">${esc(BOOK[p.bb] || p.bb || 'best')}
         <b>${p.pr > 0 ? '+' : ''}${p.pr ?? ''}</b></span>
-    </div>${tiles}${whyChart(p) || chart}${strip}`;
+    </div><div class="sliprow">${slipBtn(p)}</div>${tiles}${whyChart(p) || chart}${strip}`;
 }
 
 const WHY_CACHE = {};
@@ -3213,10 +3282,60 @@ function bookRow(p){
       ${ltag(p,'market_value')}${ltag(p,'clv')}</div>
     <div class="books">${bl.map(b => {
       const best = b.b === p.bb && b.l === p.ln;
-      return `<span class="bchip ${best ? 'best' : ''}">${esc(BOOK[b.b] || b.b)}
-        ${b.l != null ? `<b>${b.l > 0 && TEAM_MKS.has(p.mk) && /spread|puck/.test(p.mk) ? '+' : ''}${b.l}</b> ` : ''}${b.p > 0 ? '+' : ''}${b.p}</span>`;
-    }).join('')}</div>`;
+      const body = `${esc(BOOK[b.b] || b.b)}
+        ${b.l != null ? `<b>${b.l > 0 && TEAM_MKS.has(p.mk) && /spread|puck/.test(p.mk) ? '+' : ''}${b.l}</b> ` : ''}${b.p > 0 ? '+' : ''}${b.p}`;
+      // A book that sent a bet-slip link opens straight onto the
+      // selection in its app.
+      return slipUrl(b.u)
+        ? `<a class="bchip lk ${best ? 'best' : ''}" href="${esc(b.u)}" target="_blank" rel="noopener" title="open in ${esc(BOOK_NAME[b.b] || b.b)}">${body} \u2197</a>`
+        : `<span class="bchip ${best ? 'best' : ''}">${body}</span>`;
+    }).join('')}</div>
+    <div class="dim bknote">Your book: ${bookPick()} \u00b7 tap a price with \u2197 to open that bet slip.</div>`;
 }
+
+/* ---- Bet-slip links ----------------------------------------------
+   The odds feed returns a link per selection for some books; the
+   build keeps them for the legal US books on every row graded B or
+   better. The reader picks their book once; every "Bet" button then
+   opens that book on the exact selection, at the board's line. No
+   link is ever built or guessed here -- only the feed's own. */
+const BOOK_NAME = {fanatics: 'Fanatics', draftkings: 'DraftKings', fanduel: 'FanDuel',
+  betmgm: 'BetMGM', williamhill_us: 'Caesars', betrivers: 'BetRivers', espnbet: 'ESPN BET',
+  ballybet: 'Bally Bet'};
+const SLIP_BOOKS = Object.keys(BOOK_NAME);
+let MYBOOK = (() => { try { return localStorage.getItem('g15book') || 'fanatics'; } catch (_) { return 'fanatics'; } })();
+function slipUrl(u){ return typeof u === 'string' && /^https:\/\//.test(u) ? u : null; }
+function slipFor(p, book = MYBOOK){
+  return (p.bl || []).find(b => b.b === book && slipUrl(b.u) && (b.l == null || p.ln == null || b.l === p.ln)) || null;
+}
+function bookPick(){
+  return `<select class="bksel" data-mybook="1" aria-label="your sportsbook">${SLIP_BOOKS.map(b =>
+    `<option value="${b}"${b === MYBOOK ? ' selected' : ''}>${esc(BOOK_NAME[b])}</option>`).join('')}</select>`;
+}
+/* The one button: bet this at your book. When your book has no link
+   for this selection, says so and offers the best-priced book that
+   does, rather than nothing. */
+function slipBtn(p){
+  const mine = slipFor(p);
+  if (mine) return `<a class="slipbtn" href="${esc(mine.u)}" target="_blank" rel="noopener">Bet at ${esc(BOOK_NAME[MYBOOK] || MYBOOK)} ${mine.p > 0 ? '+' : ''}${mine.p} \u2197</a>`;
+  const alt = (p.bl || []).filter(b => slipUrl(b.u) && (b.l == null || b.l === p.ln))
+    .sort((a, b) => dec(b.p) - dec(a.p))[0];
+  const have = (p.bl || []).find(b => b.b === MYBOOK && (b.l == null || b.l === p.ln));
+  const why = have ? `${esc(BOOK_NAME[MYBOOK] || MYBOOK)} has this at ${have.p > 0 ? '+' : ''}${have.p}, no slip link sent`
+                   : `not offered at ${esc(BOOK_NAME[MYBOOK] || MYBOOK)} at this line`;
+  return alt
+    ? `<a class="slipbtn alt" href="${esc(alt.u)}" target="_blank" rel="noopener">Bet at ${esc(BOOK_NAME[alt.b] || alt.b)} ${alt.p > 0 ? '+' : ''}${alt.p} \u2197</a><span class="dim slipwhy">${why}</span>`
+    : `<span class="dim slipwhy">${why}</span>`;
+}
+if (typeof document !== 'undefined') document.addEventListener('change', e => {
+  const t = e.target.closest && e.target.closest('[data-mybook]');
+  if (!t) return;
+  MYBOOK = t.value;
+  try { localStorage.setItem('g15book', MYBOOK); } catch (_) {}
+  for (const x of document.querySelectorAll('[data-mybook]')) x.value = MYBOOK;
+  try { if (typeof drawLadder === 'function' && tabOn('ladder')) drawLadder(); } catch (_) {}
+  try { const sh = $('sheet'); if (sh && !sh.hidden && SHEET != null) renderSheet(); } catch (_) {}
+});
 
 /* Sport marks: small glyphs for the league itself. Team logos and
    player headshots come from D.media (media.py), below. */
@@ -5719,6 +5838,8 @@ function trkExport(){
     slate_day: D.slate_day || null,
     entries: [...TRK.values()],
     parlays: [...PSAVED.values()],
+    ladder: typeof LAD !== 'undefined' ? LAD : null,
+    book: typeof MYBOOK !== 'undefined' ? MYBOOK : null,
   }, null, 2);
 }
 
@@ -5853,12 +5974,12 @@ function drawTrack(){
     does not. What the tracker does is capture the one input neither can
     be computed without: the price you were actually filled at, and
     when. The export below is that record in a form the ledger could
-    take; reading it in is a separate job and has not been built.`;
+    take. Import reads a file or a device link back in and merges it.`;
 
   $('trkwhere').innerHTML = TRKOK
     ? `Stored in this browser only — one device, one browser profile,
-       cleared when you clear site data, never sent anywhere. The export
-       is the only way out.`
+       cleared when you clear site data, never sent anywhere. Export, or a
+       link for another device, is the only way out.`
     : `<b class="trkbad">Not saved.</b> This browser refused to store it:
        private window, or site data blocked. Everything above is in
        memory and goes when you close the tab. Export it now if you need
@@ -6381,6 +6502,279 @@ if (typeof document !== 'undefined') document.addEventListener('click', e => {
   showTab('parlays'); REC_DONE = 0; drawParlays(); window.scrollTo(0, 0);
 });
 
+/* ---------- ladder challenge ----------
+   D.ladder (ladder.py): today's three picks and flip ticket, the live
+   record (picks frozen once the first one started, graded from the
+   ledger), and a replay of the same rule over the graded history.
+   Your own ladder is just a start amount and a start day: it follows
+   every flip ticket from that day, so nothing has to be entered by
+   hand and nothing here can disagree with the record. */
+const LAD_KEY = 'green15.ladder.v1';
+let LAD = (() => { try { const v = JSON.parse(localStorage.getItem(LAD_KEY) || 'null');
+  return v && v.start > 0 && v.from ? v : null; } catch (_) { return null; } })();
+function ladSave(){ try { LAD ? localStorage.setItem(LAD_KEY, JSON.stringify(LAD)) : localStorage.removeItem(LAD_KEY); } catch (_) {} }
+const ladMoney = v => v == null || !isFinite(v) ? '\u2014' : '$' + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2));
+const ladPr = pr => pr == null ? '' : (pr > 0 ? '+' : '') + pr;
+function ladSame(c, p){
+  return p && p.sp === c.sp && p.pl === c.pl && p.mk === c.mk && p.sd === c.sd
+    && (p.ln ?? null) === (c.ln ?? null) && p.mu === c.mu;
+}
+function ladProp(c){
+  return PROPS.find(p => ladSame(c, p)) || (typeof ALLP !== 'undefined' ? ALLP.find(p => ladSame(c, p)) : null) || null;
+}
+/* A leg's result: the ledger's when graded, else the live box score. */
+function ladLeg(d, i){
+  const s = ((d.settled || {}).legs || [])[i];
+  if (s) return s;
+  const c = (d.picks || [])[i];
+  if (!c || typeof trkSettle !== 'function') return null;
+  const r = trkSettle(c);
+  return r === 'lost' ? 'miss' : r;
+}
+function ladTicket(d){
+  const t = d && d.ticket;
+  if (!t) return {st: 'pass'};
+  const legs = t.legs.map(i => ladLeg(d, i));
+  if (legs.some(x => x === 'miss')) return {st: 'miss', legs};
+  if (legs.every(x => x === 'hit' || x === 'push')) {
+    const live = t.legs.filter((i, k) => legs[k] === 'hit');
+    if (!live.length) return {st: 'push', legs};
+    return {st: 'hit', legs, dec: live.reduce((a, i) => a * dec(d.picks[i].pr), 1)};
+  }
+  return {st: 'open', legs};
+}
+function ladDays(){
+  const L = (D && D.ladder) || {};
+  const days = (L.live || []).slice();
+  const t = L.today || {};
+  if (t.day && !days.some(d => d.day === t.day)) days.push({day: t.day, picks: t.picks || [], ticket: t.ticket, locked_at: t.locked_at});
+  return days.sort((a, b) => a.day < b.day ? -1 : 1);
+}
+/* Roll the ladder: start, every ticket from `from` on. */
+function ladRun(start, from){
+  let bal = start, rung = 0, best = 0, flips = 0, busts = 0;
+  const steps = [];
+  for (const d of ladDays()) {
+    if (from && d.day < from) continue;
+    const r = ladTicket(d);
+    if (r.st === 'hit') { const stake = bal; bal *= r.dec; rung++; flips++; best = Math.max(best, rung);
+      steps.push({day: d.day, st: 'hit', stake, bal}); }
+    else if (r.st === 'miss') { steps.push({day: d.day, st: 'miss', stake: bal, rung}); bal = start; rung = 0; busts++; }
+    else steps.push({day: d.day, st: r.st, stake: bal});
+  }
+  return {start, bal, rung, best, flips, busts, steps};
+}
+function ladOpenLegs(){
+  const t = ((D && D.ladder) || {}).today || {};
+  return t.ticket ? t.ticket.legs.map(i => (t.picks || [])[i]).filter(Boolean) : [];
+}
+function ladRungs(run){
+  // Six rungs from where you are: each one the stake doubled. The
+  // dollar figures above your rung are the minimum a flip pays, not
+  // a forecast: a ticket at x2.4 lands higher.
+  const top = Math.max(5, run.rung + 2);
+  let h = '';
+  for (let k = top; k >= 0; k--) {
+    const amt = k === run.rung ? run.bal : run.start * Math.pow(2, k);
+    const cls = k < run.rung ? 'done' : k === run.rung ? 'here' : '';
+    h += `<div class="rung ${cls}"><span class="rk">${k === 0 ? 'start' : 'rung ' + k}</span><span class="ra">${k > run.rung ? '\u2265 ' : ''}${ladMoney(amt)}</span></div>`;
+  }
+  return `<div class="ladder" aria-label="ladder, rung ${run.rung}">${h}</div>`;
+}
+function ladPickCard(c, i, inTicket, res){
+  const p = ladProp(c);
+  const face = typeof avatar === 'function' ? avatar(p || c, 40) : '';
+  const name = p ? headline(p) : `${esc(c.pl)} ${esc(c.sd)} ${c.ln ?? ''}`;
+  const mk = esc(String(c.mk || '').replace(/_/g, ' '));
+  const st = res === 'hit' ? '<b class="lres hit">hit</b>' : res === 'miss' ? '<b class="lres miss">miss</b>'
+    : res === 'push' ? '<b class="lres">push</b>' : '';
+  const when = p && startTxt(p) ? ` \u00b7 ${clockHtml(p)}` : '';
+  const slip = p ? slipBtn(p) : '<span class="dim slipwhy">off the board now</span>';
+  return `<div class="lpick ${inTicket ? 'on' : ''}">
+    <div class="lphd">${face}<div class="lptx"><div class="nm">${name}</div>
+      <div class="sub dim">${mk} \u00b7 ${sico(c.sp)}${esc(c.sp)}${when}</div></div>
+      <div class="lpgr">${c.gr ? `<b class="grade ${gcls(c.gr)}">${esc(c.gr)}</b>` : ''}<span>${ladPr(c.pr)}</span></div></div>
+    <div class="lpnums">chance <b>${c.prob != null ? Math.round(c.prob * 100) + '%' : '\u2014'}</b>
+      \u00b7 edge <b>${c.ed != null ? (c.ed > 0 ? '+' : '') + (c.ed * 100).toFixed(1) : '\u2014'}</b>
+      ${inTicket ? ' \u00b7 <span class="ltag">in the flip ticket</span>' : ''} ${st}</div>
+    <div class="sliprow">${slip}${p ? `<button class="h2go" data-open="${p.i}">Open the case</button>` : ''}</div>
+  </div>`;
+}
+function drawLadder(){
+  const L = (D && D.ladder) || {};
+  const cnt = $('cLadder'); if (cnt) cnt.textContent = ((L.today || {}).picks || []).length || '';
+  if (!L.rev) {
+    $('ladme').innerHTML = '<div class="empty">The ladder is not in this build yet. It appears after the next update.</div>';
+    $('ladtoday').innerHTML = $('ladrec').innerHTML = ''; return;
+  }
+  const t = L.today || {}, tk = t.ticket;
+  // Your ladder.
+  if (LAD) {
+    const run = ladRun(LAD.start, LAD.from);
+    const tres = tk ? ladTicket({...t, settled: ((L.live || []).find(d => d.day === t.day) || {}).settled}) : null;
+    // An earlier ticket still open means today's stake is not known yet.
+    const wait = run.steps.find(x => x.st === 'open' && x.day !== t.day);
+    const next = tk && tres.st === 'open' && t.day >= LAD.from && !wait ? run.bal * tk.dec : null;
+    $('ladme').innerHTML = `<div class="ladcard">
+      <div class="ladtop"><div><div class="eyebrow">Your ladder \u00b7 since ${esc(LAD.from)}</div>
+        <div class="ladbal">${ladMoney(run.bal)}</div>
+        <div class="dim">started with ${ladMoney(run.start)} \u00b7 ${run.rung} flip${run.rung === 1 ? '' : 's'} in a row
+          \u00b7 best ${run.best} \u00b7 ${run.busts} restart${run.busts === 1 ? '' : 's'}</div></div>
+        <button class="chip" data-ladreset="1">Reset</button></div>
+      ${ladRungs(run)}
+      ${next ? `<p class="ladnext">Today's ticket pays ${ladMoney(next)} on ${ladMoney(run.bal)} (\u00d7${tk.dec.toFixed(2)}).</p>`
+        : wait ? `<p class="ladnext dim">Waiting on the ${esc(wait.day)} ticket to settle.</p>` : ''}
+    </div>`;
+  } else {
+    $('ladme').innerHTML = `<div class="ladcard"><div class="eyebrow">Start a ladder</div>
+      <div class="ladstart"><label>Start with $<input id="ladamt" type="number" min="1" step="1" value="10" inputmode="decimal"></label>
+      <button class="h2go" data-ladgo="1"${t.day ? '' : ' disabled'}>Start from ${esc(t.day || 'the next slate')}</button></div>
+      <p class="dim">Your ladder follows every flip ticket from the day you start. Nothing is placed for you.</p></div>`;
+  }
+  // Today.
+  const res = t.picks && t.picks.length ? ladTicket({...t, settled: ((L.live || []).find(d => d.day === t.day) || {}).settled}) : {st: 'pass'};
+  const legs = new Set(tk ? tk.legs : []);
+  const imp = tk ? tk.legs.reduce((a, i) => a / dec(t.picks[i].pr), 1) : null;
+  const status = {hit: '<b class="lres hit">ticket hit</b>', miss: '<b class="lres miss">ticket lost</b>',
+    push: '<b class="lres">ticket pushed</b>', open: t.locked_at ? '<b class="lres live">in play</b>' : '<span class="dim">not started</span>', pass: ''}[res.st] || '';
+  $('ladtoday').innerHTML = !(t.picks || []).length
+    ? `<h3 class="ph">Today</h3><div class="empty">No pick on the board meets the ladder rule right now. That is a pass, not a gap to fill.</div>`
+    : `<h3 class="ph">Today \u00b7 ${esc(t.day)}</h3>
+    <div class="ladtk">${tk ? `<div><div class="eyebrow">Flip ticket</div>
+        <div class="ladtkn">${tk.legs.length === 1 ? 'Single' : tk.legs.length + '-leg parlay'} \u00b7 pays \u00d7${tk.dec.toFixed(2)}</div>
+        <div class="dim">model chance <b>${Math.round(tk.prob * 100)}%</b> \u00b7 the price says ${Math.round(imp * 100)}%
+          \u00b7 ${t.locked_at ? 'locked ' + esc(String(t.locked_at).slice(11, 16)) + ' UTC' : 'updates until the first game starts'}</div></div>
+        <div>${status}</div>`
+      : `<div><div class="eyebrow">No flip ticket</div><div class="dim">No mix of today's three picks pays double. The ladder passes today and stays where it is.</div></div>`}</div>
+    ${(t.picks || []).map((c, i) => ladPickCard(c, i, legs.has(i), ladLeg({...t, settled: ((L.live || []).find(d => d.day === t.day) || {}).settled}, i))).join('')}
+    ${tk ? `<p class="dim ladodds">At ${Math.round(tk.prob * 100)}% a rung, two flips in a row happen ${(100 * tk.prob ** 2).toFixed(0)}% of the time and five ${(100 * tk.prob ** 5).toFixed(1)}%.
+      That is the ladder's real shape: most climbs end on the first rung or two.</p>` : ''}`;
+  // Record.
+  const R = L.replay || {}, LL = L.live_ladder || {};
+  const live = (L.live || []).filter(d => d.locked_at);
+  const lt = live.map(d => ladTicket(d).st), lh = lt.filter(x => x === 'hit').length, lm = lt.filter(x => x === 'miss').length;
+  const dots = days => days.map(d => { const st = d.settled ? (d.settled.ticket || (d.ticket ? 'open' : 'pass')) : ladTicket(d).st;
+    return `<i class="ldot ${st}" title="${esc(d.day)}: ${st}"></i>`; }).join('');
+  $('ladrec').innerHTML = `<h3 class="ph">Record</h3>
+    <div class="ladrec"><div><div class="eyebrow">Live</div>
+      <b>${lh}\u2013${lm}</b> <span class="dim">flip tickets the app showed${live.length ? ', since ' + esc(live[0].day) : ''}</span>
+      <div class="ldots">${dots(live)}</div>
+      ${live.length < 10 ? '<div class="dim">Too few days to say anything yet. Every day it runs adds one.</div>' : ''}</div>
+    <div><div class="eyebrow">Replay</div>
+      <b>${R.ticket_hits ?? 0}\u2013${(R.tickets ?? 0) - (R.ticket_hits ?? 0)}</b> <span class="dim">flip tickets over ${R.n_days ?? 0} graded days${R.first_day ? ' (' + esc(R.first_day) + ' to ' + esc(R.last_day) + ')' : ''}${R.said != null ? `; the model said ${Math.round(R.said * 100)}% a ticket` : ''}</span>
+      <div class="ldots">${dots(R.days || [])}</div>
+      <div class="dim">The picks one at a time: ${R.leg_hits ?? 0} of ${R.legs ?? 0} hit${R.flat_roi != null ? `, ${R.flat_roi >= 0 ? '+' : ''}${(R.flat_roi * 100).toFixed(1)}% a flat bet` : ''}.
+        Longest climb ${(R.ladder || {}).best_rung ?? 0} rung${((R.ladder || {}).best_rung ?? 0) === 1 ? '' : 's'}.
+        A replay runs today's rule over past days with each row's grade rebuilt from what it logged; the board on those days did not use it.</div></div></div>`;
+}
+if (typeof document !== 'undefined') document.addEventListener('click', e => {
+  if (!e.target.closest) return;
+  if (e.target.closest('[data-ladgo]')) {
+    const v = parseFloat(($('ladamt') || {}).value);
+    const day = (((D && D.ladder) || {}).today || {}).day;
+    if (!(v > 0) || !day) return;
+    LAD = {start: Math.round(v * 100) / 100, from: day, at: new Date().toISOString()};
+    ladSave(); drawLadder(); return;
+  }
+  if (e.target.closest('[data-ladreset]')) {
+    if (typeof confirm === 'function' && !confirm('Reset your ladder? The record stays; only your start point goes.')) return;
+    LAD = null; ladSave(); drawLadder();
+  }
+});
+
+
+/* ---- Moving your picks between devices ---------------------------
+   No accounts and no server: the app is a static page. A device link
+   carries the tracker, saved parlays, ladder start and chosen book
+   INSIDE the link's #fragment (compressed), which browsers never send
+   to the server. Opening it on another device merges, never replaces:
+   anything that device already has stays as it is. */
+function b64u(buf){
+  const u = new Uint8Array(buf); let bin = '';
+  for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+const unb64u = str => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+function syncObj(){
+  return {app: 'green15', kind: 'sync', schema: 1, at: new Date().toISOString(),
+          entries: [...TRK.values()], parlays: [...PSAVED.values()], ladder: LAD, book: MYBOOK};
+}
+async function syncPack(obj){
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') {
+    const z = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+    return 'z' + b64u(z);
+  }
+  return 'j' + b64u(raw);
+}
+async function syncUnpack(code){
+  const kind = code[0], bytes = unb64u(code.slice(1));
+  if (kind === 'z') {
+    const out = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+    return JSON.parse(new TextDecoder().decode(out));
+  }
+  if (kind === 'j') return JSON.parse(new TextDecoder().decode(bytes));
+  throw new Error('not a Green15 link');
+}
+/* Merge: add what is missing; for an entry both sides have, keep this
+   device's and only fill in what it left blank (a fill price, a stake). */
+function syncMerge(obj){
+  if (!obj || obj.app !== 'green15' || !Array.isArray(obj.entries)) throw new Error('not a Green15 export');
+  let added = 0, filled = 0, parl = 0;
+  for (const r of obj.entries) {
+    if (!r || typeof r.k !== 'string') continue;
+    const cur = TRK.get(r.k);
+    if (!cur) { TRK.set(r.k, r); added++; continue; }
+    for (const f of ['fpr', 'fat', 'stk']) if (cur[f] == null && r[f] != null) { cur[f] = r[f]; filled++; }
+  }
+  for (const pk of obj.parlays || []) if (pk && pk.id != null && !PSAVED.has(pk.id)) { PSAVED.set(pk.id, pk); parl++; }
+  let lad = false;
+  if (!LAD && obj.ladder && obj.ladder.start > 0 && obj.ladder.from) { LAD = obj.ladder; ladSave(); lad = true; }
+  let book = false;
+  try { if (!localStorage.getItem('g15book') && obj.book && BOOK_NAME[obj.book]) { MYBOOK = obj.book; localStorage.setItem('g15book', MYBOOK); book = true; } } catch (_) {}
+  trkSave(); pkStore();
+  return {added, filled, parl, lad, book};
+}
+function syncSay(r){
+  return `Imported: ${r.added} tracked prop${r.added === 1 ? '' : 's'}${r.filled ? `, ${r.filled} blank field${r.filled === 1 ? '' : 's'} filled` : ''}, ${r.parl} parlay${r.parl === 1 ? '' : 's'}${r.lad ? ', your ladder' : ''}${r.book ? ', your book' : ''}.`;
+}
+function syncRedraw(){
+  try { trkCommit(); } catch (_) {}
+  try { if (tabOn('ladder')) drawLadder(); } catch (_) {}
+}
+async function syncFromHash(){
+  const h = (typeof location !== 'undefined' && location.hash) || '';
+  if (!h.startsWith('#sync=')) return;
+  const code = h.slice(6);
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+  try {
+    const obj = await syncUnpack(code);
+    if (typeof confirm === 'function' && !confirm(`Add ${(obj.entries || []).length} tracked props and ${(obj.parlays || []).length} parlays from another device to this one?`)) return;
+    toast(syncSay(syncMerge(obj))); syncRedraw();
+  } catch (err) { toast('That device link could not be read: ' + (err.message || err)); }
+}
+if (typeof document !== 'undefined') document.addEventListener('click', async e => {
+  if (!e.target.closest) return;
+  if (e.target.closest('#trklink')) {
+    const b = $('trklink');
+    try {
+      const url = location.origin + location.pathname + '#sync=' + await syncPack(syncObj());
+      if (url.length > 60000) { b.textContent = 'too big for a link, use download'; return; }
+      if (navigator.share) { try { await navigator.share({title: 'Green15 picks', url}); b.textContent = 'shared'; } catch (_) { b.textContent = 'link for another device'; return; } }
+      else { await navigator.clipboard.writeText(url); b.textContent = 'link copied'; }
+    } catch (err) { b.textContent = 'could not make a link'; }
+    setTimeout(() => { b.textContent = 'link for another device'; }, 2200);
+    return;
+  }
+  if (e.target.closest('#trkimp')) { const f = $('trkfile'); if (f) f.click(); }
+});
+if (typeof document !== 'undefined') document.addEventListener('change', async e => {
+  if (!e.target || e.target.id !== 'trkfile') return;
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { toast(syncSay(syncMerge(JSON.parse(await f.text())))); syncRedraw(); }
+  catch (err) { toast('That file could not be imported: ' + (err.message || err)); }
+  e.target.value = '';
+});
 /* ---------- staking ---------- */
 function drawStakes(){
   const S = D.stakes || {rows:[], blocked:{}};
@@ -8373,7 +8767,7 @@ function drawRecord(){
 
 /* ---------- wiring ---------- */
 const TAB_DRAW = {
-  board: [], parlays: ['drawParlays'], trending: ['drawTrending'], games: ['drawGames'],
+  board: [], parlays: ['drawParlays'], ladder: ['drawLadder'], trending: ['drawTrending'], games: ['drawGames'],
   stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
   'drawLeafValue', 'drawMvm', 'drawTeamRecord'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
 };
@@ -9146,6 +9540,39 @@ function checkAlerts(){
     ALERTED.add(k); fresh++;
     toast(`${PK_ST[s.st]}: your ${pk.legs.length}-leg parlay${s.pnl != null ? ' (' + pkU(s.pnl) + ')' : ''}`);
   }
+  // Before the game: a tracked prop whose price moved three points
+  // of win chance or more since you tracked it, whose line moved, or
+  // whose player is now listed out. Each fires once per new number.
+  for (const [k, e] of TRK) {
+    if (trkSettle(e)) continue;
+    const say = (key, msg) => { if (ALERTED.has(key)) return; ALERTED.add(key); fresh++; toast(msg);
+      try { if (window.Notification && Notification.permission === 'granted') new Notification('Green15', {body: msg, tag: key}); } catch (_) {} };
+    const who = `${e.pl} ${e.sd || ''}`.replace(/\s+/g, ' ').trim();
+    const p = PROPS.find(q => trkKey(q) === k);
+    if (p) {
+      if (p.outNow) say('out:' + k, `Listed ${p.outNow}: ${e.pl}`);
+      if (e.bpr != null && p.pr != null && Math.abs(100 / dec(p.pr) - 100 / dec(e.bpr)) >= 3)
+        say(`mv:${k}:${p.pr}`, `Price moved: ${who} ${e.ln ?? ''} now ${p.pr > 0 ? '+' : ''}${p.pr} (was ${e.bpr > 0 ? '+' : ''}${e.bpr})`);
+    } else if (e.ln != null) {
+      const q = PROPS.find(x => x.sp === e.sp && x.pl === e.pl && x.mk === e.mk && x.sd === e.sd && x.mu === e.mu && x.ln !== e.ln);
+      if (q) say(`ln:${k}:${q.ln}`, `Line moved: ${who} ${e.ln} is now ${q.ln} (${q.pr > 0 ? '+' : ''}${q.pr})`);
+    }
+  }
+  // The ladder ticket, once it settles.
+  try {
+    const t = ((D && D.ladder) || {}).today || {};
+    if (t.ticket && typeof ladTicket === 'function') {
+      const r = ladTicket({...t, settled: (((D.ladder || {}).live || []).find(d => d.day === t.day) || {}).settled});
+      const key = `lad:${t.day}:${r.st}`;
+      if (['hit', 'miss', 'push'].includes(r.st) && !ALERTED.has(key)) {
+        ALERTED.add(key); fresh++;
+        const run = LAD ? ladRun(LAD.start, LAD.from) : null;
+        toast(r.st === 'hit' ? `Ladder: flip ticket hit${run ? `, you're at ${ladMoney(run.bal)} on rung ${run.rung}` : ''}`
+          : r.st === 'miss' ? `Ladder: flip ticket lost${run ? `, back to ${ladMoney(run.start)}` : ''}` : 'Ladder: ticket pushed');
+        if (tabOn('ladder')) drawLadder();
+      }
+    }
+  } catch (_) {}
   if (fresh) {
     try { localStorage.setItem('g15alerted', JSON.stringify([...ALERTED].slice(-300))); } catch (_) {}
     if (tabOn('track')) drawTrack();
@@ -9170,7 +9597,7 @@ async function trkLiveFetch(force){
   if (LIVE_TRK_BUSY) return; LIVE_TRK_BUSY = 1;
   try {
     const want = new Map();
-    for (const e of [...TRK.values(), ...pkOpenLegs()]) { const g = gameInfo({sp: e.sp, mu: e.mu});
+    for (const e of [...TRK.values(), ...pkOpenLegs(), ...(typeof ladOpenLegs === 'function' ? ladOpenLegs() : [])]) { const g = gameInfo({sp: e.sp, mu: e.mu});
       if (g && g.id && (g.st === 'in' || g.st === 'post')) want.set(g.id, String(e.sp || '').toUpperCase()); }
     if (!want.size) return 0;
     await Promise.all([...want].map(([id, sp]) => getLiveBox(sp, id, force)));
@@ -9327,6 +9754,8 @@ function clockNote(){
     `${b.slate_size ?? 0} evaluated`;
   TRKOK = trkLoad();
   PKOK = pkLoad();
+  try { syncFromHash(); } catch (err) { console.error('sync', err); }
+  try { const c = $('cLadder'), n = ((((D || {}).ladder || {}).today || {}).picks || []).length; if (c) c.textContent = n || ''; } catch (_) {}
   // The board first, everything else when the browser is idle. All
   // nine panels used to render before the first paint, which is the
   // long blank pause on open. A tab opened before its turn renders
