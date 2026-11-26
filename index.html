@@ -321,6 +321,58 @@ h1{font-weight:900;font-size:clamp(26px,6.5vw,40px);letter-spacing:-.02em;line-h
 h2{font-weight:700;font-size:18px;letter-spacing:-.01em}
 .eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink-2)}
+/* Board notes are sentences, not labels: in uppercase mono a
+   two-line note was the hardest text on the screen to read. */
+#tab-board #topnote,#tab-board #floornote,#tab-board #finnote{text-transform:none;letter-spacing:0;
+  font-family:inherit;font-size:12px;line-height:1.45;color:var(--ink-2);margin:4px 0 8px}
+#tab-board #floornote .chip{padding:2px 9px;font-size:10.5px;margin-left:2px}
+/* The clover: logo, row mark, hero and the Leaves section. */
+header h1{display:flex;align-items:center;gap:6px}
+header h1 .logo{width:.9em;height:1em;color:var(--clover);flex:0 0 auto;transform:translateY(-.02em)}
+.clover{display:block;overflow:visible}
+.clover .cstem{stroke:var(--clover);opacity:.75}
+.clover .csep line{stroke:var(--paper);stroke-width:.9}
+#hero .clover .csep line{stroke:var(--card)}
+.clover .cmid{fill:var(--raise)}
+.clover .cmid.g-Ap{fill:#6A3FEE} .clover .cmid.g-A{fill:var(--up,var(--clover))} .clover .cmid.g-Bp{fill:#2BA6E3}
+.clover .cmid.g-B{fill:var(--up-bg)} .clover .cmid.g-C{fill:var(--hold-bg)} .clover .cmid.g-D{fill:var(--dn-bg)}
+.clover .clet{font-family:var(--d);font-weight:900;font-size:7px;letter-spacing:-.04em;fill:var(--ink)}
+.clover .cmid.g-Ap + .clet,.clover .cmid.g-Bp + .clet{fill:#fff}
+.sc .cmini{margin:3px 0 0 auto}
+.h2g .chero{margin:0 auto}
+.cloverbig{display:flex;align-items:center;gap:16px;margin:12px 0 6px;flex-wrap:wrap}
+.clegend{display:flex;flex-wrap:wrap;gap:4px 12px;font-family:var(--m);font-size:11px;color:var(--ink-2);flex:1 1 160px}
+.clegend span{display:inline-flex;align-items:center;gap:5px}
+.clegend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.clegend i.ring{background:var(--clover);opacity:.28}
+.clegend em{flex:1 0 100%;font-style:normal;font-size:10.5px;margin-top:2px}
+/* The numbers behind the letter, on every row. */
+.nums{display:flex;flex-wrap:wrap;gap:3px 10px;margin:2px 0 0;font-family:var(--m);font-size:10.5px;
+  font-variant-numeric:tabular-nums}
+.nums .nb{white-space:nowrap}
+.nums i{font-style:normal;color:var(--ink-2);font-size:10px}
+.nums em{font-style:normal;color:var(--ink-2);font-size:10px;margin-left:1px}
+.nums b{font-weight:600}
+.nums b.hit{color:var(--over)} .nums b.miss{color:var(--under)} .nums b.mk{color:var(--ink-2)}
+.sc .tlab{font-style:normal;display:block;font-size:10px;color:var(--ink-2);margin-top:2px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+/* Grade strip: counts per letter on this view; tap to keep only those. */
+.gstrip{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;margin:2px 0 8px;padding:2px 0}
+.gstrip::-webkit-scrollbar{display:none}
+.gstrip .glab{font-family:var(--m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);flex:0 0 auto}
+.gchip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;border:1px solid var(--rule);
+  border-radius:999px;background:var(--card);font-family:var(--m);font-size:11px;color:var(--ink-2);min-height:32px}
+.gchip .grade{font-size:12px;min-width:26px;padding:3px 5px}
+.gchip .gnone{padding-left:6px}
+.gchip[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset;color:var(--ink)}
+.gchip.gclr{padding:3px 10px}
+/* Phones: the view chips get the full width and scroll; the count
+   drops under them instead of clipping the last chip. */
+@media (max-width:560px){
+  .viewbar{flex-wrap:wrap;gap:4px}
+  .viewbar .tsplit{flex:1 0 100%}
+  .vcount{margin-left:0;text-align:left}
+}
 p{margin:0}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 :focus-visible{outline:2px solid var(--clover);outline-offset:2px}
@@ -379,6 +431,38 @@ nav.tabs .cnt{font-family:var(--m);font-size:10px;color:var(--ink-2);margin-left
 .pick .sub{font-family:var(--m);font-size:11px;color:var(--ink-2);
   display:block;margin-top:2px}
 .pick .sub .thin{color:var(--under)}
+/* Headshots and logos. The image covers an initials disc in the
+   team colour, so a failed load degrades to initials. */
+.pick.wav{display:flex;gap:10px;align-items:center}
+.pick .ptx{min-width:0;flex:1}
+.av{position:relative;flex:0 0 auto;width:var(--av);height:var(--av);
+  border-radius:50%;background:color-mix(in srgb,var(--tc) 22%,var(--card,#fff));
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 55%,transparent);
+  display:inline-grid;place-items:center;overflow:visible}
+.av>b{font-family:var(--m);font-size:calc(var(--av) * .34);font-weight:700;
+  color:var(--ink-2);letter-spacing:.02em}
+.av>img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;
+  object-fit:cover;object-position:50% 18%}
+.av.avt{background:var(--card,#fff)}
+.av.avt>img{object-fit:contain;padding:12%;border-radius:0;inset:0}
+.av.avg{background:none;box-shadow:none}
+.av.avg .tlogo{position:absolute}
+.av.avg .tlogo.a{left:0;top:0} .av.avg .tlogo.h{right:0;bottom:0}
+.avb{position:absolute;right:-3px;bottom:-3px;width:calc(var(--av) * .42);
+  height:calc(var(--av) * .42);border-radius:50%;background:var(--card,#fff);
+  box-shadow:0 0 0 1.5px var(--card,#fff);display:grid;place-items:center;overflow:hidden}
+.avb>img{width:86%;height:86%;object-fit:contain}
+.tlogo{display:inline-grid;place-items:center;vertical-align:-2px;flex:0 0 auto}
+.tlogo>img{width:100%;height:100%;object-fit:contain}
+.tlogo.inl{margin-right:3px}
+.tlogo{position:relative}
+.lgd{display:none}
+:root[data-theme="dark"] .lgl{display:none} :root[data-theme="dark"] .lgd{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lgl{display:none}
+  :root:not([data-theme="light"]) .lgd{display:block}}
+#sheettitle{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center}
+#sheettitle .av{grid-row:span 2}
+#sheettitle>.nm,#sheettitle>.sub{grid-column:2}
 .px{font-family:var(--m);font-size:13px;font-weight:600;text-align:right!important}
 .sc{font-family:var(--m);font-size:11px;text-align:right}
 .sc b{font-size:15px;display:block;line-height:1.1}
@@ -1090,7 +1174,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 <div class="wrap">
 <div class="dock">
   <header>
-    <h1>Green15</h1>
+    <h1><svg class="logo" viewBox="-20 -20 40 44" aria-hidden="true"><g fill="currentColor"><path id="lg15" d="M0 -1 C-2 -5 -2.5 -10 -6.5 -14.5 C-10 -18 -16 -15 -14.5 -10 C-13.5 -6.5 -6 -3.5 0 -1Z"/><use href="#lg15" transform="scale(-1 1)"/><use href="#lg15" transform="rotate(180) scale(-1 1)"/><use href="#lg15" transform="rotate(180)"/></g><path d="M0 1 C1 8 3 14 7 21" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Green15</h1>
     <div class="live"><i class="dot"></i><span id="stamp">loading…</span>
       <button id="refresh" class="refbtn" type="button" title="Check which games have started and whether a newer board is published. Free: no odds credits." aria-label="Refresh board">&#8635;</button></div>
   </header>
@@ -1135,6 +1219,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     </div>
     <span class="vcount" id="boardmeta"></span>
   </div>
+  <div id="gradebar" class="gstrip" role="group" aria-label="Filter by pick grade"></div>
   <div id="boardwhy"></div>
   <p class="eyebrow" id="topnote" hidden></p>
   <p class="eyebrow" id="floornote" hidden></p>
@@ -1459,7 +1544,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 let D = null, PROPS = [], SEL = new Map(), OPEN = new Set();
 const F = {sport:new Set(), tier:new Set(), side:new Set(), bar:new Set(),
            trk:new Set(), mk:new Set(), odds:new Set(), trend:new Set(),
-           game:new Set(), start:new Set(), def:new Set()};
+           game:new Set(), start:new Set(), def:new Set(), grade:new Set()};
 const $ = id => document.getElementById(id);
 
 const dec = p => p > 0 ? 1 + p/100 : 1 + 100/Math.abs(p);
@@ -1701,7 +1786,7 @@ function drawHero(){
   // list the reader is no longer looking at.
   const plain = !($('q').value || '').trim()
     && !F.sport.size && !F.tier.size && !F.side.size && !F.bar.size
-    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size && !F.def.size
+    && !F.trk.size && !F.mk.size && !F.odds.size && !F.trend.size && !F.game.size && !F.start.size && !F.def.size && !F.grade.size
     && BVIEW !== 'pending' && BVIEW !== 'team' && SORT === 'score';
   if (!plain) { el.innerHTML = ''; return; }
   const top = PROPS.filter(p => p.elig !== false && p.kd !== 'team' && (SHOWLOW || !belowFloor(p)))
@@ -1714,6 +1799,7 @@ function drawHero(){
   const sp = (top.sp || '').toUpperCase();
   el.innerHTML = `<div class="hero2" data-sp="${esc(sp)}">
     <div class="h2top">
+      ${avatar(top, 60, 'avhero')}
       <div style="min-width:0">
         <div class="h2lab">ranked first of ${PROPS.length}</div>
         <div class="h2pk">${esc(top.pl)} ${esc(top.sd)} ${top.ln ?? ''}</div>
@@ -1722,7 +1808,7 @@ function drawHero(){
           top.pr ?? ''} \u00b7 ${top.n ?? '?'} games</div>
       </div>
       <div class="h2g">
-        ${top.gr ? `<b class="grade ${gcls(top.gr)}">${esc(top.gr)}</b>` : ''}
+        ${(top.lv || []).length ? cloverSvg(top, 64, {letter: true, cls: 'chero'}) : top.gr ? `<b class="grade ${gcls(top.gr)}">${esc(top.gr)}</b>` : ''}
         <span class="tier">${esc(top.ti || '')}</span>
       </div>
     </div>
@@ -1745,6 +1831,7 @@ const CLEAR_LABEL = {sport: 'all sports', tier: 'all tiers', side: 'both sides',
 let SORT = 'score';
 const SORTS = [
   ['score', 'Evidence score'],
+  ['gp', 'Pick grade'],
   ['mp', 'Model probability'],
   ['ed', 'Edge'],
   ['l3', 'Last 3 vs line'],
@@ -1809,7 +1896,8 @@ function l3Room(p){
 function sortRows(a, b){
   const nr = (a.nores?1:0)-(b.nores?1:0);
   if (nr) return nr;
-  const by = SORT === 'mp' ? (b.mp ?? -1) - (a.mp ?? -1)
+  const by = SORT === 'gp' ? (((b.gp || {}).pts ?? -1) - ((a.gp || {}).pts ?? -1))
+    : SORT === 'mp' ? (b.mp ?? -1) - (a.mp ?? -1)
     : SORT === 'ed' ? (b.ed ?? -9) - (a.ed ?? -9)
     : SORT === 'pr' ? (b.pr ?? -1e9) - (a.pr ?? -1e9)
     : SORT === 'l3' ? (l3Room(b) - l3Room(a)) || 0
@@ -1887,6 +1975,7 @@ function matches(p){
   if (q && !(`${p.pl} ${p.mk} ${p.mu||''}`.toLowerCase().includes(q))) return false;
   if (F.sport.size && !F.sport.has(p.sp)) return false;
   if (F.tier.size  && !F.tier.has(p.ti))  return false;
+  if (F.grade.size && !F.grade.has(p.gr || 'none')) return false;
   if (F.side.size  && !F.side.has(p.sd))  return false;
   if (F.mk.size    && !F.mk.has(p.mk))    return false;
   if (F.odds.size  && !F.odds.has(priceBand(p.pr))) return false;
@@ -2040,6 +2129,56 @@ function recentAvg(p, k){
   const v = recentVals(p).slice(0, k);   // ev.recent is newest first
   return v.length >= Math.min(k, 2) ? v.reduce((a, b) => a + b, 0) / v.length : null;
 }
+/* THE NUMBERS BEHIND THE LETTER, on the row itself. The grade and the
+   price were all a row showed; the projection, how often he cleared
+   this line, the model's chance and the no-vig chance only appeared
+   after opening the card. Read straight off the data file -- nothing
+   is recomputed here. */
+function pctTxt(x){ return x == null ? '\u2014' : Math.round(100 * x) + '%'; }
+function numsLine(p){
+  if (p.nores) return '';
+  const under = p.sd === 'Under', bits = [];
+  if (p.kd !== 'team' && p.pj != null && p.ln != null) {
+    const gap = p.pj - p.ln, good = under ? gap < 0 : gap > 0;
+    bits.push(`<span class="nb"><i>proj</i> <b class="${Math.abs(gap) < 0.05 ? '' : good ? 'hit' : 'miss'}">${r1(p.pj)}</b>
+      <em>${gap >= 0 ? '+' : ''}${r1(gap)}</em></span>`);
+  }
+  if (p.kd !== 'team' && p.dc) {
+    const won = under ? p.dc - (p.cl || 0) : (p.cl || 0);
+    bits.push(`<span class="nb" title="games in his saved log that cleared tonight's line for this side"><i>hit</i>
+      <b class="${won / p.dc >= 0.5 ? 'hit' : 'miss'}">${won}/${p.dc}</b></span>`);
+  }
+  if (p.mp != null) bits.push(`<span class="nb" title="model chance${p.fp != null ? ' vs the no-vig chance the price implies (bookmaker margin removed)' : ''}"><i>model</i> <b>${pctTxt(p.mp)}</b>${
+    p.fp != null ? ` <i>vs</i> <b class="mk">${pctTxt(p.fp)}</b>` : ''}</span>`);
+  else if (p.fp != null) bits.push(`<span class="nb" title="the price's chance with the bookmaker's margin removed"><i>no-vig</i> <b>${pctTxt(p.fp)}</b></span>`);
+  if (p.ed != null) bits.push(`<span class="nb" title="anchored edge over the no-vig price, capped at 4 points"><i>edge</i>
+      <b class="${p.ed > 0.0005 ? 'hit' : p.ed < -0.0005 ? 'miss' : ''}">${p.ed > 0 ? '+' : ''}${(100 * p.ed).toFixed(1)}</b></span>`);
+  return bits.length ? `<div class="nums">${bits.join('')}</div>` : '';
+}
+/* GRADE STRIP. How many props on the current view carry each pick
+   grade, counted after every other filter, and a tap to show only
+   those letters. A display filter: nothing about a pick changes. */
+const GR_STRIP = ['A+', 'A', 'B+', 'B', 'C', 'D'];
+function drawGradeBar(base){
+  const el = $('gradebar'); if (!el) return;
+  if (BVIEW === 'pending') { el.innerHTML = ''; el.hidden = true; return; }
+  const n = {};
+  for (const p of base) { const g = p.gr || 'none'; n[g] = (n[g] || 0) + 1; }
+  const keys = GR_STRIP.filter(g => n[g] || F.grade.has(g));
+  if (n.none || F.grade.has('none')) keys.push('none');
+  el.hidden = !keys.length;
+  el.innerHTML = `<span class="glab">grade</span>` + keys.map(g => `<button class="gchip" data-gfil="${esc(g)}"
+      aria-pressed="${F.grade.has(g)}" title="${g === 'none' ? 'no grade: an input is missing' : 'show only ' + g}">${
+      g === 'none' ? '<span class="gnone">no grade</span>' : `<b class="grade ${gcls(g)}">${esc(g)}</b>`}<span class="gn">${(n[g] || 0).toLocaleString()}</span></button>`).join('')
+    + (F.grade.size ? `<button class="gchip gclr" data-gfil="">clear</button>` : '');
+}
+if (typeof document !== 'undefined') document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-gfil]');
+  if (!b) return;
+  const g = b.dataset.gfil;
+  if (!g) F.grade.clear(); else F.grade[F.grade.has(g) ? 'delete' : 'add'](g);
+  draw();
+});
 function recentStrip(p){
   if (p.kd === 'team' || p.nores) return '';
   const v = recentVals(p);
@@ -2110,7 +2249,7 @@ function vs(p){
   if (p.kd === 'team') return `· ${esc(away)} @ ${esc(home)}`;
   const id = matchupIdentity(p);
   if (!id) return `· ${esc(away)} @ ${esc(home)} · team unverified`;
-  return `· ${id.venue === 'home' ? 'vs' : '@'} ${esc(id.opponent)}`;
+  return `· ${id.venue === 'home' ? 'vs' : '@'} ${typeof teamLogo === 'function' ? teamLogo(p.sp, id.opponent, 13, 'inl') : ''}${esc(id.opponent)}`;
 }
 
 /* ---- Full box scores --------------------------------------------
@@ -3079,14 +3218,93 @@ function bookRow(p){
     }).join('')}</div>`;
 }
 
-/* Sport marks. Simple glyphs rather than logos: a league wordmark
-   is someone else's trademark and has no business in a private
-   research tool. */
+/* Sport marks: small glyphs for the league itself. Team logos and
+   player headshots come from D.media (media.py), below. */
 const SPORT_ICON = {NBA:'\u25CF', NHL:'\u25C6', NFL:'\u25B2',
                     MLB:'\u25CB', NCAAF:'\u25B3'};
 function sico(sp){
   const g = SPORT_ICON[(sp || '').toUpperCase()];
   return g ? `<i class="sico">${g}</i>` : '';
+}
+
+/* ---- Team logos and headshots ------------------------------------
+   D.media = {teams:{LG:{ABBR:{n,c,l}}}, heads:{"LG|norm":[img,team]}}.
+   Every image sits ON TOP of an initials disc tinted in the team's
+   colour, and removes itself if it fails to load -- so a missing feed,
+   a dead link or an offline phone shows initials, never a broken
+   image icon. Nothing here is required for the page to work. */
+const MEDIA_TEAM = {};
+function mediaTeam(sp, nameOrAbbr){
+  const lg = String(sp || '').toUpperCase();
+  const t = (((typeof D !== 'undefined' && D && D.media) || {}).teams || {})[lg];
+  if (!t || !nameOrAbbr) return null;
+  if (!MEDIA_TEAM[lg]) {
+    const m = new Map();
+    for (const [ab, v] of Object.entries(t)) {
+      m.set(teamNorm(ab), v); if (v && v.n) m.set(teamNorm(v.n), v);
+    }
+    // The app's own abbreviations can differ from the feed's (UTA vs
+    // UTAH): join them through the full name both sides agree on.
+    for (const [ab, nm] of Object.entries(((D && D.team_names) || {})[lg] || {})) {
+      const v = m.get(teamNorm(nm)) || t[ab];
+      if (v) { m.set(teamNorm(ab), v); m.set(teamNorm(nm), v); }
+    }
+    MEDIA_TEAM[lg] = m;
+  }
+  return MEDIA_TEAM[lg].get(teamNorm(nameOrAbbr)) || null;
+}
+function initials(name){
+  const w = String(name || '').replace(/\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return '?';
+  return ((w[0][0] || '') + (w.length > 1 ? (w[w.length - 1][0] || '') : '')).toUpperCase();
+}
+function safeColor(c){
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(c || ''));
+  return m ? '#' + m[1] : '';
+}
+function avImg(src, size){
+  return src && /^https:\/\//.test(src)
+    ? `<img src="${esc(src)}" width="${size}" height="${size}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : '';
+}
+/* A logo in both themes: the dark-background version where the feed
+   has one, so a black wordmark does not vanish on the dark board. */
+function logoImg(t, size){
+  if (!t || !t.l) return '';
+  return t.d && t.d !== t.l
+    ? avImg(t.l, size).replace('<img ', '<img class="lgl" ') + avImg(t.d, size).replace('<img ', '<img class="lgd" ')
+    : avImg(t.l, size);
+}
+function teamLogo(sp, nameOrAbbr, size = 16, cls = ''){
+  const t = mediaTeam(sp, nameOrAbbr);
+  if (!t || !t.l) return '';
+  return `<span class="tlogo ${cls}" style="width:${size}px;height:${size}px" title="${esc(t.n || '')}">${logoImg(t, size)}</span>`;
+}
+function headshotOf(p){
+  const H = ((typeof D !== 'undefined' && D && D.media) || {}).heads || {};
+  return H[boxKey(p.sp, p.pl)] || null;
+}
+/* The face for a row: the player's headshot with his team's logo as a
+   badge; for a team prop, the team's logo; for a game total, both. */
+function avatar(p, size = 36, cls = ''){
+  const sp = String(p.sp || '').toUpperCase();
+  if (p.kd === 'team') {
+    const who = (p.mk === 'moneyline' || p.mk === 'spread') ? p.sd : p.pl;
+    const t = mediaTeam(sp, who);
+    if (t) return `<span class="av avt ${cls}" style="--av:${size}px;--tc:${safeColor(t.c) || 'var(--rule)'}" aria-hidden="true"><b>${esc(initials(t.n))}</b>${logoImg(t, size)}</span>`;
+    const {away, home} = matchSides(p);
+    const a = mediaTeam(sp, away), h = mediaTeam(sp, home);
+    if (!a && !h) return '';
+    const half = Math.round(size * .62);
+    return `<span class="av avg ${cls}" style="--av:${size}px" aria-hidden="true">${
+      a ? `<span class="tlogo a" style="width:${half}px;height:${half}px">${logoImg(a, half)}</span>` : ''}${
+      h ? `<span class="tlogo h" style="width:${half}px;height:${half}px">${logoImg(h, half)}</span>` : ''}</span>`;
+  }
+  const hs = headshotOf(p);
+  const ab = (hs && hs[1]) || (p.ev || {}).player_team;
+  const t = mediaTeam(sp, ab);
+  const badge = t && t.l ? `<span class="avb">${logoImg(t, Math.round(size * .42))}</span>` : '';
+  return `<span class="av ${cls}" style="--av:${size}px;--tc:${(t && safeColor(t.c)) || 'var(--rule)'}" aria-hidden="true"><b>${esc(initials(p.pl))}</b>${hs ? avImg(hs[0], size) : ''}${badge}</span>`;
 }
 
 const SEC = {};           // which section each open card is showing
@@ -3938,6 +4156,70 @@ function leafTrack(l){
   return `<div class="lt ${cls}">record: green picks ${how} after the price
     (\u00b1${(r.adj_se || 0).toFixed(1)}, ${what})</div>`;
 }
+/* THE CLOVER. Every leaf the engine scored, drawn on a four-leaf
+   clover: each leaflet is cut into slices, one per leaf, in rule order
+   clockwise from the top-right leaflet (Projection Edge first; 4, 4, 3
+   and 3 slices for fourteen leaves). Green for, red against, gold
+   neutral, grey for missing evidence. Leaves shown but not counted, or
+   not applicable, are drawn faint so the counted ones read first. A
+   picture of the same rows the Leaves section lists -- nothing new is
+   computed. */
+const CLV_FILL = {green: 'var(--clover)', red: 'var(--under)', yellow: 'var(--hold)', dark: 'var(--flat)'};
+const CLV_LEAF = 'M0 -1 C-2.6 -3 -11.5 -5.5 -11.8 -11.6 C-12 -16 -7.4 -17.8 -4.4 -16.2 C-2.3 -15 -0.7 -13.4 0 -11.6 C0.7 -13.4 2.3 -15 4.4 -16.2 C7.4 -17.8 12 -16 11.8 -11.6 C11.5 -5.5 2.6 -3 0 -1Z';
+function cloverSplit(n){
+  // slices per leaflet: as even as possible, bigger ones first
+  const b = Math.floor(n / 4), r = n % 4;
+  return [0, 1, 2, 3].map(j => b + (j < r ? 1 : 0));
+}
+function cloverDefs(n){
+  const id = 'clvdefs' + n;
+  if (typeof document === 'undefined' || document.getElementById(id)) return;
+  const sp = cloverSplit(n), d = [];
+  let i = 0;
+  sp.forEach((m, j) => {
+    const c = 45 + 90 * j;                            // leaflet centre, degrees from top
+    for (let k = 0; k < m; k++, i++) {
+      const a0 = (c - 45 + 90 * k / m) * Math.PI / 180, a1 = (c - 45 + 90 * (k + 1) / m) * Math.PI / 180;
+      const pt = a => `${(30 * Math.sin(a)).toFixed(2)} ${(-30 * Math.cos(a)).toFixed(2)}`;
+      d.push(`<clipPath id="clv${n}s${i}" clipPathUnits="userSpaceOnUse"><path d="M0 0 L${pt(a0)} A30 30 0 0 1 ${pt(a1)}Z"/></clipPath>`);
+    }
+  });
+  const el = document.createElement('div');
+  el.innerHTML = `<svg id="${id}" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${d.join('')}</defs></svg>`;
+  document.body.appendChild(el.firstChild);
+}
+function cloverSvg(p, size, opts){
+  const lv = (p && p.lv) || [];
+  if (!lv.length) return '';
+  const o = opts || {}, n = lv.length, sp = cloverSplit(n);
+  cloverDefs(n);
+  let i = 0;
+  const parts = [], seps = [];
+  sp.forEach((m, j) => {
+    const c = 45 + 90 * j;
+    for (let k = 0; k < m; k++, i++) {
+      const l = lv[i], off = l[4] === false || l[5];
+      const tip = `${esc(l[0])}: ${l[4] === false ? 'not applicable' : l[1] === 'dark' ? 'missing evidence' : l[1] === 'green' ? 'for' : l[1] === 'red' ? 'against' : 'neutral'}${l[5] ? ' (not counted)' : ''}`;
+      parts.push(`<g clip-path="url(#clv${n}s${i})"><path d="${CLV_LEAF}" transform="rotate(${c})" fill="${CLV_FILL[l[1]] || 'var(--flat)'}"${
+        off ? ' fill-opacity=".28"' : ''}>${o.tips ? `<title>${tip}</title>` : ''}</path></g>`);
+      if (k && !o.mini) {
+        const a = (c - 45 + 90 * k / m) * Math.PI / 180;
+        seps.push(`<line x1="0" y1="0" x2="${(20 * Math.sin(a)).toFixed(2)}" y2="${(-20 * Math.cos(a)).toFixed(2)}"/>`);
+      }
+    }
+  });
+  const g = p.gr;
+  const mid = o.letter && g
+    ? `<circle r="5.6" class="cmid ${gcls(g)}"/><text y="2.3" text-anchor="middle" class="clet">${esc(g)}</text>`
+    : '';
+  const live = lv.filter(l => l[4] !== false && !l[5]);
+  const cnt = st => live.filter(l => l[1] === st).length;
+  const lab = `clover: ${cnt('green')} for, ${cnt('red')} against, ${cnt('yellow')} neutral, ${cnt('dark')} missing`;
+  return `<svg class="clover${o.cls ? ' ' + o.cls : ''}" viewBox="-18 -18 36 40" width="${size}" height="${Math.round(size * 40 / 36)}"
+    role="img" aria-label="${lab}"><title>${lab}</title>
+    <path class="cstem" d="M0 2 C0.6 8 2.2 13.5 5.5 20" fill="none" stroke-width="2" stroke-linecap="round"/>
+    ${parts.join('')}<g class="csep">${seps.join('')}</g>${mid}</svg>`;
+}
 function leafRow(p, l){
   return `<div class="leaf ${l[1]}" data-lid="${p.i}:${l[3]}">
     <i class="dot ${l[1]}"></i>
@@ -3958,6 +4240,12 @@ function leavesSection(p){
     ['Not applicable', lv.filter(l => l[4] === false)],
   ].filter(([, ls]) => ls.length);
   return gradeBox(p)
+    + `<div class="cloverbig">${cloverSvg(p, 132, {letter: true, tips: true})}<div class="clegend">
+        <span><i style="background:var(--clover)"></i>for</span><span><i style="background:var(--under)"></i>against</span>
+        <span><i style="background:var(--hold)"></i>neutral</span><span><i style="background:var(--flat)"></i>missing</span>
+        <span><i class="ring"></i>faint: not counted</span>
+        <em>One slice per leaf (${lv.length}), clockwise from the top-right leaflet, Projection Edge first.
+          Tap or hover a slice for its leaf.</em></div></div>`
     + `<div class="ltally"><span><b>${n('green')}</b> for</span><span><b>${n('red')}</b> against</span>
         <span><b>${n('yellow')}</b> neutral</span><span><b>${n('dark')}</b> missing</span></div>`
     + (p.kd === 'team' ? `<div class="mnote">Team scale: ${p.mx ?? 5} applicable leaves.
@@ -4041,6 +4329,7 @@ function detail(p, p0){
 function draw(){
   drawHero();
   boardWhy();
+  const gsel = new Set(F.grade); F.grade.clear();
   let list = PROPS.filter(matches)
     // Researched rows first, THEN score. The board arrives already
     // ordered that way, and re-sorting on score alone threw it away
@@ -4059,6 +4348,7 @@ function draw(){
     lowHidden = SHOWLOW ? list.filter(belowFloor).length : list.length - kept.length;
     list = kept;
   }
+  gsel.forEach(g => F.grade.add(g));
   { const fl = $('floornote');
     if (fl) {
       fl.hidden = !lowHidden;
@@ -4110,6 +4400,12 @@ function draw(){
     list = list.filter(p => p.elig !== false && p.kd !== 'team')
                .slice(0, 15);
   }
+  // Grade counts read the list the view and every other filter left
+  // (plus the hero, which is that list's first row), so a letter's
+  // number is exactly what a tap on it will show.
+  { const hp = HEROID != null ? PROPS.find(p => p.i === HEROID) : null;
+    drawGradeBar(hp ? [hp, ...list] : list); }
+  if (F.grade.size) list = list.filter(p => F.grade.has(p.gr || 'none'));
   // Say what this ordering is and is not. The score counts evidence
   // -- green leaves minus red -- and whether a higher score wins
   // more often is a question the Record tab answers, not an
@@ -4188,7 +4484,8 @@ function rowHtml(p0){
     const open = OPEN.has(p.i), on = SEL.has(p.i), thin = (p.n||0) < 8;
     return `<div class="row" data-ri="${p0.i}" data-sp="${esc((p.sp||'').toUpperCase())}">
       <div class="rowhead">
-        <button class="pick" data-open="${p.i}" aria-expanded="${open}">
+        <button class="pick wav" data-open="${p.i}" aria-expanded="${open}">
+          ${avatar(p, 36)}<span class="ptx">
           <span class="nm">${headline(p)}</span>
           <span class="sub">${esc((p.mk||'').replace(/_/g,' '))} · ${sico(p.sp)}${esc(p.sp)}
             ${vs(p)}${startTxt(p) ? ` · ${clockHtml(p)}` : ''}
@@ -4196,18 +4493,21 @@ function rowHtml(p0){
             (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
             p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}${
             coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}${moveTag(p)}</span>
+          </span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
           ${p.pr > 0 ? '+' : ''}${p.pr ?? ''}
         </button>
         <span class="sc">${p.gr
           ? `<b class="grade ${gcls(p.gr)}">${esc(p.gr)}</b>`
-          : `<b>${p.sc ?? '-'}</b>`}${esc(p.ti||'')}${pips(p.lv)}</span>
+          : `<b>${p.sc ?? '-'}</b>`}<i class="tlab" title="${p.ti ? esc(p.ti) + ' tier: the evidence count the bet list uses' : ''}">${esc(p.ti||'')}</i>${
+          (p.lv || []).length ? cloverSvg(p, 32, {cls: 'cmini', mini: true}) : pips(p.lv)}</span>
         <button class="add" data-sel="${p.i}" aria-pressed="${on}"
           title="${on ? 'remove from parlay' : 'add to parlay'}"
           aria-label="${on ? 'remove from parlay' : 'add to parlay'}"
         >${on ? '\u2713' : '+'}</button>
       </div>
+      ${numsLine(p)}
       ${recentStrip(p)}
       ${p.kd !== 'team' ? archChips(p) : ''}
       ${srail(p)}
@@ -4309,7 +4609,7 @@ function renderSheet(){
   const {p0, p} = pp, top = sb.scrollTop;
   OPEN.clear(); OPEN.add(p.i);
   const on = SEL.has(p.i);
-  $('sheettitle').innerHTML = `<span class="nm">${headline(p)}</span>
+  $('sheettitle').innerHTML = `${avatar(p, 44, 'avsheet')}<span class="nm">${headline(p)}</span>
     <span class="sub">${esc((p.mk || '').replace(/_/g, ' '))} \u00b7 ${sico(p.sp)}${esc(p.sp)} ${vs(p)}${
       startTxt(p) ? ` \u00b7 ${clockHtml(p)}` : ''}${startedNow(p) || gameFinal(p) ? ' \u00b7 <b class="lvdot">started</b>' : ''}</span>`;
   const add = $('sheetadd');
@@ -6006,7 +6306,9 @@ function gameOuts(sp, team){
 }
 function gameTeam(sp, nm, outs){
   const ab = teamAbbr(sp, nm) || String(nm || '').split(' ').pop().slice(0, 3).toUpperCase();
-  return `<div class="gtm"><span class="gbadge">${esc(ab)}</span><span class="gtn">${esc(nm)}</span>${
+  // The logo where the feed has one; the abbreviation badge otherwise.
+  const logo = teamLogo(sp, nm, 38, 'glogo');
+  return `<div class="gtm">${logo || `<span class="gbadge">${esc(ab)}</span>`}<span class="gtn">${esc(nm)}</span>${
     outs.length ? `<span class="gout" title="${esc(outs.map(o => o.name).join(', '))}">${outs.length} out</span>` : ''}</div>`;
 }
 const G_TIERS = [['Legendary', 'var(--clover)'], ['Elite', 'var(--clover)'], ['Strong', 'var(--over)'], ['Playable', 'var(--over)'], ['Fringe', 'var(--mark)'], ['Weak', 'var(--flat)']];
