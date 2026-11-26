@@ -1272,6 +1272,41 @@ details.preason[open]>summary::after{content:' \25B4'}
   opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .2s ease,transform .2s ease,bottom .2s ease}
 #totop.show{opacity:.92;transform:none;pointer-events:auto}
 body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
+/* Board line shopping, Tracked ROI, System Lab */
+.shoptag{display:inline-block;padding:1px 6px;border-radius:999px;font-family:var(--m);font-size:10px;
+  font-weight:600;background:color-mix(in srgb,var(--over) 14%,transparent);color:var(--over);white-space:nowrap}
+.shoptag.off{background:color-mix(in srgb,var(--mark) 14%,transparent);color:var(--mark)}
+.shopbk{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)}
+.shopbk .bksel{font-size:11.5px;padding:3px 8px}
+.trkroi{margin:12px 0 14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.trkroi h3{margin:0 0 8px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-2)}
+.trkroi .tiles{margin-bottom:10px}
+.trkroi-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.trkres-bar{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+.trkres-bar .chip{padding:2px 7px;font-size:10.5px}
+.trkres-pill{display:inline-block;padding:1px 6px;border-radius:999px;font-family:var(--m);font-size:10px;
+  font-weight:700;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.trkres-pill.hit{background:color-mix(in srgb,var(--over) 18%,transparent);color:var(--over)}
+.trkres-pill.lost{background:color-mix(in srgb,var(--under) 18%,transparent);color:var(--under)}
+.trkres-pill.push{background:color-mix(in srgb,var(--ink-2) 16%,transparent);color:var(--ink-2)}
+.lab-ctrl{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;padding:12px;
+  border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lab-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.lab-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--ink-2);min-width:58px}
+.lab-sel{font:inherit;font-size:12.5px;padding:5px 9px;border-radius:8px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink);max-width:240px}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
+.lab-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lab-card .eyebrow{margin:0 0 4px}
+.lab-card .big{font-family:var(--m);font-size:22px;font-weight:700;line-height:1.15;margin:2px 0 6px}
+.lab-card .meta{font-size:12px;color:var(--ink-2);line-height:1.45}
+.lab-verdict{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;margin-bottom:8px}
+.lab-verdict.ok{background:color-mix(in srgb,var(--over) 16%,transparent);color:var(--over)}
+.lab-verdict.bad{background:color-mix(in srgb,var(--under) 16%,transparent);color:var(--under)}
+.lab-verdict.neu{background:color-mix(in srgb,var(--ink-2) 14%,transparent);color:var(--ink-2)}
+.lab-live{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);margin:10px 0;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -1293,6 +1328,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   <button role="tab" aria-selected="false" data-tab="games">Today<span class="cnt" id="cGames"></span></button>
   <button role="tab" aria-selected="false" data-tab="stake">Stake</button>
   <button role="tab" aria-selected="false" data-tab="record">Record</button>
+  <button role="tab" aria-selected="false" data-tab="lab">Lab</button>
   <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
   <button role="tab" aria-selected="false" data-tab="track">Tracked<span class="cnt" id="cTrack"></span></button>
   <button role="tab" aria-selected="false" data-tab="health">Health<span class="cnt" id="cHealth"></span></button>
@@ -1323,7 +1359,9 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       <button class="chip" data-view="team">Team markets <span id="nteam"></span></button>
       <button class="chip" data-view="pending">Pending <span id="npend"></span></button>
       <button class="chip" data-view="moving">Moving <span id="nmove"></span></button>
+      <button class="chip" data-view="shop">Better elsewhere <span id="nshop"></span></button>
     </div>
+    <span class="shopbk" id="boardbk"></span>
     <span class="vcount" id="boardmeta"></span>
   </div>
   <div id="gradebar" class="gstrip" role="group" aria-label="Filter by pick grade"></div>
@@ -1604,6 +1642,19 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 </div>
 
 
+<!-- ──────────────────────── SYSTEM LAB ──────────────────────── -->
+<div id="tab-lab" hidden>
+  <section>
+    <div class="hrow"><h2>System Lab</h2></div>
+    <p class="traynote">Test rule combinations against the full graded ledger — split into an
+      earlier <b>Train</b> window and the most recent <b>7 graded days (Holdout)</b> so you can
+      check whether an angle held up out of sample instead of overfitting past noise. Flat 1-unit
+      ROI is measured only on rows that carried a logged price; missing data is never invented.</p>
+    <div id="labctrl"></div>
+    <div id="labout"></div>
+  </section>
+</div>
+
 <!-- ──────────────────────── TRACKED ───────────────────────── -->
 <div id="tab-track" hidden>
   <section id="pksec">
@@ -1638,6 +1689,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       on iPhone, system alerts need the app added to the Home Screen.</span></div>
     <div id="trkrows"></div>
     <div class="empty" id="trknone" hidden></div>
+    <div id="trkroi"></div>
     <div class="callout" id="trksum"></div>
     <div class="trkbar">
       <button class="add" id="trkexp">download JSON</button>
@@ -3398,12 +3450,42 @@ function slipBtn(p){
     ? `<a class="slipbtn alt" href="${esc(alt.u)}" target="_blank" rel="noopener">Bet at ${esc(BOOK_NAME[alt.b] || alt.b)} ${alt.p > 0 ? '+' : ''}${alt.p} \u2197</a><span class="dim slipwhy">${why}</span>`
     : `<span class="dim slipwhy">${why}</span>`;
 }
+function impProb(a){
+  if (a == null || !isFinite(a) || a === 0) return null;
+  const n = Number(a);
+  return n > 0 ? 100 / (n + 100) : Math.abs(n) / (Math.abs(n) + 100);
+}
+const SHOP_MIN_PTS = 2.0;
+function shopOf(p, book = MYBOOK){
+  const same = (p && p.bl || []).filter(b => b && b.p != null && (b.l == null || p.ln == null || b.l === p.ln));
+  if (!same.length) return null;
+  const best = same.reduce((a, b) => (impProb(b.p) < impProb(a.p) ? b : a));
+  const mine = same.find(b => b.b === book) || null;
+  const bname = BOOK_NAME[best.b] || best.b;
+  const mname = BOOK_NAME[book] || book;
+  const bpr = (best.p > 0 ? '+' : '') + best.p;
+  if (!mine) {
+    return {kind: 'off', best, mine: null, pts: null,
+      text: `off ${mname} · ${bname} ${bpr}`};
+  }
+  if (best.b === book) return null;
+  const pts = (impProb(mine.p) - impProb(best.p)) * 100;
+  if (pts < SHOP_MIN_PTS) return null;
+  return {kind: 'better', best, mine, pts: +pts.toFixed(1),
+    text: `${bname} ${bpr} (+${pts.toFixed(1)} pts vs ${mname})`};
+}
+function shopTag(p){
+  const s = shopOf(p);
+  if (!s) return '';
+  return ` · <span class="shoptag${s.kind === 'off' ? ' off' : ''}" title="Line shopping vs ${esc(BOOK_NAME[MYBOOK] || MYBOOK)}">${esc(s.text)}</span>`;
+}
 if (typeof document !== 'undefined') document.addEventListener('change', e => {
   const t = e.target.closest && e.target.closest('[data-mybook]');
   if (!t) return;
   MYBOOK = t.value;
   try { localStorage.setItem('g15book', MYBOOK); } catch (_) {}
   for (const x of document.querySelectorAll('[data-mybook]')) x.value = MYBOOK;
+  try { if (typeof draw === 'function') draw(); } catch (_) {}
   try { if (typeof drawLadder === 'function' && tabOn('ladder')) drawLadder(); } catch (_) {}
   try { if (typeof drawCompare === 'function' && tabOn('compare')) drawCompare(); } catch (_) {}
   try { const sh = $('sheet'); if (sh && !sh.hidden && SHEET != null) renderSheet(); } catch (_) {}
@@ -4560,6 +4642,8 @@ function draw(){
   // up at the top of the board.
   $('npend').textContent = PROPS.filter(p => p.elig === false).length;
   { const nm = $('nmove'); if (nm) nm.textContent = PROPS.filter(p => p.kd !== 'team' && moveOf(p) && (SHOWLOW || !belowFloor(p))).length || ''; }
+  { const ns = $('nshop'); if (ns) ns.textContent = PROPS.filter(p => p.kd !== 'team' && shopOf(p) && (SHOWLOW || !belowFloor(p))).length || ''; }
+  { const bk = $('boardbk'); if (bk && !bk.dataset.init) { bk.innerHTML = `Your book ${bookPick()}`; bk.dataset.init = '1'; } }
   const fn = $('finnote');
   if (fn && !fn.dataset.sticky) {
     const t = clockNote();
@@ -4577,6 +4661,13 @@ function draw(){
     list = list.filter(p => p.elig === false);
   } else if (BVIEW === 'moving') {
     list = list.filter(p => moveOf(p)).sort((a, b) => Math.abs(moveOf(b).pts) - Math.abs(moveOf(a).pts));
+  } else if (BVIEW === 'shop') {
+    list = list.filter(p => shopOf(p)).sort((a, b) => {
+      const sa = shopOf(a), sb = shopOf(b);
+      const pa = sa.kind === 'better' ? sa.pts : -1;
+      const pb = sb.kind === 'better' ? sb.pts : -1;
+      return pb - pa || sortRows(a, b);
+    });
   } else if (BVIEW === 'top15') {
     // Up to fifteen QUALIFIED selections, never an obligation to
     // fill fifteen slots.
@@ -4612,6 +4703,8 @@ function draw(){
       ? `props whose no-vig chance moved ${MOVE_PTS}+ points since the app first saw the price, biggest first.
          Up means the market now rates this side more likely. Shown for context: the graded record
          has not shown that following or fading a move wins more than the price.`
+      : BVIEW === 'shop'
+      ? `props where another book beats ${esc(BOOK_NAME[MYBOOK] || MYBOOK)} by ${SHOP_MIN_PTS}+ implied points at the same line, or where ${esc(BOOK_NAME[MYBOOK] || MYBOOK)} does not offer the line — biggest price edge first.`
       : BVIEW === 'pending'
       ? `selections that cannot be acted on yet \u2014 stale price, no
          research attached, or too few games. Each row says which. They
@@ -4683,7 +4776,7 @@ function rowHtml(p0){
             · <span class="dim ${thin?'thin':''}" style="font-size:.92em">${gamesText(p)}</span>${trkPip(p)}${
             (SORT === 'tr' || F.trend.size) && trendTag(p) ? ` · ${trendTag(p)}` : ''}${
             p.outNow ? ` · <span class="outnow">listed ${esc(p.outNow)}</span>` : ''}${
-            coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}${moveTag(p)}</span>
+            coldOf(p) ? ` · <span class="coldtag">cold market</span>` : ''}${moveTag(p)}${shopTag(p)}</span>
           </span>
         </button>
         <button class="pick px" data-open="${p.i}" style="text-align:right">
@@ -5956,6 +6049,122 @@ function trkBox(p){
            record, and nothing downstream can measure it.`}</p></div>`;
 }
 
+let TRKROIGRP = 'sport';
+function trkOutcome(e){
+  try {
+    if (typeof trkSettle === 'function') {
+      const s = trkSettle(e);
+      if (s === 'hit' || s === 'lost' || s === 'push') return s;
+    }
+  } catch (_) {}
+  if (e && (e.res === 'hit' || e.res === 'lost' || e.res === 'push')) return e.res;
+  return null;
+}
+function trkSetRes(k, res){
+  const e = TRK.get(k); if (!e) return;
+  e.res = e.res === res ? null : res;
+  trkSave(); drawTrack();
+}
+function trkProfit(price, res, units = 1){
+  if (price == null || !isFinite(price) || price === 0) return null;
+  if (res === 'push') return 0;
+  if (res === 'lost') return -units;
+  if (res !== 'hit') return null;
+  const a = Number(price);
+  return units * (a > 0 ? a / 100 : 100 / Math.abs(a));
+}
+function trkRoiStats(entries){
+  const empty = () => ({w: 0, l: 0, p: 0, fpnl: 0, spnl: 0, staked: 0, n: 0});
+  const tot = empty();
+  const by = {sport: new Map(), market: new Map(), grade: new Map()};
+  const add = (m, k, r, fp, sp, stk) => {
+    const key = k || 'Other';
+    let o = m.get(key);
+    if (!o) { o = empty(); m.set(key, o); }
+    o.n++;
+    if (r === 'hit') o.w++; else if (r === 'lost') o.l++; else o.p++;
+    o.fpnl += fp;
+    if (stk > 0) { o.staked += stk; o.spnl += sp; }
+  };
+  let settledNoFill = 0;
+  for (const e of (entries || [])) {
+    const r = trkOutcome(e);
+    if (!r) continue;
+    if (e.fpr == null || !isFinite(e.fpr) || e.fpr === 0) { settledNoFill++; continue; }
+    const fp = trkProfit(e.fpr, r, 1);
+    if (fp == null) continue;
+    const stk = (e.stk != null && isFinite(e.stk) && Number(e.stk) > 0) ? Number(e.stk) : 0;
+    const sp = stk > 0 ? trkProfit(e.fpr, r, stk) : 0;
+    tot.n++;
+    if (r === 'hit') tot.w++; else if (r === 'lost') tot.l++; else tot.p++;
+    tot.fpnl += fp;
+    if (stk > 0) { tot.staked += stk; tot.spnl += sp; }
+    add(by.sport, (e.sp || 'Other').toUpperCase(), r, fp, sp, stk);
+    add(by.market, (e.mk || 'Other').replace(/_/g, ' '), r, fp, sp, stk);
+    add(by.grade, e.bgr || 'Ungraded', r, fp, sp, stk);
+  }
+  const fin = o => {
+    const dec = o.w + o.l;
+    return {
+      ...o, dec,
+      wr: dec ? (100 * o.w / dec) : null,
+      froi: dec ? (100 * o.fpnl / dec) : null,
+      sroi: o.staked > 0 ? (100 * o.spnl / o.staked) : null,
+    };
+  };
+  return {
+    tot: fin(tot),
+    settledNoFill,
+    by: {
+      sport: [...by.sport.entries()].map(([k, v]) => [k, fin(v)]).sort((a, b) => b[1].n - a[1].n),
+      market: [...by.market.entries()].map(([k, v]) => [k, fin(v)]).sort((a, b) => b[1].n - a[1].n),
+      grade: [...by.grade.entries()].map(([k, v]) => [k, fin(v)]).sort((a, b) => b[1].n - a[1].n),
+    },
+  };
+}
+function renderTrkRoi(all){
+  const el = $('trkroi'); if (!el) return;
+  const st = trkRoiStats(all);
+  const t = st.tot;
+  if (!t.n && !st.settledNoFill) {
+    el.innerHTML = '';
+    return;
+  }
+  const fmtU = v => `${v > 0 ? '+' : ''}${v.toFixed(2)}u`;
+  const fmtP = v => v == null ? '—' : `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+  const rows = st.by[TRKROIGRP] || [];
+  el.innerHTML = `<div class="trkroi">
+    <h3>Personal ROI (settled filled bets)</h3>
+    ${t.n ? `<div class="tiles">
+      <div class="tile"><div class="tl">record</div>
+        <div class="tv">${t.w}-${t.l}${t.p ? '-' + t.p : ''}</div>
+        <div class="tn">${t.wr != null ? t.wr.toFixed(1) + '% win' : 'pushes only'}</div></div>
+      <div class="tile ${t.fpnl > 0 ? 'up' : t.fpnl < 0 ? 'dn' : ''}">
+        <div class="tl">flat 1u P&amp;L</div>
+        <div class="tv">${fmtU(t.fpnl)}</div>
+        <div class="tn">${fmtP(t.froi)} ROI</div></div>
+      <div class="tile ${t.spnl > 0 ? 'up' : t.spnl < 0 ? 'dn' : ''}">
+        <div class="tl">staked P&amp;L</div>
+        <div class="tv">${t.staked > 0 ? fmtU(t.spnl) : '—'}</div>
+        <div class="tn">${t.staked > 0 ? `${fmtP(t.sroi)} on ${t.staked.toFixed(1)}u` : 'add stakes to track'}</div></div>
+    </div>
+    <div class="trkroi-tabs">${[['sport','By sport'],['market','By market'],['grade','By grade']].map(([k, l]) =>
+      `<button class="chip${TRKROIGRP === k ? ' on' : ''}" data-trkgrp="${k}">${l}</button>`).join('')}</div>
+    <div class="tscroll"><table>
+      <thead><tr><th>${esc(TRKROIGRP)}</th><th>W-L</th><th>Win %</th><th>Flat P&amp;L</th><th>Flat ROI</th></tr></thead>
+      <tbody>${rows.map(([k, v]) => `<tr>
+        <td><b>${esc(k)}</b></td>
+        <td>${v.w}-${v.l}${v.p ? '-' + v.p : ''}</td>
+        <td>${v.wr != null ? v.wr.toFixed(1) + '%' : '—'}</td>
+        <td class="${v.fpnl > 0 ? 'up' : v.fpnl < 0 ? 'dn' : ''}">${fmtU(v.fpnl)}</td>
+        <td class="${v.froi > 0 ? 'up' : v.froi < 0 ? 'dn' : ''}">${fmtP(v.froi)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`
+    : `<p class="dim" style="margin:0;font-size:12.5px">${st.settledNoFill} settled bet${st.settledNoFill === 1 ? '' : 's'} without a fill price — enter your fill price to compute ROI.</p>`}
+    ${t.n && st.settledNoFill ? `<p class="dim" style="margin:8px 0 0;font-size:11.5px">${st.settledNoFill} other settled entry${st.settledNoFill === 1 ? '' : 'ies'} had no fill price and ${st.settledNoFill === 1 ? 'was' : 'were'} left out.</p>` : ''}
+  </div>`;
+}
+
 function drawTrack(){
   alertBtn();
   const all = [...TRK.values()].sort((a, b) =>
@@ -5984,10 +6193,12 @@ function drawTrack(){
   } else {
     $('trkrows').innerHTML = list.map(e => {
       const beat = trkBeat(e), lv = trkLive(e);
+      const out = trkOutcome(e);
       if (lv && lv.need) needLive = 1;
+      const pill = out ? `<span class="trkres-pill ${out}">${out === 'hit' ? 'Win' : out === 'lost' ? 'Loss' : 'Push'}</span>` : '';
       return `<div class="trkrow">
         <div>
-          <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}</div>${
+          <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}${pill}</div>${
           lv ? `<div class="trklive">${lv.g.st === 'in' ? '<b class="lvdot">live</b> ' : ''}${lv.html}</div>` : ''}
           <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}
             · ${sico(e.sp)}${esc(e.sp)}${e.mu ? ' · ' + esc(e.mu) : ''}
@@ -6000,6 +6211,8 @@ function drawTrack(){
           <div class="trkst">${TRK_STATES.map(([k, l]) =>
             `<button class="chip${e.st === k ? ' on' : ''}"
               data-trkst="${k}" data-trkk="${esc(e.k)}">${l}</button>`).join('')}
+            <span class="trkres-bar">${[['hit','W'],['lost','L'],['push','P']].map(([r, lbl]) =>
+              `<button class="chip${out === r ? ' on' : ''}" data-trkres="${r}" data-trkk="${esc(e.k)}" title="Mark ${lbl}">${lbl}</button>`).join('')}</span>
             <button class="chip" data-trkdel="1"
               data-trkk="${esc(e.k)}">remove</button></div>
         </div>
@@ -6023,6 +6236,7 @@ function drawTrack(){
   }
 
   if (needLive) trkLiveFetch().then(n => { if (n) drawTrack(); });
+  renderTrkRoi(all);
   const filled = all.filter(e => e.fpr != null);
   const staked = all.reduce((a, e) => a + (e.stk || 0), 0);
   const beats = filled.map(trkBeat).filter(v => v != null);
@@ -6039,14 +6253,10 @@ function drawTrack(){
       even <b>${Math.abs(avg).toFixed(2)} points
       ${avg > 0 ? 'lower' : 'higher'}</b> than the board price at the
       time.` : ''}
-    <br><br><b>No CLV and no ROI on this tab, and that is not an
-    oversight.</b> CLV needs the price the market closed at, which this
-    app has never stored — the same missing field that keeps leaf 11
-    dark. ROI needs the outcome, which the grader owns and this list
-    does not. What the tracker does is capture the one input neither can
-    be computed without: the price you were actually filled at, and
-    when. The export below is that record in a form the ledger could
-    take. Import reads a file or a device link back in and merges it.`;
+    <br><br><b>Personal ROI settles automatically from live box scores</b> (or
+    tap W / L / P on any older bet) and only counts rows with a real fill price.
+    Personal CLV still depends on closing prices captured at tipoff. The export
+    below saves your record as JSON, and Import reads a file or device link back in.`;
 
   $('trkwhere').innerHTML = TRKOK
     ? `Stored in this browser only — one device, one browser profile,
@@ -9523,11 +9733,178 @@ function drawRecord(){
   }).join('');
 }
 
+/* ---------- System Lab ---------- */
+const LAB = {sp: 'ALL', mk: 'ALL', sd: 'ALL', gr: new Set(), lf: new Set()};
+
+function labEval(lab, flt = LAB){
+  const empty = () => ({n: 0, w: 0, np: 0, p: 0});
+  const train = empty(), hold = empty(), all = empty();
+  const byGr = new Map(), bySp = new Map();
+  if (!lab || !Array.isArray(lab.rows)) {
+    return {train, hold, all, byGr: [], bySp: []};
+  }
+  const sps = lab.sps || [], mks = lab.mks || [], sds = lab.sds || [], grs = lab.grs || [];
+  let reqMask = 0;
+  for (const bit of (flt.lf || [])) reqMask |= (1 << bit);
+  const grSet = flt.gr && flt.gr.size ? flt.gr : null;
+  for (const r of lab.rows) {
+    const [h, spi, mki, sdi, gri, mask, n, w, np, p] = r;
+    const sp = sps[spi] || '', mk = mks[mki] || '', sd = sds[sdi] || '', gr = grs[gri] || 'none';
+    if (flt.sp && flt.sp !== 'ALL' && sp !== flt.sp) continue;
+    if (flt.mk && flt.mk !== 'ALL' && mk !== flt.mk) continue;
+    if (flt.sd && flt.sd !== 'ALL' && sd !== flt.sd) continue;
+    if (grSet && !grSet.has(gr)) continue;
+    if (reqMask && ((mask & reqMask) !== reqMask)) continue;
+    const tgt = h ? hold : train;
+    tgt.n += n; tgt.w += w; tgt.np += np; tgt.p += p;
+    all.n += n; all.w += w; all.np += np; all.p += p;
+    for (const [mp, key] of [[byGr, gr], [bySp, sp]]) {
+      let o = mp.get(key);
+      if (!o) { o = {t: empty(), h: empty()}; mp.set(key, o); }
+      const b = h ? o.h : o.t;
+      b.n += n; b.w += w; b.np += np; b.p += p;
+    }
+  }
+  const fin = o => ({
+    ...o,
+    l: o.n - o.w,
+    wr: o.n ? (100 * o.w / o.n) : null,
+    roi: o.np ? (100 * o.p / o.np) : null,
+  });
+  const grOrder = { 'A+': 0, 'A': 1, 'B+': 2, 'B': 3, 'C': 4, 'D': 5, 'none': 6 };
+  return {
+    train: fin(train),
+    hold: fin(hold),
+    all: fin(all),
+    byGr: [...byGr.entries()].map(([k, v]) => [k, {t: fin(v.t), h: fin(v.h)}])
+      .sort((a, b) => (grOrder[a[0]] ?? 9) - (grOrder[b[0]] ?? 9)),
+    bySp: [...bySp.entries()].map(([k, v]) => [k, {t: fin(v.t), h: fin(v.h)}])
+      .sort((a, b) => (b[1].t.n + b[1].h.n) - (a[1].t.n + a[1].h.n)),
+  };
+}
+
+function labBoardMatches(props, lab, flt = LAB){
+  const labels = (lab && lab.leaves) || [];
+  const reqIdx = [...(flt.lf || [])];
+  const grSet = flt.gr && flt.gr.size ? flt.gr : null;
+  return (props || []).filter(p => {
+    const sp = (p.sp || '').toUpperCase();
+    const sd = p.sd === 'Over' ? 'Over' : p.sd === 'Under' ? 'Under' : 'Team';
+    const gr = p.gr || 'none';
+    if (flt.sp && flt.sp !== 'ALL' && sp !== flt.sp) return false;
+    if (flt.mk && flt.mk !== 'ALL' && p.mk !== flt.mk) return false;
+    if (flt.sd && flt.sd !== 'ALL' && sd !== flt.sd) return false;
+    if (grSet && !grSet.has(gr)) return false;
+    if (reqIdx.length) {
+      const lv = p.lv || [];
+      for (const idx of reqIdx) {
+        if (!lv[idx] || lv[idx].s !== 'G') return false;
+      }
+    }
+    return true;
+  });
+}
+
+function drawLab(){
+  const ctrl = $('labctrl'), out = $('labout');
+  if (!ctrl || !out) return;
+  const lab = D && D.lab;
+  if (!lab || !lab.rows || !lab.rows.length) {
+    ctrl.innerHTML = '';
+    out.innerHTML = '<div class="empty">No graded history available for System Lab yet.</div>';
+    return;
+  }
+  const sps = lab.sps || [], mks = lab.mks || [], sds = lab.sds || [], grs = lab.grs || [];
+  const leaves = lab.leaves || [];
+  ctrl.innerHTML = `<div class="lab-ctrl">
+    <div class="lab-row"><span class="lab-lbl">Sport</span>
+      <button class="chip${LAB.sp === 'ALL' ? ' on' : ''}" data-labsp="ALL">All</button>
+      ${sps.map(s => `<button class="chip${LAB.sp === s ? ' on' : ''}" data-labsp="${esc(s)}">${esc(s)}</button>`).join('')}
+    </div>
+    <div class="lab-row"><span class="lab-lbl">Side</span>
+      <button class="chip${LAB.sd === 'ALL' ? ' on' : ''}" data-labsd="ALL">All</button>
+      ${sds.map(s => `<button class="chip${LAB.sd === s ? ' on' : ''}" data-labsd="${esc(s)}">${esc(s)}</button>`).join('')}
+    </div>
+    <div class="lab-row"><span class="lab-lbl">Market</span>
+      <select class="lab-sel" data-labmk="1" aria-label="Market">
+        <option value="ALL"${LAB.mk === 'ALL' ? ' selected' : ''}>All markets</option>
+        ${mks.map(m => `<option value="${esc(m)}"${LAB.mk === m ? ' selected' : ''}>${esc(m.replace(/_/g, ' '))}</option>`).join('')}
+      </select>
+      <button class="chip" data-labreset="1" style="margin-left:auto">Reset filters</button>
+    </div>
+    <div class="lab-row"><span class="lab-lbl">Grade</span>
+      ${grs.map(g => `<button class="chip${LAB.gr.has(g) ? ' on' : ''}" data-labgr="${esc(g)}">${esc(g === 'none' ? 'No grade' : g)}</button>`).join('')}
+    </div>
+    <div class="lab-row"><span class="lab-lbl">Leaves</span>
+      ${leaves.map((lb, i) => `<button class="chip${LAB.lf.has(i) ? ' on' : ''}" data-lablf="${i}">${esc(lb)}</button>`).join('')}
+    </div>
+  </div>`;
+
+  const ev = labEval(lab, LAB);
+  const tr = ev.train, ho = ev.hold;
+  const fmtRoi = v => v == null ? '—' : `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
+  const fmtU = v => `${v > 0 ? '+' : ''}${v.toFixed(2)}u`;
+  const fmtWr = v => v == null ? '—' : `${v.toFixed(1)}%`;
+  const cls = v => v == null ? '' : v > 0 ? 'up' : v < 0 ? 'dn' : '';
+
+  let vCls = 'neu', vTxt = 'Exploratory sample — need 50+ train & 30+ holdout picks to judge stability';
+  if (tr.np >= 50 && ho.np >= 30 && tr.roi != null && ho.roi != null) {
+    if (tr.roi > 0 && ho.roi > 0) {
+      vCls = 'ok'; vTxt = 'Held up out of sample — positive flat ROI in both Train and Holdout';
+    } else if (tr.roi > 0 && ho.roi <= 0) {
+      vCls = 'bad'; vTxt = 'Faded in holdout — positive in Train but negative/flat in the last 7 graded days';
+    } else if (tr.roi <= 0 && ho.roi > 0) {
+      vCls = 'neu'; vTxt = 'Mixed — negative in Train, positive in the last 7 graded days';
+    } else {
+      vCls = 'bad'; vTxt = 'Negative in both Train and Holdout';
+    }
+  }
+
+  const liveMatches = labBoardMatches(PROPS, lab, LAB);
+  const tblRows = (title, rows) => rows.length ? `
+    <h3 style="margin:14px 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2)">${title}</h3>
+    <div class="tscroll"><table>
+      <thead><tr><th>Bucket</th><th>Train W-L</th><th>Train ROI</th><th>Holdout W-L</th><th>Holdout ROI</th></tr></thead>
+      <tbody>${rows.map(([k, v]) => `<tr>
+        <td><b>${esc(k === 'none' ? 'No grade' : k)}</b></td>
+        <td>${v.t.n ? `${v.t.w}-${v.t.l} (${fmtWr(v.t.wr)})` : '—'}</td>
+        <td class="${cls(v.t.roi)}">${fmtRoi(v.t.roi)}</td>
+        <td>${v.h.n ? `${v.h.w}-${v.h.l} (${fmtWr(v.h.wr)})` : '—'}</td>
+        <td class="${cls(v.h.roi)}">${fmtRoi(v.h.roi)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : '';
+
+  out.innerHTML = `
+    <div class="lab-verdict ${vCls}">${vTxt}</div>
+    <div class="lab-grid">
+      <div class="lab-card">
+        <div class="eyebrow">Train (${lab.train_days}d · ${esc(lab.train_from)} to ${esc(lab.train_to)})</div>
+        <div class="big ${cls(tr.roi)}">${fmtRoi(tr.roi)} ROI</div>
+        <div class="meta"><b>${tr.w}-${tr.l}</b> (${fmtWr(tr.wr)}) across ${tr.n.toLocaleString()} decided<br>
+          ${tr.np.toLocaleString()} priced · <b class="${cls(tr.p)}">${fmtU(tr.p)}</b> flat 1u</div>
+      </div>
+      <div class="lab-card">
+        <div class="eyebrow">Holdout (${lab.hold_days}d · ${esc(lab.hold_from)} to ${esc(lab.hold_to)})</div>
+        <div class="big ${cls(ho.roi)}">${fmtRoi(ho.roi)} ROI</div>
+        <div class="meta"><b>${ho.w}-${ho.l}</b> (${fmtWr(ho.wr)}) across ${ho.n.toLocaleString()} decided<br>
+          ${ho.np.toLocaleString()} priced · <b class="${cls(ho.p)}">${fmtU(ho.p)}</b> flat 1u
+          ${ho.n < 30 ? '<br><span class="dim">Small holdout sample — treat as directional.</span>' : ''}</div>
+      </div>
+    </div>
+    <div class="lab-live">
+      <span><b>${liveMatches.length}</b> prop${liveMatches.length === 1 ? '' : 's'} on tonight's live board match these filters.</span>
+      ${liveMatches.length ? `<button class="chip on" data-labgo="1">Apply to Board</button>` : ''}
+    </div>
+    ${tblRows('By pick grade', ev.byGr)}
+    ${tblRows('By sport', ev.bySp)}
+  `;
+}
+
 /* ---------- wiring ---------- */
 const TAB_DRAW = {
   board: [], compare: ['drawCompare'], parlays: ['drawParlays'], ladder: ['drawLadder'], trending: ['drawTrending'], games: ['drawGames'],
   stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
-  'drawLeafValue', 'drawMvm', 'drawTeamRecord'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
+  'drawLeafValue', 'drawMvm', 'drawTeamRecord'], lab: ['drawLab'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
 };
 const TAB_DONE = new Set(['board']);
 function ensureTab(name){
@@ -9619,6 +9996,10 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => {
   const v = e.target.closest('[data-trkview]');
   if (v) { TRKVIEW = v.dataset.trkview; drawTrack(); return; }
+  const g = e.target.closest('[data-trkgrp]');
+  if (g) { TRKROIGRP = g.dataset.trkgrp; drawTrack(); return; }
+  const r = e.target.closest('[data-trkres]');
+  if (r) { trkSetRes(r.dataset.trkk, r.dataset.trkres); return; }
   const m = e.target.closest('[data-trkmark]');
   if (m) { const p = PROPS.find(x => x.i === +m.dataset.trkmark);
            if (p) trkMark(p, m.dataset.trkto); return; }
@@ -9626,8 +10007,33 @@ document.addEventListener('click', e => {
   if (s) { trkSet(s.dataset.trkk, s.dataset.trkst); return; }
   const d = e.target.closest('[data-trkdel]');
   if (d) { TRK.delete(d.dataset.trkk); trkCommit(); return; }
+  const lsp = e.target.closest('[data-labsp]');
+  if (lsp) { LAB.sp = lsp.dataset.labsp; drawLab(); return; }
+  const lsd = e.target.closest('[data-labsd]');
+  if (lsd) { LAB.sd = lsd.dataset.labsd; drawLab(); return; }
+  const lgr = e.target.closest('[data-labgr]');
+  if (lgr) { const k = lgr.dataset.labgr; LAB.gr.has(k) ? LAB.gr.delete(k) : LAB.gr.add(k); drawLab(); return; }
+  const llf = e.target.closest('[data-lablf]');
+  if (llf) { const i = +llf.dataset.lablf; LAB.lf.has(i) ? LAB.lf.delete(i) : LAB.lf.add(i); drawLab(); return; }
+  const lrs = e.target.closest('[data-labreset]');
+  if (lrs) { LAB.sp = 'ALL'; LAB.mk = 'ALL'; LAB.sd = 'ALL'; LAB.gr.clear(); LAB.lf.clear(); drawLab(); return; }
+  const lgo = e.target.closest('[data-labgo]');
+  if (lgo) {
+    F.sport.clear(); if (LAB.sp !== 'ALL') F.sport.add(LAB.sp);
+    F.market.clear(); if (LAB.mk !== 'ALL') F.market.add(LAB.mk);
+    F.side.clear(); if (LAB.sd === 'Over' || LAB.sd === 'Under') F.side.add(LAB.sd);
+    F.grade.clear(); LAB.gr.forEach(x => F.grade.add(x));
+    BVIEW = LAB.sd === 'Team' ? 'team' : 'all';
+    for (const x of document.querySelectorAll('[data-view]')) x.classList.toggle('on', x.dataset.view === BVIEW);
+    if (typeof drawFilters === 'function') drawFilters();
+    draw();
+    showTab('board');
+    return;
+  }
 });
 document.addEventListener('change', e => {
+  const lm = e.target.closest('[data-labmk]');
+  if (lm) { LAB.mk = lm.value; drawLab(); return; }
   const f = e.target.closest('[data-trkf]');
   if (f) { trkEdit(f.dataset.trkk, 'fpr', f.value); return; }
   const s = e.target.closest('[data-trks]');
