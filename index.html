@@ -909,6 +909,11 @@ tr.sub td{font-size:11.5px;color:var(--ink-2)}
 .cmpsec h3{margin:0;font-family:var(--d);font-size:15px}
 .cmpwin{display:inline-flex;gap:5px}
 .peer-tag{font-size:11px;color:var(--ink-2);display:block;margin-top:1px}
+.spvs{margin-top:10px;padding-top:8px;border-top:1px solid var(--rule);font-size:12.5px;line-height:1.45}
+.spvs .chips{margin-top:5px;flex-wrap:wrap;overflow-x:visible}
+.spvs .rd{white-space:nowrap}
+.spvs .sptm{display:inline-block;font-family:var(--m);font-size:11px;padding:1px 6px;margin:2px 4px 0 0;border-radius:999px;background:var(--raise);white-space:nowrap}
+.spvs table{margin-top:6px}
 .peer-sim{display:inline-block;white-space:nowrap;font-family:var(--m);font-size:10px;padding:1px 5px;border-radius:999px;background:var(--raise);
   border:1px solid var(--rule);color:var(--ink-2);margin-left:5px;vertical-align:middle}
 .peer-btn{font-family:var(--m);font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--rule);
@@ -1078,6 +1083,28 @@ td:first-child{text-align:left;font-family:var(--b);min-width:0}
 .glines b{font-family:var(--m);font-size:13.5px} .glines .hit{color:var(--over)}
 .gtbar{display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--raise)}
 .gleg{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--m);font-size:9.5px;color:var(--ink-2);margin:4px 0 8px}
+/* quarter splits and first scorers */
+.qtab{margin-top:4px;font-size:12px}
+.qtab th{font-size:9.5px}
+.qtab td{padding:5px 0 5px 6px;font-family:var(--m)}
+.qtab td:first-child{font-family:var(--b);padding-left:0}
+.qtab tr.qrk td{border-bottom:1px solid var(--rule);padding-top:0}
+.qtab tr.qlead td{font-weight:700}
+.qtab tr.qlg td{color:var(--ink-2)}
+.qhot{color:var(--over);font-weight:700}.qcold{color:var(--under);font-weight:700}
+.mhead.qsub{margin:10px 0 2px}
+.qbox .mstat{margin-top:8px}
+.gqd{margin:8px 0 6px;border-top:1px solid var(--rule);padding-top:7px}
+.gqd summary{cursor:pointer;font-family:var(--m);font-size:11px;color:var(--ink-2)}
+.qfirst{margin-top:10px}
+.qfs{margin:0 0 8px}
+.qfsh{font-size:12px;margin-bottom:3px}
+.qfr{display:grid;grid-template-columns:1fr auto;gap:0 8px;padding:5px 0;border-top:1px solid var(--rule);font-size:12.5px}
+.qfr span:nth-child(2){grid-column:1;font-size:11px}
+.qfr b{grid-column:2;grid-row:1 / span 2;align-self:center;font-family:var(--m);font-size:12px;text-align:right;white-space:nowrap}
+.qcard{border:1px solid var(--rule);border-radius:12px;padding:10px 11px;margin:0 0 10px;background:var(--card)}
+.qch{font-size:13px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.qch .dim{font-size:11px}
 .gleg i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}
 .gtops-h{font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:2px 0 4px}
 .gtop{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:0;
@@ -1686,6 +1713,14 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     earns nothing here. &plusmn; is one standard error, clustered by game; a
     difference counts only past two.</p>
     <div id="gini"></div>
+  </section>
+  <section>
+    <h2>Quarters and first scorers</h2>
+    <p>Every check walks forward: each game is predicted only from the games before it, then scored.
+    <b>Team and player quarter numbers</b> are shrunk toward the league because the raw ones did worse than the plain
+    league average. <b>First basket and first touchdown</b> are research only: no book prices for them are fetched,
+    so they are never graded or bet, and a chance is shown only where it beat its baseline.</p>
+    <div id="qsplits"></div>
   </section>
   <section>
     <h2>Where the edge is spent</h2>
@@ -3755,7 +3790,8 @@ function teamBox(p){
 
 function matchup(p){
   const ev = p.ev || {}, out = [];
-  if (p.kd === 'team') return teamBox(p);
+  // Quarter splits sit at the end of the matchup: tonight's opponent by quarter.
+  if (p.kd === 'team') return teamBox(p) + quarterBox(p);
   out.push(matchupScore(p));
   const dr = ev.def_rank_pos || ev.def_rank;
   if (dr && dr.rank) {
@@ -3824,6 +3860,7 @@ function matchup(p){
       giving it up to</div>
       <div class="tscroll"><table><tbody>${rows}</tbody></table></div></div>`);
   }
+  { const qb = quarterBox(p); if (qb) out.push(qb); }
   return out.length ? out.join('')
     : `<div class="empty">No opponent record yet. Defensive ranks need
        ${4} games against a team before they mean anything, and head to
@@ -7532,9 +7569,207 @@ function gameCard(g, p0){
       <div><small>playable</small><b class="${g.playable ? 'hit' : ''}">${g.playable ?? 0}</b></div></div>
     <div class="gtbar">${bar}</div><div class="gleg">${legend}</div>
     ${tops ? `<div class="gtops-h">Best on the board</div>${tops}` : ''}
+    ${typeof gameQuarters === 'function' ? gameQuarters(sp, g.matchup) : ''}
     <div class="gbtns"><button class="h2go" data-game="${esc(g.matchup)}">See on board</button>
       <button class="h2go" data-gpar="${esc(g.matchup)}">Build parlay</button></div>
   </div>`;
+}
+/* ---------- quarter splits and first scorers ----------
+   D.quarters (audit/quarter_splits.py). Every number is rebuilt from
+   play-by-play and kept only when the player's quarters add up to his
+   box score. Splits are shrunk toward the league, because raw quarter
+   numbers called the next game worse than the league average did.
+   First basket and first TD are research only: no book prices for
+   them are fetched, so nothing here is graded or bet. */
+const Q_STAT = {
+  NBA: {points: ['pts'], rebounds: ['reb'], assists: ['ast'], '3-pointers_made': ['3pm'],
+        pra: ['pts', 'reb', 'ast'], points_rebounds: ['pts', 'reb'], points_assists: ['pts', 'ast'],
+        rebounds_assists: ['reb', 'ast']},
+  NFL: {receiving_yards: ['rec'], rush_yards: ['rush'], receptions: ['recs'], passing_yards: ['pass']},
+};
+const Q_LBL = {pts: 'points', reb: 'rebounds', ast: 'assists', '3pm': 'threes', rec: 'receiving yards',
+  rush: 'rushing yards', recs: 'catches', pass: 'passing yards'};
+function qBlk(sp){ return ((D && D.quarters) || {})[String(sp || '').toUpperCase()] || null; }
+function qKey(sp, name){ const k = boxKey(sp, name); return k.slice(k.indexOf('|') + 1); }
+function qOrd(n){ const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function qFmt(v, d){ return v == null || !isFinite(v) ? '\u2014' : (+v).toFixed(d == null ? 1 : d); }
+function qOdds(a){ return a == null ? '\u2014' : (a > 0 ? '+' : '') + a; }
+/* One market's per-quarter line for a player: the stats summed (PRA is
+   points + rebounds + assists), and the quarter split weighted by how
+   much of his volume each stat carries. Null when a stat is missing. */
+function qLine(B, P, stats){
+  if (!P || !stats || stats.some(s => !P[s])) return null;
+  const sum = k => [0, 1, 2, 3].map(i => stats.reduce((a, s) => a + (+(P[s][k] || [])[i] || 0), 0));
+  const w = stats.map(s => (P[s].szn || []).reduce((a, b) => a + (+b || 0), 0));
+  const W = w.reduce((a, b) => a + b, 0) || 1;
+  const mix = src => [0, 1, 2, 3].map(i => stats.reduce((a, s, j) => a + w[j] * (+(src(s) || [])[i] || 0), 0) / W);
+  return {l5: sum('l5'), szn: sum('szn'), adj: mix(s => P[s].adj), lg: mix(s => (B.ls || {})[s])};
+}
+function qTeamRows(B, names, sp){
+  const T = B.t || {}, lg = B.lg || [], of = Object.keys(T).length;
+  const row = (lab, arr, cls) => `<tr class="${cls || ''}"><td>${lab}</td>${[0, 1, 2, 3].map(i => `<td>${qFmt(arr[i])}</td>`).join('')}</tr>`;
+  let h = '';
+  for (const nm of names) {
+    const t = T[nm];
+    if (!t) continue;
+    h += row(`<b>${esc(teamAbbr(sp, nm) || nm)}</b> allows <small class="dim">${t.n} g</small>`, t.allow_adj || []);
+    h += `<tr class="qrk"><td><small class="dim">rank, 1st = allows most</small></td>${[0, 1, 2, 3].map(i =>
+      `<td><small class="${(t.rank || [])[i] <= 5 ? 'qhot' : (t.rank || [])[i] > of - 5 ? 'qcold' : 'dim'}">${(t.rank || [])[i] ? qOrd(t.rank[i]) : ''}</small></td>`).join('')}</tr>`;
+  }
+  h += row('<small class="dim">League average</small>', lg, 'qlg');
+  return `<div class="tscroll"><table class="qtab"><thead><tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>${h}</tbody></table></div>`;
+}
+/* The prop screen's quarter box (Matchup section). Player props: his
+   last five games per quarter lead, the season sits under it, then his
+   shrunk split against the league's and what tonight's opponent gives
+   up by quarter. Team props: both teams' quarter tables. */
+function quarterBox(p){
+  const sp = String(p.sp || '').toUpperCase(), B = qBlk(sp);
+  if (!B) return '';
+  const {away, home} = matchSides(p);
+  const foot = `<div class="mnote">Points per quarter, shrunk toward the league (raw quarter numbers predicted the next game worse than the
+    league average). Overtime left out. ${B.games} ${sp} games from ${esc(B.from || '')} to ${esc(B.to || '')}.</div>`;
+  if (p.kd === 'team') {
+    if (!B.t || !B.t[away] || !B.t[home]) return '';
+    return `<div class="mbox qbox"><div class="mhead">BY QUARTER \u00b7 POINTS ALLOWED</div>${qTeamRows(B, [away, home], sp)}${foot}</div>`;
+  }
+  const P = (B.p || {})[qKey(sp, p.pl)];
+  const stats = (Q_STAT[sp] || {})[String(p.mk || '').toLowerCase()];
+  const L = qLine(B, P, stats);
+  if (!L) return '';
+  const opp = P.team === away ? home : P.team === home ? away : null;
+  const lab = stats.map(s => Q_LBL[s]).join(' + ');
+  const row = (h, arr, d, cls) => `<tr class="${cls || ''}"><td>${h}</td>${arr.map(v => `<td>${qFmt(v, d)}</td>`).join('')}</tr>`;
+  const pct = arr => arr.map(v => v == null ? null : 100 * v);
+  let lean = '', best = -1, bi = -1;
+  L.adj.forEach((v, i) => { const d0 = 100 * (v - (L.lg[i] || 0)); if (d0 > best) { best = d0; bi = i; } });
+  if (bi >= 0 && best >= 1) lean = `He does more of his ${esc(lab)} in Q${bi + 1} than the league does
+    (${qFmt(100 * L.adj[bi])}% of his total against ${qFmt(100 * L.lg[bi])}%, after shrinking).`;
+  else lean = 'His split sits within a point of the league in every quarter, so no quarter stands out yet.';
+  const O = opp && (B.t || {})[opp];
+  const oppLine = O ? qTeamRows(B, [opp], sp) : '';
+  return `<div class="mbox qbox"><div class="mhead">BY QUARTER \u00b7 ${esc(lab.toUpperCase())}</div>
+    <div class="tscroll"><table class="qtab"><thead><tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr></thead><tbody>
+      ${row(`<b>Last ${D.quarters.recent || 5}</b>`, L.l5, 1, 'qlead')}
+      ${row(`Season <small class="dim">${P.g} g</small>`, L.szn, 1)}
+      ${row('His split %', pct(L.adj), 1)}
+      ${row('<small class="dim">League split %</small>', pct(L.lg), 1, 'qlg')}
+    </tbody></table></div>
+    <div class="mstat">${lean}</div>
+    ${O ? `<div class="mhead qsub">${esc(opp.toUpperCase())} \u00b7 POINTS ALLOWED BY QUARTER</div>${oppLine}` : ''}
+    ${foot}</div>`;
+}
+/* First basket (NBA) and first touchdown (NFL) for one game. A chance
+   and fair price show only when that model beat its plain baseline
+   walking forward through the season; otherwise the counts stand. */
+function firstScorer(sp, mu){
+  const B = qBlk(sp);
+  if (!B) return '';
+  if (sp === 'NBA') {
+    const F = B.fb || {}, g = (F.m || []).find(x => x.mu === mu);
+    if (!g) return '';
+    const T = (B.check || {}).tip || {};
+    const side = s => `<div class="qfs"><div class="qfsh"><b>${esc(teamAbbr('NBA', s.t) || s.t)}</b>
+        scored first ${s.first}/${s.games} \u00b7 tip: ${esc(s.tipper || 'unknown')} ${s.tip && s.tip[1] ? `${s.tip[0]}-${s.tip[1] - s.tip[0]}` : ''}</div>
+      ${s.rows.map(r => `<div class="qfr"><span>${esc(r.n)}</span><span class="dim">${r.first ?? 0}/${r.starts ?? 0} first \u00b7 ${qFmt(100 * (r.q1 || 0), 0)}% Q1 shots</span>
+        <b>${r.p != null ? qFmt(100 * r.p) + '% \u00b7 ' + qOdds(r.fair) : ''}</b></div>`).join('')}</div>`;
+    return `<div class="qfirst"><div class="mhead">FIRST BASKET</div>${g.sides.map(side).join('')}
+      <div class="mnote">Chance = half (which team) \u00d7 a starter takes it (${qFmt(100 * (F.sr || 0), 0)}%) \u00d7 his share of the
+        five starters' first-quarter shots, shrunk 8 starts toward 1 in 5. The tip winner scores first ${qFmt(100 * (F.tw || 0), 0)}% of the
+        time, but past tip records called the next tip ${T.right != null ? qFmt(100 * T.right, 0) + '%' : 'no better than a coin'} of the time, so
+        the tip is shown, not used. Starting fives are from each team's last game; check tonight's lineup. Research only: no book
+        prices for this market are fetched.</div></div>`;
+  }
+  if (sp === 'NFL') {
+    const F = B.ftd || {}, g = (F.m || []).find(x => x.mu === mu);
+    if (!g) return '';
+    const side = s => `<div class="qfs"><div class="qfsh"><b>${esc(teamAbbr('NFL', s.t) || s.t)}</b>
+        scored first ${s.first}/${s.games} \u00b7 opponent allowed first ${s.allowed_by_opp}/${s.opp_games}
+        ${F.show ? `\u00b7 team ${qFmt(100 * s.pt, 0)}%` : ''}</div>
+      ${s.rows.map(r => `<div class="qfr"><span>${esc(r.n)} <small class="dim">${esc(r.pos || '')}</small></span>
+        <span class="dim">${r.tds} TD \u00b7 ${r.first} first \u00b7 ${qFmt(100 * r.share, 0)}% of team TDs</span>
+        <b>${r.p != null ? qFmt(100 * r.p) + '% \u00b7 ' + qOdds(r.fair) : ''}</b></div>`).join('')}</div>`;
+    const bq = F.byq || {}, nq = Object.values(bq).reduce((a, b) => a + b, 0) || 1;
+    return `<div class="qfirst"><div class="mhead">FIRST TOUCHDOWN</div>${g.sides.map(side).join('')}
+      <div class="mnote">Chance = his team scores first (its rate and the opponent's, shrunk toward 50%) \u00d7 his share of the team's
+        touchdowns \u00d7 ${qFmt(100 * (1 - (F.new || 0)), 0)}%, because ${qFmt(100 * (F.new || 0), 0)}% of first TDs went to someone with no
+        touchdown for his team yet. The first TD came in Q1 in ${qFmt(100 * (bq['1'] || 0) / nq, 0)}% of games. Research only: no book
+        prices for this market are fetched.</div></div>`;
+  }
+  return '';
+}
+function gameQuarters(sp, mu){
+  const B = qBlk(sp);
+  if (!B) return '';
+  const [away, home] = String(mu || '').split(' @ ');
+  const tab = B.t && B.t[away] && B.t[home] ? qTeamRows(B, [away, home], sp) : '';
+  const fs = firstScorer(sp, mu);
+  if (!tab && !fs) return '';
+  return `<details class="gqd"><summary>Quarters and first ${sp === 'NFL' ? 'touchdown' : 'basket'}</summary>
+    ${tab ? `<div class="mhead qsub">POINTS ALLOWED BY QUARTER</div>${tab}` : ''}${fs}</details>`;
+}
+/* Record tab: what the quarter numbers and first-scorer chances did
+   walking forward, each against the plain number it has to beat. */
+function qCheckRows(){
+  const out = [];
+  for (const sp of ['NBA', 'NFL']) {
+    const B = qBlk(sp);
+    if (!B) continue;
+    const C = B.check || {}, tq = C.team || {};
+    const q = Object.keys(tq).filter(k => /^Q\d$/.test(k));
+    if (q.length) out.push({sp, lab: `${sp} team points by quarter`, unit: 'RMSE, points',
+      n: (tq.Q1 || {}).n, d: 2, rows: q.map(k => [k, tq[k].league, tq[k].raw, tq[k].shrunk]), cols: ['League', 'Raw', 'Shrunk']});
+    for (const [s, v] of Object.entries(C.player || {})) {
+      const qk = Object.keys(v).filter(k => /^Q\d$/.test(k));
+      out.push({sp, lab: `${sp} player ${Q_LBL[s] || s} by quarter`, unit: 'RMSE', n: v.n, d: 3,
+        rows: qk.map(k => [k, v[k].league, v[k].raw, v[k].shrunk]), cols: ['League split', 'Raw split', 'Shrunk']});
+    }
+    for (const [k, nm, base] of [['first_basket', 'First basket', 'flat'], ['first_td', 'First touchdown', 'base']]) {
+      const c = C[k];
+      if (!c || !c.n) continue;
+      out.push({sp, lab: nm, prob: c, base});
+    }
+  }
+  return out;
+}
+function qProbCard(r){
+  const c = r.prob, ll = c.logloss || {};
+  const baseLab = r.base === 'flat' ? '1 in 10 for every starter' : 'coin flip on the team \u00d7 his TD share';
+  const verdict = !c.beats_base ? 'Does not beat the baseline, so the app shows counts, not chances.'
+    : c.clear ? 'Beats the baseline, and the gap holds up when the days are resampled.'
+    : 'Beats the baseline, but the gap is inside the noise of a short season.';
+  const top = (c.bands || []).slice(-1)[0];
+  const hot = top && top.n >= 30 && top.said - top.hit >= 3
+    ? ` Its top band runs hot: it said ${qFmt(top.said)}% and those players scored ${qFmt(top.hit)}%, so read the biggest chances as a little high.` : '';
+  return `<div class="qcard"><div class="qch"><b>${esc(r.sp)} ${esc(r.lab)}</b> <span class="dim">${(c.n || 0).toLocaleString()} player-games \u00b7 ${c.events} scored \u00b7 ${c.days} days</span></div>
+    <div class="gnhead"><span>Log loss <b>${qFmt(ll.model, 4)}</b></span><span>baseline <b>${qFmt(ll[r.base], 4)}</b></span>
+      <span class="dim">baseline: ${baseLab}</span></div>
+    <div class="tscroll"><table class="qtab"><thead><tr><th>Chance band</th><th>n</th><th>Said</th><th>Hit</th></tr></thead><tbody>
+      ${(c.bands || []).map(b => `<tr><td>${b.hi >= 1 ? qFmt(100 * b.lo, 0) + '%+' : qFmt(100 * b.lo, 0) + '\u2013' + qFmt(100 * b.hi, 0) + '%'}</td><td>${b.n}</td><td>${qFmt(b.said)}%</td><td>${qFmt(b.hit)}%</td></tr>`).join('')}
+    </tbody></table></div><div class="mnote">${verdict}${hot}</div></div>`;
+}
+function drawQuarters(){
+  const el = $('qsplits');
+  if (!el) return;
+  const rows = qCheckRows();
+  if (!rows.length) { el.innerHTML = '<div class="empty">No quarter data in this build.</div>'; return; }
+  el.innerHTML = rows.map(r => r.prob ? qProbCard(r) : `<div class="qcard"><div class="qch"><b>${esc(r.lab)}</b>
+      <span class="dim">${(r.n || 0).toLocaleString()} predictions \u00b7 ${esc(r.unit)}, lower is better</span></div>
+    <div class="tscroll"><table class="qtab"><thead><tr><th></th>${r.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
+      ${r.rows.map(x => { const m = Math.min(...x.slice(1).filter(v => v != null));
+        return `<tr><td>${x[0]}</td>${x.slice(1).map(v => `<td>${v === m ? '<b>' + qFmt(v, r.d) + '</b>' : qFmt(v, r.d)}</td>`).join('')}</tr>`; }).join('')}
+    </tbody></table></div></div>`).join('');
+}
+function labQuarters(f){
+  if (!(f.sp === 'ALL' || f.sp === 'NBA' || f.sp === 'NFL')) return '';
+  const rows = qCheckRows().filter(r => r.prob && (f.sp === 'ALL' || r.sp === f.sp));
+  if (!rows.length) return '';
+  return `<div class="lab-aud"><h3>First basket and first TD</h3>
+    <p>Walk-forward check of the research-only first-scorer chances: each game priced from earlier games only. Follows the Sport filter.</p>
+    ${rows.map(r => { const ll = r.prob.logloss || {};
+      return `<div class="rel"><span><b>${esc(r.sp)} ${esc(r.lab)}</b> <span class="dim">\u00b7 ${(r.prob.n || 0).toLocaleString()} player\u2011games</span><br>
+      <span class="lc-steps">log loss <b>${qFmt(ll.model, 4)}</b> \u00b7 baseline ${qFmt(ll[r.base], 4)}</span></span>
+      <span class="lc-br">${r.prob.beats_base ? (r.prob.clear ? 'beats it' : 'within noise') : 'no edge'}</span></div>`; }).join('')}</div>`;
 }
 if (typeof document !== 'undefined') document.addEventListener('click', e => {
   const t = e.target.closest && e.target.closest('[data-gsport],[data-gsort],[data-gpar]');
@@ -8233,8 +8468,12 @@ function similarPeers(p, maxPeers = 5){
   const names = cmpBoxNameMap();
   const under = p.sd === 'Under';
   const scored = [];
+  // NHL: forwards against forwards, defencemen against defencemen.
+  const posOf = sp === 'NHL' ? ((((typeof D !== 'undefined' && D && D.simopp) || {}).NHL || {}).pos || {}) : {};
+  const myPos = posOf[myKey.split('|')[1]];
   for (const it of pool.items) {
     if (it.key === myKey) continue;
+    if (myPos && posOf[it.key.split('|')[1]] && posOf[it.key.split('|')[1]] !== myPos) continue;
     let sq = 0;
     for (let d = 0; d < me.vec.length; d++) sq += ((me.vec[d] - it.vec[d]) / pool.sd[d]) ** 2;
     const dist = Math.sqrt(sq / me.vec.length);
@@ -8280,6 +8519,127 @@ function similarPeers(p, maxPeers = 5){
   return {sp, peers, totHits, totN, totRate: totHits / totN, totAvg,
     totL10Hits, totL10N, totL10Rate: totL10N ? totL10Hits / totL10N : null, totL10Avg};
 }
+/* ---- Similar players vs this team, and vs teams like it ----------
+   The similar-players list answers "how do players built like him
+   do?". This answers the next two questions: how did THOSE players do
+   against tonight's opponent, and against the defences most like it
+   -- same pace, same allowance in this market, same allowance to his
+   position (audit/similar_opp.py). Their own averages are the
+   yardstick, so a star and a role player can be read together: "ran
+   8% above their usual" means the same thing for both.
+   Context only. The card prints what the walk-forward check found. */
+function simOppData(p){
+  const SO = (typeof D !== 'undefined' && D && D.simopp) || {};
+  const sp = String(p.sp || '').toUpperCase(), S = SO[sp];
+  if (!S || !S.t) return null;
+  const mk = ((SO.alias || {})[sp] || {})[p.mk] || p.mk;
+  let opp = (p.sim || {}).opponent;
+  if (!opp || !S.t[opp]) {
+    const id = typeof matchupIdentity === 'function' ? matchupIdentity(p) : null;
+    if (!id) return null;
+    const al = teamAliasSet(id.opponent, sp);
+    opp = Object.keys(S.t).find(t => al.has(teamNorm(t))) || null;
+  }
+  if (!opp || !S.t[opp] || (S.t[opp].a || {})[mk] == null) return null;
+  const pos = (S.pos || {})[boxKey(sp, p.pl).split('|')[1]] || '';
+  const like = (S.like || {})[`${opp}|${mk}|${pos}`] || (S.like || {})[`${opp}|${mk}|`] || [];
+  return {SO, S, sp, mk, opp, pos: (S.like || {})[`${opp}|${mk}|${pos}`] ? pos : '', like};
+}
+function simOppRank(S, opp, f){
+  const v = Object.values(S.t).map(f).filter(x => x != null).sort((a, b) => b - a);
+  const me = f(S.t[opp]);
+  return me == null ? null : {r: v.indexOf(me) + 1, n: v.length};
+}
+function simOppGames(p, res, keep){
+  const pool = cmpPeerPool(res.sp, cmpRoleGroup(res.sp, p.mk));
+  if (!pool) return [];
+  const out = [];
+  for (const x of res.peers) {
+    const rows = ((D.box || {}).p || {})[x.key] || [];
+    for (const r of rows) {
+      if (!keep(String(r[2] || ''))) continue;
+      const v = cmpMarketVal(r, pool.idx, res.sp, p.mk);
+      if (v == null) continue;
+      out.push({name: x.name, d: r[0], opp: r[2], v, usual: x.avg});
+    }
+  }
+  return out.sort((a, b) => String(b.d).localeCompare(String(a.d)));
+}
+function simOppSum(p, g){
+  const ok = g.map(x => simSideOk(p, x.v));
+  const w = ok.filter(x => x === true).length, dec = ok.filter(x => x != null).length;
+  const tot = g.reduce((a, x) => a + x.v, 0), us = g.reduce((a, x) => a + (x.usual || 0), 0);
+  return {n: g.length, w, dec, ok, avg: g.length ? tot / g.length : null,
+          rel: us > 0 ? tot / us - 1 : null};
+}
+function simOppLine(p, sm, what){
+  if (!sm.n) return `<span class="dim">No games by these players ${what} in the saved box scores yet.</span>`;
+  const pct = sm.dec ? Math.round(100 * sm.w / sm.dec) : null;
+  const rel = sm.rel == null ? '' : Math.abs(sm.rel) < 0.02 ? ' \u00b7 right at their usual'
+    : ` \u00b7 <b class="${(p.sd === 'Under' ? sm.rel < 0 : sm.rel > 0) ? 'hit' : 'miss'}">${Math.round(Math.abs(100 * sm.rel))}% ${sm.rel > 0 ? 'above' : 'below'}</b> their usual`;
+  return `${sm.n} game${sm.n === 1 ? '' : 's'} \u00b7 ${esc(p.sd)} ${p.ln}: <b class="${pct == null ? '' : pct >= 50 ? 'hit' : 'miss'}">${sm.w} of ${sm.dec}${pct == null ? '' : ` (${pct}%)`}</b>
+    \u00b7 avg <b>${r1(sm.avg)}</b>${rel}${sm.n < 4 ? ' <span class="unv">\u00b7 small sample</span>' : ''}`;
+}
+function simOppErr(c){
+  const a = +c.rmse_sim, b = +c.rmse_base;
+  const dp = a.toFixed(2) === b.toFixed(2) ? 3 : 2;
+  return `${a.toFixed(dp)} with it vs ${b.toFixed(dp)} without`;
+}
+function simOppCheck(c, mk){
+  const lab = String(mk).replace(/_/g, ' ');
+  if (!c) return `Not walk-forward tested for ${esc(lab)}. Context only; it does not change the projection.`;
+  const n = (c.n || 0).toLocaleString();
+  if (c.helps) return `Tested walking forward on ${n} ${esc(lab)} games: adjusting his average by how these players did against teams like this lowered the typical miss (${simOppErr(c)}). Still context; it does not change the projection.`;
+  return `Tested walking forward on ${n} ${esc(lab)} games: adjusting his average by how players like him did against teams like this did not predict better than his own average (typical miss ${simOppErr(c)}; it called the direction ${c.dir_acc == null ? '\u2014' : Math.round(100 * c.dir_acc) + '%'} of the time). Read it as context, not as an edge.`;
+}
+function simOppBox(p, res){
+  if (!res || !res.peers || !res.peers.length) return '';
+  const X = simOppData(p);
+  if (!X) return '';
+  const {SO, S, sp, mk, opp, pos, like} = X;
+  const T = S.t[opp], nm = ((D.team_names || {})[sp] || {})[opp] || opp;
+  const mlab = String(mk).replace(/_/g, ' ');
+  const pl = (SO.pl || {})[sp] || 'pace';
+  const posN = pos ? ((POS_NAMES[sp] || {})[pos] || pos) : '';
+  const rk = (f, lab) => { const r = simOppRank(S, opp, f); return r ? `${qOrd(r.r)} ${lab}` : ''; };
+  const prof = [
+    T.pace != null ? `pace ${r1(T.pace)} ${esc(pl)} a game (${rk(t => t.pace, 'fastest')})` : '',
+    `allows ${r1(T.a[mk])} ${esc(mlab)} a game (${rk(t => (t.a || {})[mk], 'most')})`,
+    pos && ((T.pa || {})[pos] || {})[mk] != null
+      ? `${r1(T.pa[pos][mk])} per ${esc(posN.replace(/s$/, ''))} (${rk(t => ((t.pa || {})[pos] || {})[mk], 'most')})` : ''
+  ].filter(Boolean).join(' \u00b7 ');
+  const vsO = simOppGames(p, res, o => teamNorm(o) === teamNorm(opp));
+  const likeSet = new Set(like.map(x => teamNorm(x[0])));
+  const vsL = simOppGames(p, res, o => likeSet.has(teamNorm(o)));
+  const so = simOppSum(p, vsO), sl = simOppSum(p, vsL);
+  const chipsO = vsO.slice(0, 10).map((g, k) => `<span class="rd ${so.ok[k] == null ? '' : so.ok[k] ? 'hit' : 'miss'}"
+    title="${esc(g.name)} vs ${esc(g.opp)}, usual ${r1(g.usual)}">${esc(g.name.split(' ').slice(-1)[0])} ${esc(String(g.d).slice(5))} \u00b7 ${g.v}</span>`).join('');
+  const tchips = like.map(([t, m]) => {
+    const u = S.t[t] || {};
+    const tip = `pace ${r1(u.pace)} \u00b7 allows ${r1((u.a || {})[mk])}${pos && ((u.pa || {})[pos] || {})[mk] != null ? ` \u00b7 ${r1(u.pa[pos][mk])} per ${posN.replace(/s$/, '')}` : ''}`;
+    return `<span class="sptm" title="${esc(tip)}">${esc(t)} ${m}%</span>`;
+  }).join('');
+  const key = 'simpv' + p.i, open = OPENT.has(key);
+  const tbl = open && vsL.length ? `<div class="tscroll"><table class="gtab"><thead><tr><th>Player</th><th>Date</th><th>Opp</th>
+    <th>Result</th><th>Usual</th><th>vs ${p.ln}</th></tr></thead><tbody>${vsL.map((g, k) => {
+      const o = sl.ok[k];
+      return `<tr><td>${esc(g.name)}</td><td>${esc(String(g.d).slice(5))}</td><td>${esc(g.opp)}</td>
+        <td class="v">${g.v}</td><td>${r1(g.usual)}</td><td class="${o == null ? '' : o ? 'hit' : 'miss'}">${o == null ? 'push' : o ? 'hit' : 'miss'}</td></tr>`;
+    }).join('')}</tbody></table></div>` : '';
+  const ck = (S.check || {})[mk];
+  return `<div class="spvs"><b>These players vs ${esc(nm)}</b>
+      <div>${simOppLine(p, so, `against ${esc(opp)}`)}</div>
+      ${chipsO ? `<div class="chips">${chipsO}</div>` : ''}
+    </div>
+    <div class="spvs"><b>These players vs teams like ${esc(opp)}</b>
+      <div class="dim">${esc(opp)}: ${prof}</div>
+      ${like.length ? `<div>Closest on pace, ${esc(mlab)} allowed${pos ? ` and ${esc(mlab)} to ${esc(posN)}` : ''}: ${tchips}</div>
+      <div style="margin-top:4px">${simOppLine(p, sl, 'against those teams')}</div>
+      ${vsL.length ? `<button class="tgl" data-trow="${key}" style="margin:4px 0 0">${open ? 'hide games' : `show all ${vsL.length} games`}</button>` : ''}
+      ${tbl}` : `<div class="dim">No team is close enough to ${esc(opp)} on these numbers to call it similar.</div>`}
+      <div class="simcrit" style="margin:7px 0 0"><span class="unv">Their usual is each player's own average in the saved box scores. Team numbers are this season's to date, so older games are matched on what those teams look like now. ${simOppCheck(ck, mk)}</span></div>
+    </div>`;
+}
 function similarPlayersBox(p, inCompare = false){
   const res = similarPeers(p, 5);
   if (!res) return '';
@@ -8309,6 +8669,7 @@ function similarPlayersBox(p, inCompare = false){
     <p style="font-size:12.5px;margin:0 0 8px">${res.peers.length} ${esc(res.sp)} player${res.peers.length === 1 ? '' : 's'} with the closest advanced stats to <b>${esc(p.pl)}</b> cleared ${esc(p.sd)} ${p.ln} in <b class="${pct >= 50 ? 'hit' : 'miss'}">${th} of ${tn} ${useL10 ? 'L10 ' : ''}games (${pct}%)</b>, averaging <b>${r1(tavg)}</b>.</p>
     <table class="gtab"><tbody>${rows}</tbody></table>
     <div class="simcrit" style="margin:7px 0 0"><span class="unv">Matched on standardized box-score volume and efficiency across all logged ${esc(res.sp)} players (4+ games). Context only — does not change the model projection.</span></div>
+    ${inCompare ? '' : simOppBox(p, res)}
   </div>`;
 }
 function cmpBars(p){
@@ -9458,6 +9819,7 @@ function drawMvm(){
   $('mvm').innerHTML = parts;
   // Ranking power sits in the next section and reads the same ledger.
   try { drawGini(); } catch (err) { console.error('drawGini', err); }
+  try { drawQuarters(); } catch (err) { console.error('drawQuarters', err); }
 }
 
 /* ---- Ranking power ---------------------------------------------
@@ -10721,6 +11083,7 @@ function drawLab(){
       ${liveMatches.length ? `<button class="chip on" data-labgo="1">Apply to Board</button>` : ''}
     </div>
     ${labGini(LAB)}
+    ${labQuarters(LAB)}
     ${tblRows('By pick grade', ev.byGr)}
     ${tblRows('By sport', ev.bySp)}
   `;
