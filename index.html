@@ -702,6 +702,8 @@ mark.ctxside{background:none;color:inherit;border-bottom:2px solid var(--clover)
 .sheett .sub{font-size:11.5px;opacity:.75;line-height:1.3}
 .sheetadd{flex:0 0 auto;border:1px solid var(--clover);background:var(--clover-soft);color:inherit;
   border-radius:999px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.sheetshare{flex:0 0 auto;border:1px solid var(--rule);background:var(--card,transparent);color:inherit;
+  border-radius:999px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
 .sheetbody{position:relative;flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   padding:6px max(14px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));
   max-width:860px;width:100%;margin:0 auto;box-sizing:border-box}
@@ -1762,6 +1764,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
   <div class="sheethead">
     <button class="sheetx" data-shut="1" aria-label="Back to the board">&#8592;</button>
     <div class="sheett" id="sheettitle"></div>
+    <button class="sheetshare" id="sheetshare" data-share="" aria-label="Share this pick as a picture">Share</button>
     <button class="sheetadd" id="sheetadd" data-sel="">+ slip</button>
   </div>
   <div class="sheetbody" id="sheetbody"></div>
@@ -4998,7 +5001,6 @@ function detail(p, p0){
     ${propSwitch(p, p0 || p)}
     ${ruleNote(p)}
     ${cardHtml}
-    <div class="sharerow">${shareBtn('p:' + p.i)}</div>
     ${nav}
     <div class="secbody">${body}</div>
     <button class="closecard" data-shut="1">close ${esc(p.pl)}</button>
@@ -5306,6 +5308,9 @@ function renderSheet(){
   const add = $('sheetadd');
   add.dataset.sel = p.i; add.setAttribute('aria-pressed', String(on));
   add.textContent = on ? '\u2713 in slip' : '+ slip';
+  // Share sits in the top bar so it is visible without scrolling past
+  // the chart and stat tiles.
+  $('sheetshare').dataset.share = 'p:' + p.i;
   sb.innerHTML = detail(p, p0);
   sb.scrollTop = top;
   el.hidden = false;
