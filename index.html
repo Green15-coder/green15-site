@@ -611,6 +611,14 @@ details.tgame .tgn{margin-left:auto;font-family:var(--m);font-size:10px;color:va
 .mvmblk td,.mvmblk th{white-space:normal;word-break:break-word}
 .mvmblk td:first-child,.mvmblk th:first-child{width:46%}
 .mvmblk td:last-child{font-size:11px;line-height:1.35}
+#gini table{width:100%;table-layout:fixed}
+#gini td,#gini th{white-space:normal;word-break:break-word;font-size:11.5px}
+#gini td:first-child,#gini th:first-child{width:32%}
+#gini td:nth-child(2),#gini th:nth-child(2),#gini td:nth-child(3),#gini th:nth-child(3){width:21%}
+#gini th{text-transform:none;letter-spacing:0}
+#gini small{display:block;font-size:10px;line-height:1.3}
+.gnhead{display:flex;flex-wrap:wrap;gap:4px 16px;margin:10px 0;font-size:12.5px}
+.gnhead b{font-family:var(--m)}
 tr.bestw td{font-weight:700}
 tr.bestw td:first-child::after{content:' \2190';opacity:.5}
 .lvv span{font-weight:650;margin-right:5px}
@@ -1665,6 +1673,19 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
     the line was free. The weight sweep shows where the optimum actually
     sits.</p>
     <div id="mvm"></div>
+  </section>
+  <section>
+    <h2>Ranking power (Gini)</h2>
+    <p class="traynote">Calibration asks whether "60%" hits 60% of the time.
+    This asks something it cannot: line every graded prop up by its chance
+    and check whether the order sorts hits from misses. <b>Gini = 2 &times;
+    AUC &minus; 1.</b> 0 is a coin flip at ranking, 1 would be perfect.
+    <b>The bar is the market's Gini on the same props</b>, because the
+    de-vigged price ranks props for free. Every prop counts once, folded onto
+    its Over (or the home side for spreads and moneylines), so picking a side
+    earns nothing here. &plusmn; is one standard error, clustered by game; a
+    difference counts only past two.</p>
+    <div id="gini"></div>
   </section>
   <section>
     <h2>Where the edge is spent</h2>
@@ -9435,6 +9456,68 @@ function drawMvm(){
       <div class="callout" style="margin-top:9px">${dir}</div></div>`;
   }).join('');
   $('mvm').innerHTML = parts;
+  // Ranking power sits in the next section and reads the same ledger.
+  try { drawGini(); } catch (err) { console.error('drawGini', err); }
+}
+
+/* ---- Ranking power ---------------------------------------------
+   Gini of the shown chance against the market's own, on graded
+   props only. Read-only: nothing here moves a threshold. */
+const GINI_SAID = {better: 'Green15 better', worse: 'market better',
+  even: 'no clear gap', thin: 'too few props', unclear: 'too few games'};
+function giniFmt(v, se){
+  if (v == null) return '\u2014';
+  return `${(+v).toFixed(3)}${se != null ? ` <small class="dim">\u00b1${(+se).toFixed(3)}</small>` : ''}`;
+}
+function giniDiff(g){
+  if (!g || g.diff == null) return '\u2014';
+  const c = g.verdict === 'better' ? 'hit' : g.verdict === 'worse' ? 'miss' : 'dim';
+  return `<b class="${c}">${g.diff > 0 ? '+' : ''}${(+g.diff).toFixed(3)}</b>${
+    g.diff_se != null ? ` <small class="dim">\u00b1${(+g.diff_se).toFixed(3)} \u00b7 ${
+    esc(GINI_SAID[g.verdict] || '')}</small>` : ''}`;
+}
+function giniMk(m){ return String(m || '').replace(/_/g, ' ').replace('3-pointers made', '3PM'); }
+function giniRows(list, lab){
+  return (list || []).map(g => `<tr><td><b>${lab(g)}</b><small class="dim">${
+    (g.n || 0).toLocaleString()} props \u00b7 ${g.games ?? 0} games</small></td>
+    <td>${giniFmt(g.shown, g.shown_se)}</td><td>${giniFmt(g.market, g.market_se)}</td>
+    <td>${giniDiff(g)}</td></tr>`).join('');
+}
+function drawGini(){
+  const el = $('gini');
+  if (!el) return;
+  const G = (D && D.gini) || {}, o = G.overall;
+  if (!o) { el.innerHTML = '<div class="empty">No graded props carry both a Green15 chance and a de-vigged price yet, so there is nothing to rank.</div>'; return; }
+  const mk = G.markets || [], rawLow = mk.filter(m => m.raw < m.market).length;
+  const rawLine = mk.length ? ` Its Gini is below the market's in ${rawLow} of ${mk.length}
+    markets${o.raw < o.market ? ' and overall' : ''}, which is why the anchor exists.` : '';
+  const head = `<thead><tr><th></th><th>Green15</th><th>Market</th><th>Gap</th></tr></thead>`;
+  const gapLine = g => g.gap == null ? '' : `${esc(g.sport || 'All sports')}: <b>${
+    g.gap > 0 ? '+' : ''}${(+g.gap).toFixed(3)}</b> <span class="dim">\u00b1${(+(g.gap_se || 0)).toFixed(3)}</span>`;
+  const kinds = (G.sports || []).flatMap(s => ['player', 'team'].filter(k => s[k]).map(k =>
+    Object.assign({sport: s.sport, kind: k, games: null}, s[k])));
+  el.innerHTML = `
+    <div class="gnhead"><span>Graded ${esc(G.from || '')} to ${esc(G.to || '')}</span>
+      <span>Raw projection, all sports <b>${(+o.raw).toFixed(3)}</b></span></div>
+    <div class="tscroll"><table>${head}<tbody>
+      ${giniRows([Object.assign({sport: 'All sports'}, o)], g => esc(g.sport))}
+      ${giniRows(G.sports, g => esc(g.sport))}
+      ${kinds.map(g => `<tr><td><b>${esc(g.sport)} ${g.kind} props</b><small class="dim">${
+        (g.n || 0).toLocaleString()} props</small></td><td>${giniFmt(g.shown)}</td>
+        <td>${giniFmt(g.market)}</td><td>${giniDiff(g)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h3 style="font-size:13px;margin:14px 0 7px">By market <small class="dim">(${G.min || 300}+ props)</small></h3>
+    <div class="tscroll"><table>${head}<tbody>
+      ${giniRows(G.markets, g => `${esc(g.sport)} ${esc(giniMk(g.mkt))}`)}
+    </tbody></table></div>
+    <div class="callout" style="margin-top:9px">
+      <b>Does the disagreement point the right way?</b> Ranking by Green15 minus
+      the market asks whether the props Green15 rated above the price hit more
+      often than the ones it rated below. Above zero means yes.
+      ${[o].concat(G.sports || []).map(gapLine).filter(Boolean).join(' \u00b7 ')}
+      <div class="dim" style="margin-top:7px">The raw projection is the model before
+      it is pulled toward the price.${rawLine} Thresholds are not changed by this
+      panel.</div></div>`;
 }
 
 /* ---- Ask --------------------------------------------------------
@@ -10637,9 +10720,34 @@ function drawLab(){
       <span><b>${liveMatches.length}</b> prop${liveMatches.length === 1 ? '' : 's'} on tonight's live board match these filters.</span>
       ${liveMatches.length ? `<button class="chip on" data-labgo="1">Apply to Board</button>` : ''}
     </div>
+    ${labGini(LAB)}
     ${tblRows('By pick grade', ev.byGr)}
     ${tblRows('By sport', ev.bySp)}
   `;
+}
+
+/* The Lab's Gini follows the Sport and Market filters only. It is
+   precomputed over every graded prop on one canonical side, so the
+   side, grade and leaf filters (which select picks) do not apply. */
+function labGini(f){
+  const G = (D && D.gini) || {};
+  if (!G.overall) return '';
+  let rows, scope;
+  if (f.mk !== 'ALL') {
+    rows = (G.markets || []).filter(m => m.mkt === f.mk && (f.sp === 'ALL' || m.sport === f.sp))
+      .map(m => Object.assign({lab: `${m.sport} ${giniMk(m.mkt)}`}, m));
+    scope = rows.length ? '' : `Fewer than ${G.min || 300} graded props in this market, so no Gini is shown.`;
+  } else if (f.sp !== 'ALL') {
+    rows = (G.sports || []).filter(s => s.sport === f.sp).map(s => Object.assign({lab: s.sport}, s));
+    scope = rows.length ? '' : 'No graded props for this sport.';
+  } else rows = [Object.assign({lab: 'All sports'}, G.overall)];
+  return `<div class="lab-aud"><h3>Ranking power (Gini)</h3>
+    <p>How well each chance sorts hits from misses: 0 is a coin flip, 1 is perfect, and the market's own Gini is the bar.
+      Follows the Sport and Market filters; side, grade and leaf filters do not apply.</p>
+    ${rows.map(g => `<div class="rel"><span><b>${esc(g.lab)}</b> <span class="dim">\u00b7 ${(g.n || 0).toLocaleString()} props</span><br>
+      <span class="lc-steps">Green15 <b>${(+g.shown).toFixed(3)}</b> \u00b7 market <b>${(+g.market).toFixed(3)}</b> \u00b7 raw ${(+g.raw).toFixed(3)}</span></span>
+      <span class="lc-br">${giniDiff(g)}</span></div>`).join('')}
+    ${scope ? `<p class="dim">${esc(scope)}</p>` : ''}</div>`;
 }
 
 /* ---------- System Lab: audits of the live chance and parlay math ---------- */
@@ -10652,7 +10760,7 @@ function drawLabAudit(){
   const f3 = v => v == null ? '\u2014' : (+v).toFixed(3);
   const cards = [];
   if (L.rows && L.rows.length) {
-    const ov = L.overall || {}, E = L.espn;
+    const ov = L.overall || {}, E = L.espn, B = L.blend || {}, X = L.blowout || {};
     // One line per sport and kind: the chance's score before the game
     // and at each break, so the improvement reads left to right.
     const grp = new Map();
@@ -10676,6 +10784,17 @@ function drawLabAudit(){
       ${wc ? `<p>NBA player chances were too sure late in games (said 3%, happened 6.5%), so the spread of what is left to play now widens as the game goes,
         from unchanged at tipoff to 1.5\u00d7 at the final buzzer. Brier before \u2192 after:</p><ul style="margin:4px 0 6px 18px;font-size:12.5px">${wc}</ul>` : ''}
       ${E && E.n ? `<p>Benchmark: on ${E.n} NBA moneyline checks, ESPN's own win probability scored ${f3(E.espn)}; ours scored ${f3(E.ours)}.</p>` : ''}
+      ${B.walk_forward && B.walk_forward.ours ? `<p>Live NBA moneylines and spreads now lean ${Math.round((B.w || 0) * 100)}% on ESPN's live win chance.
+        Tested on ${(B.walk_forward.n || 0).toLocaleString()} checks in ${B.walk_forward.games ?? 0} games, each day priced only from earlier days:
+        ours alone <b>${f3(B.walk_forward.ours.brier)}</b>, ESPN alone <b>${f3(B.walk_forward.espn.brier)}</b>, the blend <b>${f3(B.walk_forward.app.brier)}</b>${
+        B.walk_forward_vs_ours ? ` (better than ours in ${Math.round((B.walk_forward_vs_ours.share_better || 0) * 100)}% of resamples by game)` : ''}.
+        ${B.never_worse ? 'The blend scored at least as well as ours alone at every break, in both markets.' : ''}</p>` : ''}
+      ${X.walk_forward && X.walk_forward.ours ? `<p>NBA player props in a decided game (ESPN 95% or more for one side) now expect less
+        from the rest of the game, most for the biggest roles, because starters sit.${(X.decided || []).map(c => ` ${esc(c.side)}s in those games:
+        said ${(+c.said_ours).toFixed(1)}%, hit ${(+c.happened).toFixed(1)}%, now ${(+c.said_adjusted).toFixed(1)}%.`).join('')}
+        On ${(X.walk_forward.n || 0).toLocaleString()} checks in ${X.walk_forward.games ?? 0} games, each day priced only from earlier days:
+        <b>${f3(X.walk_forward.ours.brier)}</b> \u2192 <b>${f3(X.walk_forward.adjusted.brier)}</b>${X.walk_forward.vs_ours
+        ? ` (better in ${Math.round((X.walk_forward.vs_ours.share_better || 0) * 100)}% of resamples by game)` : ''}.</p>` : ''}
     </div>`);
   }
   const T = P.t || {};
@@ -11292,7 +11411,12 @@ function parseLiveBox(j, sp){
   // Period and clock drive the live hit chance: how much of the game
   // is left is the whole difference between 18 of 22.5 in the first
   // quarter and 18 of 22.5 with two minutes to play.
-  return {teams, state: st.state || null, det: st.shortDetail || '',
+  // ESPN's latest home win chance (0..1), for live NBA sides.
+  const wpl = Array.isArray(j.winprobability) && j.winprobability.length ? j.winprobability[j.winprobability.length - 1] : null;
+  let wp = wpl && wpl.homeWinPercentage != null ? +wpl.homeWinPercentage : null;
+  if (wp != null && wp > 1) wp /= 100;
+  if (!(wp >= 0 && wp <= 1)) wp = null;
+  return {teams, state: st.state || null, det: st.shortDetail || '', wp,
     per: (comp.status || {}).period ?? null, clk: (comp.status || {}).displayClock || '',
     score: (comp.competitors || []).map(c => ({ab: ((c.team || {}).abbreviation) || '', ha: c.homeAway, s: c.score}))
       .sort((a, b) => (a.ha === 'away' ? 0 : 1) - (b.ha === 'away' ? 0 : 1))};
@@ -11444,7 +11568,39 @@ function propCurve(x, c){
    The widening grows with time played, so at tipoff the live chance
    still equals the pregame chance exactly. */
 const LIVE_WIDEN = {'NBA|player': 1.5};
-function liveChance(x, cur, left, c){
+/* How far a live NBA moneyline or spread leans on ESPN's own win
+   chance. Graded by audit/espn_blend.py on every NBA side pick
+   replayed at the end of Q1, halftime and Q3 against ESPN's number at
+   the same moment: moving the remaining margin halfway to the one
+   ESPN implies beat our number alone out of sample (priced day by day
+   with only earlier days, and on a 2-fold split by game), at every
+   break and in both markets. ESPN sees possessions, fouls and
+   lineups the score alone cannot. Only while the game is in progress;
+   a weight of 0 is the old number exactly. */
+const ESPN_BLEND = {'NBA': 0.5};
+/* Live NBA player props in a decided game. ESPN publishes no player
+   chances, but its win chance says how settled a game is, and settled
+   games get starters benched. Graded by audit/espn_blowout.py on every
+   NBA player prop replayed at each quarter break: when ESPN had one
+   side at 95% or more, overs were said 52% and hit 48% (starters
+   much more: said 52%, hit 41% after Q3). With q = |2 * wp - 1|, the
+   rest-of-game mean is scaled by 1 - a * q^P, a by role (the bottom,
+   middle or top third of lines for that stat). It beat the unadjusted
+   chance on days it never saw. Close games are untouched (q^32 is
+   nothing below about 90%), and stats without enough history
+   (steals, blocks) are left alone. */
+const ESPN_BLOWOUT = {'NBA': {P: 32, a: [0.15, 0.3, 0.45],
+  cut: {'3-pointers_made': [1.5, 2.5], 'assists': [2.5, 4.5], 'points': [11.5, 16.5], 'points_assists': [14.5, 21.5], 'points_rebounds': [15.5, 21.5], 'pra': [19.5, 26.5], 'rebounds': [3.5, 5.5], 'rebounds_assists': [7.5, 9.5]}}};
+function blowoutMul(x, wp){
+  const B = ESPN_BLOWOUT[String(x.sp || '').toUpperCase()];
+  const c = B && B.cut[String(x.mk || '').replace(/^player_/, '')];
+  if (!c || wp == null || x.ln == null || !Number.isFinite(+wp)) return 1;
+  const t = x.ln <= c[0] ? 0 : x.ln >= c[1] ? 2 : 1, q = Math.abs(2 * Math.min(1, Math.max(0, +wp)) - 1);
+  return Math.max(0.05, 1 - B.a[t] * Math.pow(q, B.P));
+}
+/* `wps`: ESPN's live win chance. For a team side it is that side's
+   chance; for a player prop either side's (only how decided matters). */
+function liveChance(x, cur, left, c, wps){
   if (cur == null || left == null || c == null) return null;
   const d0 = propCurve(x, c), L = legLine(x);
   if (!d0) return null;
@@ -11452,6 +11608,16 @@ function liveChance(x, cur, left, c){
   const kind = x.kd === 'team' || TEAM_MKS.has(x.mk) ? 'team' : 'player';
   const K = LIVE_WIDEN[String(x.sp || '').toUpperCase() + '|' + kind] || 1, k = 1 + (K - 1) * (1 - r);
   const dR = d0.k === 'n' ? {...d0, mu: d0.mu * r, sd: d0.sd * Math.sqrt(r * k)} : {...d0, mu: d0.mu * r, phi: d0.phi * k};
+  const w = wps != null && kind === 'team' && d0.k === 'n' && dR.sd > 0 && r > 0 && r < 1
+    && !/total/.test(String(x.mkk || x.mk || '')) ? (ESPN_BLEND[String(x.sp || '').toUpperCase()] || 0) : 0;
+  if (w > 0) {
+    // The remaining margin ESPN's win chance implies for this side:
+    // P(cur + X wins) = wps, with our own remaining spread.
+    const p = Math.min(0.999, Math.max(0.001, +wps));
+    const win = dR.int ? 0.5 - cur : -cur;
+    dR.mu = (1 - w) * dR.mu + w * (win + dR.sd * pcInv(p));
+  }
+  if (kind === 'player' && wps != null && r > 0 && r < 1) dR.mu *= blowoutMul(x, wps);
   return distSide(dR, L.ln - cur, L.over);
 }
 /* Minutes on a display clock: "4:12" or, under a minute, "42.3". */
@@ -11523,8 +11689,20 @@ function liveRead(e, box){
   else { const hit = livePlayer(box, e.pl); if (hit) { cur = liveStat(hit.r, e.mk); dnp = !!hit.r.dnp; } else inBox = false; }
   let st = null; try { st = trkSettle(e); } catch (_) {}
   let pct = st === 'hit' ? 1 : st === 'lost' ? 0 : null;
-  if (st == null && !dnp && cur != null) pct = liveChance(x, cur, left, pre.c);
-  return {cur, pct, pre: pre.c, left, st, dnp, inBox, team, done: box.state === 'post'};
+  // ESPN's win chance for this side, while the game is on.
+  let wps = null;
+  if (team && box.state === 'in' && box.wp != null && !/total/.test(String(x.mkk || e.mk || ''))) {
+    const side = teamSideOf(e);
+    wps = side === 'h' ? box.wp : side === 'a' ? 1 - box.wp : null;
+  } else if (!team && box.state === 'in' && box.wp != null) wps = box.wp;
+  if (st == null && !dnp && cur != null) pct = liveChance(x, cur, left, pre.c, wps);
+  const open = pct != null && pct > 0 && pct < 1 && wps != null;
+  const espn = open && team && (ESPN_BLEND[String(e.sp || '').toUpperCase()] || 0) > 0 ? wps : null;
+  // A player in a decided game: how sure ESPN is and how much of the
+  // rest-of-game pace that takes off.
+  const m = open && !team && left > 0 && left < 1 ? blowoutMul(x, wps) : 1;
+  const blow = m < 0.99 ? {lead: Math.max(wps, 1 - wps), cut: 1 - m} : null;
+  return {cur, pct, pre: pre.c, left, st, dnp, inBox, team, espn, blow, done: box.state === 'post'};
 }
 /* Progress bar toward the line, for Over/Under props and totals. */
 function liveBar(cur, sd, ln){
@@ -11534,14 +11712,17 @@ function liveBar(cur, sd, ln){
   return `<span class="lvbar ${cls}" role="img" aria-label="${cur} of ${ln}"><i style="width:${Math.round(f * 100)}%"></i></span>`;
 }
 /* "63% to hit" chip, with the pregame number beside it. */
-function chanceChip(pct, pre, left){
+function chanceChip(pct, pre, left, espn, blow){
   if (pct == null) return '';
   const v = Math.round(pct * 100), cls = v >= 60 ? 'up' : v <= 35 ? 'dn' : '';
   const d = pre != null ? v - Math.round(pre * 100) : null;
   const arrow = d == null || Math.abs(d) < 1 ? '' : d > 0 ? ` \u25b2${d}` : ` \u25bc${-d}`;
   const tip = pct === 1 || pct === 0 ? 'Settled from the live box.'
     : `Live estimate. Pregame ${pre != null ? Math.round(pre * 100) + '%' : 'n/a'}${
-      left != null ? `, about ${Math.round(left * 100)}% of the game left` : ''}. Assumes the pregame pace holds for the time left; it cannot see foul trouble, injuries or a blowout until the box does.`;
+      left != null ? `, about ${Math.round(left * 100)}% of the game left` : ''}. ${espn != null
+      ? `Leans halfway on ESPN's live win chance (${Math.round(espn * 100)}% for this side), which beat the score alone in testing.`
+      : blow ? `ESPN gives one side ${blow.lead >= 0.995 ? 'over 99' : Math.round(blow.lead * 100)}%, and in games this settled starters sit, so the rest-of-game pace is cut ${Math.round(blow.cut * 100)}%.`
+      : 'Assumes the pregame pace holds for the time left; it cannot see foul trouble, injuries or a blowout until the box does.'}`;
   return `<span class="lvchance ${cls}" title="${esc(tip)}">${v}% to hit<small>${arrow}</small></span>`;
 }
 /* One leg's live line: progress text, bar and chance. */
@@ -11554,7 +11735,7 @@ function liveLegHtml(e, box){
   } else if (!r.inBox) body = '<span class="trksub">not in the box yet</span>';
   else if (r.dnp) body = '<span class="trksub">did not play</span>';
   else body = liveProgress(r.cur, e.sd, e.ln, r.done) + liveBar(r.cur, e.sd, e.ln);
-  return {html: body + (r.done && r.pct == null ? '' : chanceChip(r.pct, r.pre, r.left)), r};
+  return {html: body + (r.done && r.pct == null ? '' : chanceChip(r.pct, r.pre, r.left, r.espn, r.blow)), r};
 }
 /* Every game on this slate that has started, with its scoreboard. */
 function liveGames(){
@@ -11593,7 +11774,7 @@ function liveMarks(lg, box){
     const hit = livePlayer(box, e.pl); if (!hit) continue;
     const rd = liveRead(e, box);
     add(hit.r.name, `${esc(e.sd)} ${e.ln} ${esc((e.mk || '').replace(/_/g, ' '))} · ${liveProgress(liveStat(hit.r, e.mk), e.sd, e.ln, box.state === 'post')}${
-      rd ? chanceChip(rd.pct, rd.pre, rd.left) : ''}`);
+      rd ? chanceChip(rd.pct, rd.pre, rd.left, rd.espn, rd.blow) : ''}`);
   }
   return mark;
 }
