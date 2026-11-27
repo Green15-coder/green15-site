@@ -1328,6 +1328,15 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 .trkres-pill.hit{background:color-mix(in srgb,var(--over) 18%,transparent);color:var(--over)}
 .trkres-pill.lost{background:color-mix(in srgb,var(--under) 18%,transparent);color:var(--under)}
 .trkres-pill.push{background:color-mix(in srgb,var(--ink-2) 16%,transparent);color:var(--ink-2)}
+.lab-aud{margin:18px 0 6px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lab-aud h3{margin:0 0 6px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-2)}
+.lab-aud p{font-size:12.5px;line-height:1.45;margin:6px 0}
+.lab-aud table td,.lab-aud table th{font-size:11.5px;white-space:nowrap}
+.lab-aud .rel{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.lab-aud .rel:first-of-type{border-top:0}
+.lab-aud .rel b.r{font-family:var(--m)}
+.lab-aud .lc-steps{font-size:12px;color:var(--ink-2)}
+.lab-aud .lc-br{font-family:var(--m);font-size:11.5px;text-align:right;white-space:nowrap}
 .lab-ctrl{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;padding:12px;
   border:1px solid var(--line);border-radius:12px;background:var(--card)}
 .lab-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -1705,6 +1714,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       ROI is measured only on rows that carried a logged price; missing data is never invented.</p>
     <div id="labctrl"></div>
     <div id="labout"></div>
+    <div id="labaudit"></div>
   </section>
 </div>
 
@@ -5695,8 +5705,9 @@ function matchupScore(p){
    PARLAY GENERATOR
    Leg chance = the anchored probability (ap) adjusted by how that
    calibration bucket has actually landed. Same-game pairs carry a
-   measured correlation from the games both players logged; with no
-   shared games it is treated as unmeasured and flagged.
+   correlation measured on graded history by pair kind (see SAME-GAME
+   CORRELATION below), blended with the games both legs share; with
+   neither it is treated as unmeasured and flagged.
    ================================================================ */
 function calProb(p){
   const base = p.ap ?? p.fp ?? p.mp;
@@ -5791,23 +5802,193 @@ function pairCorr(a, b){
   CORR.set(k, res);
   return res;
 }
+/* ================================================================
+   SAME-GAME CORRELATION (Gaussian copula)
+   Each leg's calibrated chance is a threshold on a standard normal;
+   legs from one game share a correlation matrix and the ticket hits
+   when every leg clears its threshold. Legs from different games stay
+   independent. The correlation comes from graded history
+   (audit/parlay_correlation.py, shipped as D.pcorr), with each leg read
+   in a canonical direction -- player Over, game total Over, the home
+   side of a spread or moneyline:
+     self|mkA|mkB  one player, two markets
+     pmar|mk       a player and his own team's spread or moneyline
+     ptot|mk       a player and the game total
+     mtot / sml    game total and a side / spread and moneyline
+   Teammate and opponent pairs measured near zero and made the
+   out-of-sample check worse, so they are held at 0 (independent).
+   For the other kinds a pair's own shared games (pairCorr) are blended
+   in lightly, weight n/(n+30); a pair with no table kind (one player's
+   two lines in one market, a player who cannot be placed on a side)
+   uses its shared games alone; with neither it is unmeasured.
+   ================================================================ */
+const PC_TEAM = {game_total: 'total', game_total_points: 'total', game_total_goals: 'total',
+  spread: 'spread', alt_spread: 'spread', puck_line: 'spread', moneyline: 'moneyline'};
+function pcInv(u){
+  // Acklam's inverse normal, |error| < 1.2e-9.
+  const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.3577518672690, -30.66479806614716, 2.506628277459239],
+    b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572],
+    c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783],
+    d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+  const x = Math.min(1 - 1e-12, Math.max(1e-12, u));
+  if (x < 0.02425) { const q = Math.sqrt(-2 * Math.log(x));
+    return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  if (x > 1 - 0.02425) return -pcInv(1 - x);
+  const q = x - 0.5, r = q * q;
+  return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+const PC_GL = [[-0.9739065285, 0.0666713443], [-0.8650633667, 0.1494513492], [-0.6794095683, 0.2190863625],
+  [-0.4333953941, 0.2692667193], [-0.1488743390, 0.2955242247], [0.1488743390, 0.2955242247],
+  [0.4333953941, 0.2692667193], [0.6794095683, 0.2190863625], [0.8650633667, 0.1494513492], [0.9739065285, 0.0666713443]];
+/* P(Z1 < h, Z2 < k) at correlation r: Phi(h)Phi(k) plus the integral of
+   the bivariate density over 0..r (two 10-point Gauss-Legendre halves). */
+function pcBvn(h, k, r){
+  let s = normCdf(h) * normCdf(k);
+  if (!r) return s;
+  for (const [lo, hi] of [[0, r / 2], [r / 2, r]]) {
+    const m = (lo + hi) / 2, w = (hi - lo) / 2;
+    for (const [x, wt] of PC_GL) {
+      const t = m + w * x, q = 1 - t * t;
+      s += w * wt * Math.exp(-(h * h - 2 * t * h * k + k * k) / (2 * q)) / (2 * Math.PI * Math.sqrt(q));
+    }
+  }
+  return Math.min(1, Math.max(0, s));
+}
+function pcChol(R){
+  const n = R.length, L = R.map(() => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) {
+    let v = R[i][j];
+    for (let k = 0; k < j; k++) v -= L[i][k] * L[j][k];
+    if (i === j) { if (v <= 1e-9) return null; L[i][i] = Math.sqrt(v); }
+    else L[i][j] = v / L[j][j];
+  }
+  return L;
+}
+const PC_ALPHA = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29].map(x => Math.sqrt(x) % 1);
+/* P(all Z_i < h_i) under correlation R. Two legs exactly; three or more
+   by Genz's method on a fixed lattice (the same answer every time),
+   shrinking the off-diagonal until R is a valid correlation matrix. */
+function pcMvn(h, R){
+  const d = h.length;
+  if (d === 1) return normCdf(h[0]);
+  if (d === 2) return pcBvn(h[0], h[1], R[0][1]);
+  let L = null, s = 1;
+  for (let t = 0; t < 40 && !L; t++, s *= 0.9) L = pcChol(R.map((row, i) => row.map((v, j) => i === j ? 1 : v * s)));
+  if (!L) return h.reduce((a, x) => a * normCdf(x), 1);
+  const N = 1500, y = new Array(d).fill(0);
+  let tot = 0;
+  for (let m = 1; m <= N; m++) {
+    let e = normCdf(h[0] / L[0][0]), f = e;
+    for (let i = 1; i < d && f > 0; i++) {
+      const u = (m * PC_ALPHA[(i - 1) % PC_ALPHA.length]) % 1, w = Math.abs(2 * u - 1);
+      y[i - 1] = pcInv(Math.max(1e-12, w * e));
+      let z = h[i];
+      for (let j = 0; j < i; j++) z -= L[i][j] * y[j];
+      e = normCdf(z / L[i][i]); f *= e;
+    }
+    tot += f;
+  }
+  return tot / N;
+}
+/* A leg in canonical direction, or null when it cannot be placed. */
+function pcLeg(p){
+  const sp = String(p.sp || '').toUpperCase(), mk = p.mk || '', sd = String(p.sd || '');
+  const team = p.kd === 'team' || PC_TEAM[mk] != null || /^team_total/.test(mk);
+  if (team) {
+    const kind = PC_TEAM[mk];
+    if (!kind) return null;
+    if (kind === 'total') return {sp, team, mk: kind, who: 'TEAM:' + kind, flip: /^under$/i.test(sd), tm: null};
+    const {away, home} = matchSides(p), s = teamAbbr(sp, sd), a = teamAbbr(sp, away), h = teamAbbr(sp, home);
+    if (!s || !a || !h || (s !== a && s !== h)) return null;
+    return {sp, team, mk: kind, who: 'TEAM:' + kind, flip: s === a, tm: null};
+  }
+  let tm = p.tm || null;
+  if (!tm) {
+    const own = playerSideAbbr(p), h = teamAbbr(sp, matchSides(p).home);
+    tm = own && h ? (own === h ? 'h' : 'a') : null;
+  }
+  return {sp, team: false, mk, who: String(p.pl || '').toLowerCase(), flip: /^under$/i.test(sd), tm};
+}
+function pcType(a, b){
+  if (a.team && b.team) {
+    const ks = new Set([a.mk, b.mk]);
+    if (ks.size === 2 && ks.has('spread') && ks.has('moneyline')) return {key: 'sml', sign: 1};
+    if (ks.size === 2 && ks.has('total')) return {key: 'mtot', sign: 1};
+    return null;
+  }
+  if (a.team || b.team) {
+    const [t, q] = a.team ? [a, b] : [b, a];
+    if (t.mk === 'total') return {key: 'ptot|' + q.mk, sign: 1};
+    if (!q.tm) return null;
+    return {key: 'pmar|' + q.mk, sign: q.tm === 'h' ? 1 : -1};
+  }
+  const m = [a.mk, b.mk].sort().join('|');
+  if (a.who === b.who) return a.mk !== b.mk ? {key: 'self|' + m, sign: 1} : null;
+  if (!a.tm || !b.tm) return null;
+  return {key: (a.tm === b.tm ? 'mate|' : 'opp|') + m, sign: 1};
+}
+/* Table value for a pair kind: the exact markets, else the sport's pool
+   for that kind. Teammate and opponent kinds are 0 by measurement. */
+function pcPrior(sp, key){
+  const P = (D && D.pcorr) || {}, T = P.t || {};
+  if (!P.t) return null;
+  const kind = key.split('|')[0];
+  if (!(P.kinds || []).includes(kind)) return /^(mate|opp)$/.test(kind) ? {r: 0, g: P.games || 0, zero: true} : null;
+  return T[sp + '|' + key] || T[sp + '|' + kind + '|*'] || null;
+}
+/* Correlation between two same-game legs AS PICKED, with where it came
+   from. `pc` is the pair's own shared-history read, when there is one. */
+function legRho(a, b, pc){
+  const A = pcLeg(a), B = pcLeg(b), t = A && B && A.sp === B.sp ? pcType(A, B) : null;
+  let r0 = null, g = 0, key = t ? t.key : '';
+  if (t) {
+    const pr = pcPrior(A.sp, t.key);
+    if (pr) { r0 = (pr.r || 0) * t.sign * (A.flip ? -1 : 1) * (B.flip ? -1 : 1); g = pr.g || 0; }
+  }
+  // Teammates and opponents stay at the measured zero: a pair's own
+  // dozen shared games is noise there, and the out-of-sample check said
+  // so. Elsewhere the shared games are blended in.
+  const zero = r0 != null && /^(mate|opp)\|/.test(key);
+  const n = !zero && pc && pc.same && pc.n >= 6 ? pc.n : 0;
+  const rp = n ? Math.sin(Math.PI * Math.max(-1, Math.min(1, pc.r)) / 2) : null;
+  if (r0 == null && rp == null) return {r: 0, measured: false, key, g: 0, n: 0};
+  const w = rp == null ? 0 : r0 == null ? 1 : n / (n + 30);
+  const r = Math.max(-0.95, Math.min(0.95, (1 - w) * (r0 ?? 0) + w * (rp ?? 0)));
+  return {r, measured: true, key, g, n, r0, rp};
+}
+/* Joint chance for legs with chances q under one game's correlations. */
+function pcJoint(q, R){
+  if (q.some(x => x == null)) return null;
+  if (q.some(x => x <= 0)) return 0;
+  return pcMvn(q.map(x => pcInv(Math.min(1 - 1e-6, x))), R);
+}
 function jointProb(legs){
   let pr = 1;
   const q = legs.map(calProb);
   for (const x of q) pr *= x;
-  let ratio = 1, unmeasured = 0, rs = [], warn = [];
-  for (let i = 0; i < legs.length; i++) for (let j = i + 1; j < legs.length; j++) {
-    const c = pairCorr(legs[i], legs[j]); if (!c.same) continue;
-    if (c.n < 6) { unmeasured++; continue; }
-    const pa = q[i], pb = q[j];
-    let r = 1 + c.r * Math.sqrt(((1 - pa) * (1 - pb)) / (pa * pb));
-    r = Math.min(Math.min(1 / pa, 1 / pb), Math.max(0.3, r));
-    ratio *= r; rs.push(c.r);
-    // Pairs that clearly move together (or against each other) are
-    // named on the card, not only folded into the estimate.
-    if (Math.abs(c.r) >= 0.25) warn.push({a: legs[i], b: legs[j], r: c.r, n: c.n});
+  let est = 1, unmeasured = 0;
+  const rs = [], warn = [], pairs = [];
+  const games = new Map();
+  legs.forEach((p, k) => { const g = p.mu || '#' + k; if (!games.has(g)) games.set(g, []); games.get(g).push(k); });
+  for (const ix of games.values()) {
+    if (ix.length === 1) { est *= q[ix[0]]; continue; }
+    const R = ix.map(() => ix.map(() => 0));
+    ix.forEach((_, a) => { R[a][a] = 1; });
+    for (let a = 0; a < ix.length; a++) for (let b = a + 1; b < ix.length; b++) {
+      const i = ix[a], j = ix[b], c = pairCorr(legs[i], legs[j]), lr = legRho(legs[i], legs[j], c);
+      R[a][b] = R[b][a] = lr.r;
+      pairs.push({i, j, ...lr});
+      if (!lr.measured) { unmeasured++; continue; }
+      rs.push(lr.r);
+      // Pairs that clearly move together (or against each other) are
+      // named on the card, not only folded into the estimate.
+      if (Math.abs(lr.r) >= 0.25) warn.push({a: legs[i], b: legs[j], r: lr.r, n: lr.n || lr.g,
+        src: [lr.r0 != null && lr.g ? `${lr.g} graded games like it` : '', lr.n ? `${lr.n} shared games` : ''].filter(Boolean).join(' + ')});
+    }
+    const jg = pcJoint(ix.map(k => q[k]), R);
+    est = jg == null ? NaN : est * jg;
   }
-  return {ind: pr, est: Math.min(Math.min(...q), pr * ratio), unmeasured, rs, warn};
+  return {ind: pr, est: Math.min(Math.min(...q), est), unmeasured, rs, warn, pairs};
 }
 // Same-game legs allowed by default, up to three per game.
 // Legs graded B or better by default (owner request 2026-11-26). The
@@ -5963,9 +6144,11 @@ function generateParlays(F, want = 8, ex = null){
     if (F.corr === 'diff' && same.length) return false;
     if (same.length + 1 > F.maxGame) return false;
     for (const x of same) {
-      const c = pairCorr(x, p);
-      if (F.corr === 'pos' && !(c.n >= 6 && c.r > 0.05)) return false;
-      if (F.corr === 'noneg' && c.n >= 6 && c.r < -0.05) return false;
+      // The same correlation the estimate uses (graded history by pair
+      // kind, plus the pair's shared games where that kind allows it).
+      const c = legRho(x, p, pairCorr(x, p));
+      if (F.corr === 'pos' && !(c.measured && c.r > 0.05)) return false;
+      if (F.corr === 'noneg' && c.measured && c.r < -0.05) return false;
     }
     return true;
   };
@@ -6089,18 +6272,19 @@ function parlayReason(r, tag){
     return `<tr class="prln"><td colspan="6">${legShort(p)} <span class="dim">${p.pr > 0 ? '+' : ''}${p.pr}</span></td></tr>
       <tr><td>${pp(imp)}</td><td>${pp(p.fp)}</td><td>${pp(p.mp)}</td><td>${pp(p.ap)}</td><td><b>${pp(q[k])}</b></td><td>${p.ed == null ? '\u2014' : sgn(100 * p.ed)}</td></tr>`;
   }).join('');
-  // 2. Correlation, pair by pair (same game only).
-  const pairs = [];
-  for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
-    const c = pairCorr(L[i], L[j]); if (!c.same) continue;
-    let eff = null;
-    if (c.n >= 6) {
-      const pa = q[i], pb = q[j];
-      eff = Math.min(Math.min(1 / pa, 1 / pb), Math.max(0.3, 1 + c.r * Math.sqrt(((1 - pa) * (1 - pb)) / (pa * pb))));
-    }
-    pairs.push(`<tr><td>${legShort(L[i])} + ${legShort(L[j])}</td><td>${c.n}</td><td>${c.n >= 6 ? (c.r > 0 ? '+' : '') + c.r.toFixed(2) : 'unmeasured'}</td>
-      <td>${eff == null ? '\u00d71.00 (left alone)' : '\u00d7' + eff.toFixed(2)}</td></tr>`);
-  }
+  // 2. Correlation, pair by pair (same game only), as jointProb used it.
+  const PCK = {self: 'same player', pmar: 'player + his side', ptot: 'player + game total',
+    mtot: 'total + side', sml: 'spread + moneyline', mate: 'teammates', opp: 'opponents'};
+  const pairs = (r.j.pairs || []).map(x => {
+    const pa = q[x.i], pb = q[x.j];
+    const eff = x.measured && pa > 0 && pb > 0 ? pcJoint([pa, pb], [[1, x.r], [x.r, 1]]) / (pa * pb) : null;
+    const kind = PCK[(x.key || '').split('|')[0]] || '';
+    const src = !x.measured ? 'not measured'
+      : (kind ? kind + ': ' : '') + [x.r0 != null && x.g ? `${x.g} graded games` : '', x.n ? `${x.n} shared` : ''].filter(Boolean).join(' + ');
+    return `<tr class="prln"><td colspan="3">${legShort(L[x.i])} + ${legShort(L[x.j])}</td></tr>
+      <tr><td>${esc(src)}</td><td>${x.measured ? (x.r > 0 ? '+' : '') + x.r.toFixed(2) : '\u2014'}</td>
+      <td>${eff == null ? '\u00d71.00 (left alone)' : '\u00d7' + eff.toFixed(2)}</td></tr>`;
+  });
   // 3. Weakest leg, and the ticket without it.
   const wi = q.indexOf(Math.min(...q));
   let drop = '';
@@ -6136,8 +6320,11 @@ function parlayReason(r, tag){
         pairs.length ? `<br>same-game adjustment \u00d7${(r.j.est / r.j.ind).toFixed(2)} = <b>${pp(r.j.est)}</b> estimated` : ''}
         <br>payout ${am(r.d)} needs <b>${pp(be)}</b> to break even \u2192 ${r.j.est - be > 0 ? '+' : ''}${(100 * (r.j.est - be)).toFixed(1)} pts
         <br>expected return per $1: <b class="${r.ev > 0 ? 'hit' : 'miss'}">${r.ev > 0 ? '+' : ''}${r.ev.toFixed(2)}</b> \u00b7 fair price at this estimate: ${fair}</div>
-      ${pairs.length ? `<div class="prtab"><table class="prpair"><tr><th>Same-game pair</th><th>Shared games</th><th>Correlation</th><th>Effect</th></tr>${pairs.join('')}</table></div>
-      <p class="dim">Correlation is measured on the games both legs share, shrunk toward zero for small samples. Under 6 shared games it is left out, not guessed.${
+      ${pairs.length ? `<div class="prtab"><table class="prpair"><tr><th>Measured on</th><th>Correlation</th><th>Effect</th></tr>${pairs.join('')}</table></div>
+      <p class="dim">Correlation comes from how same-game pairs of this kind finished in graded history (one player's two markets, a player with his
+        side or the total, a total with a side), blended lightly with the games these two legs share. Teammates and opponents measured close to
+        zero and did not help when checked on games held out, so they count as independent. The legs are joined with a normal copula, so the
+        estimate never tops the weakest leg. A pair with neither measurement is left alone, not guessed.${
         sgp ? ' Books price same-game tickets lower than the multiplied price shown here.' : ''}</p>`
         : '<p class="dim">Every leg is from a different game, so no correlation is applied.</p>'}</div>
     <div class="prsec"><h4>Weakest leg</h4><p><b>${legName(L[wi])}</b> at ${pp(q[wi])} is the leg most likely to miss.${drop ? ' ' + drop : ''}</p></div>
@@ -6185,7 +6372,7 @@ function parlayCard(r, tag){
         sl ? `<a class="pleg-go" href="${esc(sl.u)}" target="_blank" rel="noopener" title="Open in ${esc(BOOK_NAME[MYBOOK] || MYBOOK)}">${esc(BOOK[MYBOOK] || MYBOOK)} \u2197</a>` : ''}</li>`;
     }).join('')}</ol>
     ${bookCmpHtml}
-    <div class="pfoot">independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
+    <div class="pfoot">if independent ${pc(r.j.ind)}${r.j.rs.length ? ` \u00b7 same-game correlation ${r.j.rs.map(x => (x > 0 ? '+' : '') + x.toFixed(2)).join(', ')}` : ''}
       ${shade == null ? '' : `\u00b7 if each leg is ${cg.toFixed(1)} pts worse (largest measured miss): ${pc(shade)} `}\u00b7 break-even ${pc(be)}${
       sgp ? ' \u00b7 same game: the book will price this lower than shown' : ''}${
       r.j.unmeasured ? ` \u00b7 ${r.j.unmeasured} same-game pair${r.j.unmeasured > 1 ? 's' : ''} unmeasured` : ''}${
@@ -6198,7 +6385,7 @@ function parlayCard(r, tag){
     ${(r.j.warn || []).length ? `<div class="pwarn">${r.j.warn.map(w => {
       const nm = q => q.kd === 'team' ? (/total/.test(q.mkk || q.mk || '') ? `game ${esc(q.sd)} ${q.ln}` : `${esc(q.sd)}${q.mkk === 'moneyline' ? ' ML' : ' ' + spreadSign(q, q.ln)}`) : `${esc(String(q.pl).split(' ').slice(-1)[0])} ${esc(q.sd)} ${q.ln}`;
       return `<div>${w.r > 0 ? '<b>Move together</b>' : '<b>Pull apart</b>'}: ${nm(w.a)} + ${nm(w.b)}
-        (${(w.r > 0 ? '+' : '') + w.r.toFixed(2)} over ${w.n} shared games). ${w.r > 0
+        (${(w.r > 0 ? '+' : '') + w.r.toFixed(2)}, ${esc(w.src || 'measured')}). ${w.r > 0
           ? 'One hitting makes the other likelier, so this is closer to one bet than two; books price that in.'
           : 'One hitting makes the other less likely, which is why the estimate is below the naive product.'}</div>`;
     }).join('')}</div>` : ''}
@@ -6815,7 +7002,14 @@ function pkLegOf(p){
   return {sp: String(p.sp || '').toUpperCase(), pl: p.pl || '', mk: p.mk || '', mkk: p.mkk || '',
     kd: p.kd || 'player', sd: p.sd || '', ln: p.ln ?? null, mu: p.mu || '', gd: p.gd || null,
     ct: p.ct || null, pr: p.pr ?? null, cal: calProb(p), mp: p.mp ?? null, gr: p.gr ?? null,
-    pj: p.pj ?? null, sv: p.sv ?? null, res: null, val: null};
+    pj: p.pj ?? null, sv: p.sv ?? null, res: null, val: null, tm: pkSideOf(p)};
+}
+/* 'h' / 'a' for a player's own side of the matchup, kept on a saved leg
+   so its live chance can carry the same-game correlation later. */
+function pkSideOf(p){
+  if (p.kd === 'team') return null;
+  const own = playerSideAbbr(p), h = teamAbbr(p.sp, matchSides(p).home);
+  return own && h ? (own === h ? 'h' : 'a') : null;
 }
 function pkIdOf(legs){
   return (D.slate_day || 'undated') + '|' + legs.map(l =>
@@ -6907,18 +7101,31 @@ function pkStatus(pk){
   const overdue = open > 0 && last && today && pkAdd(last, 2) < today;
   // Live parlay chance: settled legs are 1 (hit, push, void) or 0
   // (lost); open legs use their live chance once the game is on and
-  // the chance from when it was saved before that. Multiplied as if
-  // independent, which same-game legs are not -- shown as an estimate.
+  // the chance from when it was saved before that. Open legs from one
+  // game are joined with the same copula as the builder, using the
+  // graded-history correlation for their pair kind.
   let lpc = null, anyLive = false;
   if (open && !lost) {
-    lpc = 1;
+    const games = new Map();
+    let miss = false;
     pk.legs.forEach((l, k) => {
       const x = S[k]; if (x.res) return;
       const lp = x.live && x.live.pc != null ? x.live.pc : null;
       if (lp != null) anyLive = true;
       const v = lp ?? l.cal;
-      lpc = v == null || lpc == null ? null : lpc * v;
+      if (v == null) { miss = true; return; }
+      const g = l.mu || '#' + k;
+      if (!games.has(g)) games.set(g, []);
+      games.get(g).push([l, v]);
     });
+    if (!miss) {
+      lpc = 1;
+      for (const xs of games.values()) {
+        const R = xs.map((a, i) => xs.map((b, j) => i === j ? 1 : legRho(a[0], b[0], null).r));
+        lpc *= xs.length === 1 ? xs[0][1] : pcJoint(xs.map(z => z[1]), R);
+      }
+      lpc = Math.max(0, Math.min(1, lpc));
+    }
   }
   return {S, st, open, hits, pnl, price, changed, overdue, lpc: anyLive ? lpc : null};
 }
@@ -7025,7 +7232,7 @@ function pkCard(pk, s){
     <div class="pkhead"><span class="pkst">${PK_ST[s.st]}</span>
       <b>${pk.legs.length}-leg</b>${pk.tag ? ` <span class="dim">${esc(pk.tag)}</span>` : ''}
       <span class="pkpx">${am(pk.d)}</span>${pnl}</div>
-    ${s.lpc != null ? `<div class="pklive">${chanceChip(s.lpc, pk.est, null)}<span class="dim">live estimate, legs treated as independent</span></div>` : ''}
+    ${s.lpc != null ? `<div class="pklive">${chanceChip(s.lpc, pk.est, null)}<span class="dim">live estimate, same-game legs correlated</span></div>` : ''}
     <div class="pksub">est. hit ${pc(pk.est)} when saved \u00b7 ${s.hits}/${pk.legs.length} legs hit${s.open ? ` \u00b7 ${s.open} to go` : ''}${
       pk.placed ? ' \u00b7 <b>placed</b>' : ''}${s.overdue ? ' \u00b7 <span class="miss">no box score found yet</span>' : ''}</div>
     <ol class="pklegs">${legs}</ol>
@@ -10435,11 +10642,83 @@ function drawLab(){
   `;
 }
 
+/* ---------- System Lab: audits of the live chance and parlay math ---------- */
+const PC_LABEL = {self: 'same player', pmar: 'player + his side', ptot: 'player + game total',
+  mtot: 'total + side', sml: 'spread + moneyline'};
+function drawLabAudit(){
+  const el = $('labaudit');
+  if (!el) return;
+  const L = (D && D.livecal) || {}, P = (D && D.pcorr) || {};
+  const f3 = v => v == null ? '\u2014' : (+v).toFixed(3);
+  const cards = [];
+  if (L.rows && L.rows.length) {
+    const ov = L.overall || {}, E = L.espn;
+    // One line per sport and kind: the chance's score before the game
+    // and at each break, so the improvement reads left to right.
+    const grp = new Map();
+    for (const r of L.rows) { const k = r.sp + '|' + r.kd; if (!grp.has(k)) grp.set(k, []); grp.get(k).push(r); }
+    const rows = [...grp.values()].map(rs => {
+      rs.sort((x, y) => (x.k || 0) - (y.k || 0));
+      const r0 = rs[0], short = t => String(t || '').replace(/^after /, '').replace('halftime', 'Half');
+      return `<div class="rel"><span><b>${esc(r0.sp)}</b> ${r0.kd === 'team' ? 'team' : 'player'} props
+        <span class="dim">\u00b7 ${r0.games ?? 0} games \u00b7 slope ${rs.map(r => r.slope == null ? '\u2014' : (+r.slope).toFixed(2)).join(' / ')}</span><br>
+        <span class="lc-steps">Pre ${f3(r0.brier_pregame)}${rs.map(r => ` \u2192 ${esc(short(r.at))} <b>${f3(r.brier)}</b>`).join('')}</span></span></div>`;
+    }).join('');
+    const wc = (L.widen_check || []).map(w => `<li>${esc(w.sp)} player props, ${w.part === 'fitted on' ? 'games it was tuned on' : 'later games it never saw'}
+      (${(w.n || 0).toLocaleString()} checks): ${f3(w.brier_before)} \u2192 <b>${f3(w.brier_after)}</b></li>`).join('');
+    cards.push(`<div class="lab-aud"><h3>Live chance record</h3>
+      <p>Every graded pick from ${esc((L.dates || [])[0] || '')} to ${esc((L.dates || [])[1] || '')} was replayed through the app's own live hit chance
+        at the end of each quarter or period, then scored against how it finished. Lower is better on the Brier score: 0.25 is a coin flip,
+        0 is perfect. Slope near 1.00 means the chances are the right size (under 1 means too sure of itself).</p>
+      <p>Overall: <b>${f3(ov.brier_pregame)}</b> before the game \u2192 <b>${f3(ov.brier)}</b> live, across
+        ${(ov.n || 0).toLocaleString()} checks in ${ov.games ?? 0} games.</p>
+      ${rows}
+      ${wc ? `<p>NBA player chances were too sure late in games (said 3%, happened 6.5%), so the spread of what is left to play now widens as the game goes,
+        from unchanged at tipoff to 1.5\u00d7 at the final buzzer. Brier before \u2192 after:</p><ul style="margin:4px 0 6px 18px;font-size:12.5px">${wc}</ul>` : ''}
+      ${E && E.n ? `<p>Benchmark: on ${E.n} NBA moneyline checks, ESPN's own win probability scored ${f3(E.espn)}; ours scored ${f3(E.ours)}.</p>` : ''}
+    </div>`);
+  }
+  const T = P.t || {};
+  const keys = Object.keys(T).filter(k => !k.endsWith('|*') && (T[k].g || 0) >= 30);
+  if (keys.length) {
+    const top = keys.sort((a, b) => Math.abs(T[b].r) - Math.abs(T[a].r)).slice(0, 8).map(k => {
+      const [sp, kind, ...mk] = k.split('|'), v = T[k];
+      const MKS = {points: 'points', rebounds: 'rebounds', assists: 'assists', pra: 'PRA', points_rebounds: 'P+R',
+        points_assists: 'P+A', rebounds_assists: 'R+A', '3-pointers_made': '3PM', shots_on_goal: 'shots', receiving_yards: 'rec yards',
+        rush_yards: 'rush yards', passing_yards: 'pass yards', rush_attempts: 'rush att'};
+      const mks = mk.map(m => MKS[m] || m.replace(/_/g, ' ')).join(' & ');
+      return `<div class="rel"><span><b>${esc(sp)}</b> ${esc(PC_LABEL[kind] || kind)}${mks ? ': ' + esc(mks) : ''}
+        <span class="dim">\u00b7 ${v.g} games \u00b7 both hit ${v.both}% vs ${v.ind}% if independent</span></span>
+        <b class="r ${v.r > 0 ? 'hit' : 'miss'}">${v.r > 0 ? '+' : ''}${(+v.r).toFixed(2)}</b></div>`;
+    }).join('');
+    const ck = (P.check || {}), grp = ['all', 'same player', 'with a team leg', 'different players'];
+    const crow = (lab, arr) => (arr || []).filter(r => grp.includes(r.group)).map(r => {
+      const pa = r.pred_applied ?? r.pred_correlated, ba = r.brier_applied ?? r.brier_correlated;
+      const same = Math.round(pa) === Math.round(r.pred_independent);
+      return `<div class="rel"><span><b>${lab}-leg, ${esc(r.group)}</b> <span class="dim">\u00b7 ${(r.n || 0).toLocaleString()} tickets</span><br>
+        <span class="lc-steps">hit ${(r.actual || 0).toLocaleString()} \u00b7 independent said ${Math.round(r.pred_independent).toLocaleString()}${
+          same ? ' (no correlation applied)' : ` \u00b7 correlated said <b>${Math.round(pa).toLocaleString()}</b>`}</span></span>
+        <span class="lc-br">${(+r.brier_independent).toFixed(4)}<br><b class="${ba < r.brier_independent ? 'hit' : ba > r.brier_independent ? 'miss' : ''}">${(+ba).toFixed(4)}</b></span></div>`;
+    }).join('');
+    cards.push(`<div class="lab-aud"><h3>Same-game parlay correlation</h3>
+      <p>Measured on ${P.games ?? 0} graded games (${esc((P.dates || [])[0] || '')} to ${esc((P.dates || [])[1] || '')}): how often two legs from one game
+        both hit, compared with multiplying their chances. These numbers join same-game legs in the parlay builder and in a saved parlay's live chance.
+        Teammates and opponents measured close to zero, so they stay independent.</p>
+      ${top}
+      <p style="margin-top:10px">Out-of-sample check: every game was priced with numbers measured on the other half of the games.
+        Tickets of 55%+ legs, how many hit vs predicted:</p>
+      <p class="dim">Right column: Brier score independent (top) and with correlation (bottom); lower is better.</p>
+      ${crow('2', ck.pairs)}${crow('3', ck.triples)}
+    </div>`);
+  }
+  el.innerHTML = cards.join('');
+}
+
 /* ---------- wiring ---------- */
 const TAB_DRAW = {
   board: [], compare: ['drawCompare'], parlays: ['drawParlays'], ladder: ['drawLadder'], trending: ['drawTrending'], games: ['drawGames'],
   stake: ['drawStakes'], record: ['drawRecord', 'drawCalibration', 'drawTierOutcomes',
-  'drawLeafValue', 'drawMvm', 'drawTeamRecord'], lab: ['drawLab'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
+  'drawLeafValue', 'drawMvm', 'drawTeamRecord'], lab: ['drawLab', 'drawLabAudit'], ask: ['drawAsk'], track: ['drawTrack'], health: ['drawHealth'],
 };
 const TAB_DONE = new Set(['board']);
 function ensureTab(name){
@@ -11155,12 +11434,24 @@ function propCurve(x, c){
 }
 /* Chance the selected side hits with `cur` banked and `left` of the
    game (0..1) still to play. */
+/* How much wider the rest of a game runs than the pregame shape says,
+   by sport and kind. Graded by audit/live_calibration.py: NBA player
+   props replayed at every quarter break were too sure at the
+   extremes (said 3%, happened 6.5% at halftime). Widening the
+   remaining spread 1.5x by the final buzzer improved Brier and log
+   loss on early-November games and again on the later games it was
+   not fitted on. Hockey, NFL and team legs scored best unchanged.
+   The widening grows with time played, so at tipoff the live chance
+   still equals the pregame chance exactly. */
+const LIVE_WIDEN = {'NBA|player': 1.5};
 function liveChance(x, cur, left, c){
   if (cur == null || left == null || c == null) return null;
   const d0 = propCurve(x, c), L = legLine(x);
   if (!d0) return null;
   const r = Math.max(0, Math.min(1, left));
-  const dR = d0.k === 'n' ? {...d0, mu: d0.mu * r, sd: d0.sd * Math.sqrt(r)} : {...d0, mu: d0.mu * r};
+  const kind = x.kd === 'team' || TEAM_MKS.has(x.mk) ? 'team' : 'player';
+  const K = LIVE_WIDEN[String(x.sp || '').toUpperCase() + '|' + kind] || 1, k = 1 + (K - 1) * (1 - r);
+  const dR = d0.k === 'n' ? {...d0, mu: d0.mu * r, sd: d0.sd * Math.sqrt(r * k)} : {...d0, mu: d0.mu * r, phi: d0.phi * k};
   return distSide(dR, L.ln - cur, L.over);
 }
 /* Minutes on a display clock: "4:12" or, under a minute, "42.3". */
