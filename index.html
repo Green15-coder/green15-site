@@ -739,6 +739,38 @@ html.sheeton #totop,html.sheeton .tray{visibility:hidden}
   font-weight:600;border:1px solid color-mix(in srgb,currentColor 35%,transparent);white-space:nowrap}
 .lvchance small{font-size:9.5px;font-weight:500;opacity:.85}
 .lvchance.up{color:var(--over)} .lvchance.dn{color:var(--under)}
+.simbox{margin:4px 0}
+.simhead{font-size:13px;margin-bottom:2px}
+.simsum{font-size:12.5px;color:var(--ink-2);margin-bottom:6px}
+.simsvg{width:100%;height:auto;display:block;margin:4px 0 6px}
+.simsvg .simw{fill:var(--over);opacity:.85} .simsvg .siml{fill:var(--flat);opacity:.45}
+.simsvg .simln{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 2}
+.simsvg .simlt,.simsvg .simtk{font-family:var(--m);font-size:9px;fill:var(--ink-2)}
+.simrow{display:flex;flex-wrap:wrap;gap:4px 12px;font-family:var(--m);font-size:11.5px;margin:4px 0;color:var(--ink-2)}
+.simrow b{color:var(--ink);font-weight:600}
+.spr{display:grid;grid-template-columns:52px 1fr 48px;align-items:center;gap:8px;font-family:var(--m);font-size:11.5px;margin:3px 0}
+.spr b{text-align:right;font-weight:600}
+.spb{height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink,#888) 8%,transparent);overflow:hidden}
+.spb i{display:block;height:100%;border-radius:4px} .spb i.simw{background:var(--over)} .spb i.siml{background:var(--flat);opacity:.6}
+#livepicks{margin-bottom:14px}
+.lprow{border-top:1px solid var(--rule);padding:9px 0}
+.lptop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.lpnm{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+.lpnm .sub{font-size:11px;color:var(--ink-2);margin-top:1px}
+.lpbeat{display:flex;flex-direction:column;align-items:flex-end;font-family:var(--m);flex:0 0 auto;line-height:1.15}
+.lpbeat b{font-size:15px;color:var(--clover)} .lpbeat small{font-size:9.5px;color:var(--ink-2)}
+.lpin{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:6px;font-size:11.5px}
+.lpin input{width:120px;font:inherit;font-family:var(--m);padding:5px 8px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)}
+.lptrk{font-family:var(--m);font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--clover);background:none;color:var(--clover);cursor:pointer}
+.lptrk[disabled]{opacity:.6;cursor:default}
+.matebox p{font-size:12.5px}
+.matet{border-collapse:collapse;width:100%;font-family:var(--m);font-size:11.5px;margin:6px 0}
+.matet th{font-weight:400;color:var(--ink-2);font-size:9.5px;text-align:right;padding:2px 5px;white-space:nowrap}
+.matet td{padding:5px 4px;border-top:1px solid var(--rule);text-align:right;vertical-align:top;white-space:nowrap}
+.matet th:first-child,.matet td:first-child{text-align:left;white-space:normal}
+.matet td small{color:var(--ink-2);font-size:9.5px}
+.matet .sub{font-size:9.5px;color:var(--ink-2)}
+.matet tr.dim td{opacity:.65}
 .alttab{border-collapse:collapse;width:100%;font-family:var(--m);font-size:11.5px;margin:6px 0}
 .alttab th{font-weight:400;color:var(--ink-2);font-size:9.5px;text-align:right;padding:2px 5px;white-space:nowrap}
 .alttab td{padding:5px 4px;border-top:1px solid var(--rule);text-align:right;white-space:nowrap}
@@ -1523,6 +1555,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
 
 <!-- ───────────────────────── TODAY ──────────────────────── -->
 <div id="tab-games" hidden>
+  <section id="livepicks" hidden></section>
   <section id="livegames" hidden></section>
   <section>
     <h2>Tonight's slate</h2>
@@ -3732,6 +3765,8 @@ const SECTIONS = [
   ['market',  'Market'],
   ['leaves',  'Leaves'],
   ['alt',     'Alt lines'],
+  ['sim',     'Simulate'],
+  ['with',    'Teammates'],
   ['track',   'Tracked'],
 ];
 
@@ -5044,13 +5079,13 @@ if (typeof document !== 'undefined') {
 }
 
 function detail(p, p0){
-  const cur = SEC[p.i] || 'read';
+  const cur = SEC[p.i] === 'with' && p.kd === 'team' ? 'read' : SEC[p.i] || 'read';
   // card() writes this prop's Why box. Built first, so the Why section
   // has it on the first open instead of only after a second render.
   const cardHtml = card(p);
   // The prop switcher sits right on top of the big bar, so another
   // line on this player is one tap away without leaving the card.
-  const nav = `<div class="secnav"><div class="secrow">${SECTIONS.filter(([k]) => k !== 'alt' || p.kd !== 'team').map(([k, label]) =>
+  const nav = `<div class="secnav"><div class="secrow">${SECTIONS.filter(([k]) => (k !== 'alt' && k !== 'with') || p.kd !== 'team').map(([k, label]) =>
     `<button class="secbtn ${k === cur ? 'on' : ''}"
       data-sec="${p.i}:${k}">${label}</button>`).join('')}</div></div>`;
 
@@ -5073,6 +5108,8 @@ function detail(p, p0){
         <div class="facts">${facts}</div>`
     : cur === 'track'  ? trkBox(p)
     : cur === 'alt'    ? altBox(p)
+    : cur === 'sim'    ? simBox(p)
+    : cur === 'with'   ? mateBox(p)
     : leavesSection(p);
 
   return `<div class="detail">
@@ -6395,6 +6432,7 @@ function parlayReason(r, tag){
         estimate never tops the weakest leg. A pair with neither measurement is left alone, not guessed.${
         sgp ? ' Books price same-game tickets lower than the multiplied price shown here.' : ''}</p>`
         : '<p class="dim">Every leg is from a different game, so no correlation is applied.</p>'}</div>
+    ${simParlayHtml(L, r.j.est)}
     <div class="prsec"><h4>Weakest leg</h4><p><b>${legName(L[wi])}</b> at ${pp(q[wi])} is the leg most likely to miss.${drop ? ' ' + drop : ''}</p></div>
     <div class="prsec"><h4>Stress test</h4><p>If every leg is worse than estimated by: ${stress}.
       ${flip == null ? '' : flip === 0 ? 'It is below break-even already.' : `It drops below break-even once each leg is about <b>${flip} pts</b> worse.`}</p></div>
@@ -6632,13 +6670,13 @@ function trkKey(p){
     return ['team-v2', p.gd || D.slate_day || 'undated',
             (p.sp || '').toUpperCase(), (p.mu || '').trim().toLowerCase(),
             (p.pl || '').trim().toLowerCase(), (p.mk || '').toLowerCase(),
-            (p.sd || '').toLowerCase(), p.ln ?? ''].join('␟');
+            (p.sd || '').toLowerCase(), p.ln ?? ''].join('␟') + (p.live ? '␟live' : '');
   }
   return [D.slate_day || 'undated', (p.sp || '').toUpperCase(),
           (p.pl || '').trim().toLowerCase(),
           (p.mk || '').trim().toLowerCase(),
           (p.sd || '').trim().toLowerCase(),
-          p.ln ?? ''].join('␟');
+          p.ln ?? ''].join('␟') + (p.live ? '␟live' : '');
 }
 
 /* Every read and write guarded. In a private window, with site data
@@ -6705,6 +6743,10 @@ function trkMark(p, st){
       // up on the board).
       bcp: p.bcp ?? calProb(p), bpj: p.pj ?? null, bsv: p.sv ?? null,
       bkd: p.kd || 'player', bmkk: p.mkk || null, ...(p.alt ? {alt: 1} : {}),
+      // Taken live from the Today tab (gap 8): the price typed is the
+      // fill, and the live chance at that moment is kept beside it.
+      ...(p.live ? {live: 1, fpr: p.pr ?? null, fat: new Date().toISOString(), lpc: p.lpc ?? null,
+                    lleft: p.lleft ?? null, ldet: p.ldet || ''} : {}),
     });
   }
   trkCommit();
@@ -6971,7 +7013,7 @@ function drawTrack(){
         <div>
           <div class="trkpk">${esc(e.pl)} ${esc(e.sd)} ${e.ln ?? ''}${pill}</div>${
           lv ? `<div class="trklive">${lv.g.st === 'in' ? '<b class="lvdot">live</b> ' : ''}${lv.html}</div>` : ''}
-          <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}${e.alt ? ' · <b>alt line</b>' : ''}
+          <div class="trksub">${esc((e.mk || '').replace(/_/g, ' '))}${e.alt ? ' · <b>alt line</b>' : ''}${e.live ? ` · <b>taken live</b>${e.lpc != null ? ` at ${Math.round(100 * e.lpc)}%` : ''}${e.ldet ? ' (' + esc(e.ldet) + ')' : ''}` : ''}
             · ${sico(e.sp)}${esc(e.sp)}${e.mu ? ' · ' + esc(e.mu) : ''}
             · ${esc(e.day || 'undated')}<br>
             board ${e.bpr != null ? (e.bpr > 0 ? '+' : '') + e.bpr : '—'}${
@@ -7897,8 +7939,8 @@ function ladPickCard(c, i, inTicket, res){
 }
 /* ---------- round robin ----------
    D.ladder.today.rr (ladder.py round_robin): the four or five best
-   picks under the ladder rule, $20 spread across every 2-leg and
-   3-leg parlay they make. Legs 1-3 are the ladder's picks. Settled
+   picks under the ladder rule priced -150 or better, $20 spread
+   across every 2-leg and 3-leg parlay they make. Settled
    here the same way ladder.py settles it: a miss loses that ticket, a
    push drops out of it, a ticket of only pushes is refunded. */
 function rrLeg(d, i){
@@ -7926,7 +7968,7 @@ function rrSettle(d){
 function rrBox(L){
   const t = L.today || {}, R = t.rr;
   const head = '<h3 class="ph">Round robin \u00b7 $20</h3>';
-  if (!R) return head + `<div class="empty">Fewer than four picks meet the ladder rule${t.day ? ' for ' + esc(t.day) : ''}. The round robin needs four or five; it passes rather than pad the list.</div>`;
+  if (!R) return head + `<div class="empty">Fewer than four picks priced -150 or better meet the ladder rule${t.day ? ' for ' + esc(t.day) : ''}. The round robin needs four or five; it passes rather than pad the list.</div>`;
   const live = (L.live || []).find(d => d.day === t.day) || {};
   const d = {...t, rr_settled: live.rr_settled};
   const st = rrSettle(d);
@@ -7938,17 +7980,21 @@ function rrBox(L){
     : '<span class="dim">not started</span>';
   const spread = Object.entries(R.by_hits || {}).filter(([k]) => +k >= 2).reverse().map(([k, v]) =>
     `<tr${R.need_hits != null && +k >= R.need_hits ? ' class="up"' : ''}><td>${k} of ${n} hit</td><td>${v[0] === v[1] ? ladMoney(v[0]) : ladMoney(v[0]) + ' \u2013 ' + ladMoney(v[1])}</td></tr>`).join('');
+  // Legs are priced -150 or better, so they can differ from the
+  // ladder's three; a leg that is also a ladder pick says so.
+  const onLadder = c => (t.picks || []).some(q => q.pl === c.pl && q.mk === c.mk && q.sd === c.sd && q.ln === c.ln && q.mu === c.mu);
   const legRow = (c, i) => {
     const r = st.legs[i], p = ladProp(c);
     const nm = p ? headline(p) : `${esc(c.pl)} ${esc(c.sd)} ${c.ln ?? ''}`;
     const tag = r === 'hit' ? '<b class="lres hit">hit</b>' : r === 'miss' ? '<b class="lres miss">miss</b>' : r === 'push' ? '<b class="lres">push</b>' : '';
     return `<div class="rrleg"><span class="rrn">${i + 1}</span><div class="rrtx"><div class="nm">${nm}</div>
-      <div class="sub dim">${esc(String(c.mk || '').replace(/_/g, ' '))} \u00b7 ${sico(c.sp)}${esc(c.sp)}${i < 3 ? ' \u00b7 ladder pick' : ''}</div></div>
+      <div class="sub dim">${esc(String(c.mk || '').replace(/_/g, ' '))} \u00b7 ${sico(c.sp)}${esc(c.sp)}${onLadder(c) ? ' \u00b7 ladder pick' : ''}</div></div>
       <div class="lpgr">${c.gr ? `<b class="grade ${gcls(c.gr)}">${esc(c.gr)}</b>` : ''}<span>${ladPr(c.pr)} \u00b7 ${pct(c.prob)}</span>${tag}</div></div>`;
   };
   const tix = R.tickets.map(k => `<tr><td>${k.legs.map(i => i + 1).join(' + ')}</td><td>\u00d7${k.dec.toFixed(2)}</td><td>${ladMoney(R.per * k.dec)}</td><td>${pct(k.prob)}</td></tr>`).join('');
   return head + `<div class="ladtk rrtk"><div><div class="eyebrow">${n} legs \u00b7 by 2s and 3s</div>
       <div class="ladtkn">${nt} tickets at ${ladMoney(R.per)} \u00b7 ${ladMoney(R.stake)} total</div>
+      <div class="dim">every leg priced -150 or better</div>
       <div class="dim">all ${n} hit pays ${ladMoney(R.max_back)} \u00b7 a profit needs ${R.need_hits ?? '\u2014'} of ${n}
         \u00b7 model: ${pct(R.p_profit)} chance of a profit, ${pct(R.p_back)} of getting something back</div></div>
       <div>${status}</div></div>
@@ -12273,8 +12319,10 @@ async function drawLive(force){
   const el = $('livegames'); if (!el) return;
   const gs = liveGames();
   el.hidden = !gs.length;
-  if (!gs.length) { el.innerHTML = ''; return; }
-  const open = gs.filter(lg => LIVEOPEN.has(lg.mu));
+  if (!gs.length) { el.innerHTML = ''; drawLivePicks(); return; }
+  // Every game in progress is read, not only the open ones: the live
+  // prices to beat need each box.
+  const open = gs.filter(lg => LIVEOPEN.has(lg.mu) || lg.g.st === 'in');
   await Promise.all(open.map(lg => getLiveBox(lg.sp, lg.g.id, force)));
   const body = gs.map(lg => {
     const isOpen = LIVEOPEN.has(lg.mu), c = LIVEBOX.get(lg.g.id), box = c && c.box;
@@ -12292,6 +12340,7 @@ async function drawLive(force){
   }).join('');
   const nLive = gs.filter(x => x.g.st === 'in').length;
   el.innerHTML = `<h2>Live and final</h2><p class="traynote">${nLive} in progress, ${gs.length - nLive} final. Tap a game for the full box score. Free to read, no odds credits.</p>${body}`;
+  drawLivePicks();
 }
 if (typeof document !== 'undefined') document.addEventListener('click', e => {
   const b = e.target.closest('[data-live]'); if (!b) return;
@@ -12301,6 +12350,438 @@ if (typeof document !== 'undefined') document.addEventListener('click', e => {
   drawLive().then(() => { const again = document.querySelector(`[data-live="${CSS.escape(k)}"]`);
     if (again) scrollByAny(again.getBoundingClientRect().top - y0); });
 });
+/* ================================================================
+   SIMULATOR (owner request 2026-11-28, gap 14). The card's own curve
+   -- the same propCurve the Alt lines and the live chance use, fitted
+   so it gives the card's chance at tonight's line -- drawn 10,000
+   times. It is the card's number shown as a spread of outcomes, not
+   a second opinion: it cannot know anything the curve does not.
+   Seeded by the prop, so the same prop draws the same games every
+   time it is opened.
+   ================================================================ */
+const SIM_N = 10000;
+function simSeed(s){
+  let h = 2166136261;
+  for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function simRng(seed){
+  let a = (seed >>> 0) || 1;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function simNorm(rng){
+  let u = 0; while (u <= 1e-12) u = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng());
+}
+/* Gamma(k, 1) by Marsaglia and Tsang. */
+function simGamma(k, rng){
+  if (k < 1) return simGamma(k + 1, rng) * Math.pow(Math.max(rng(), 1e-12), 1 / k);
+  const d = k - 1 / 3, c = 1 / Math.sqrt(9 * d);
+  for (;;) {
+    let x, v;
+    do { x = simNorm(rng); v = 1 + c * x; } while (v <= 0);
+    v = v * v * v;
+    const u = rng();
+    if (u < 1 - 0.0331 * x * x * x * x || Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+  }
+}
+function simPois(lam, rng){
+  if (!(lam > 0)) return 0;
+  if (lam > 500) return Math.max(0, Math.round(lam + Math.sqrt(lam) * simNorm(rng)));
+  let k = 0, p = Math.exp(-lam), s = p;
+  const u = rng();
+  while (u > s && k < 5000) { k++; p *= lam / k; s += p; }
+  return k;
+}
+/* One game from a fitted curve. A count with variance phi * mu is a
+   gamma-Poisson mix (negative binomial), the same shape cntCdf sums. */
+function simDraw(d, rng){
+  if (d.k === 'n') { const x = d.mu + (d.sd > 0 ? d.sd * simNorm(rng) : 0); return d.int ? Math.round(x) : x; }
+  const phi = d.phi || 1;
+  if (phi <= 1.0001) return simPois(d.mu, rng);
+  return simPois(simGamma(d.mu / (phi - 1), rng) * (phi - 1), rng);
+}
+/* P(X <= y) on the curve, exactly (no draws). */
+function simCdf(d, y){
+  if (d.k === 'n') {
+    if (!(d.sd > 0)) return y >= d.mu ? 1 : 0;
+    return normCdf(((d.int ? Math.floor(y) + 0.5 : y) - d.mu) / d.sd);
+  }
+  return cntCdf(d.mu, d.phi || 1, Math.floor(y));
+}
+/* The f-th quantile on the curve, exactly. */
+function simQuant(d, f){
+  if (d.k === 'n') { const x = d.mu + (d.sd > 0 ? d.sd * pcInv(Math.min(0.999999, Math.max(1e-6, f))) : 0); return d.int ? Math.round(x) : x; }
+  let k = 0; while (k < 5000 && cntCdf(d.mu, d.phi || 1, k) < f) k++;
+  return k;
+}
+function simProp(p, n = SIM_N){
+  const c = calProb(p), d = c == null ? null : propCurve(p, c), L = legLine(p);
+  if (!d || L.ln == null || !Number.isFinite(d.mu)) return null;
+  const rng = simRng(simSeed([p.sp, p.pl, p.mk, p.sd, p.ln, p.mu].join('|')));
+  const xs = new Float64Array(n);
+  let hit = 0, push = 0, sum = 0;
+  for (let i = 0; i < n; i++) {
+    const v = simDraw(d, rng); xs[i] = v; sum += v;
+    if (v === L.ln) push++; else if (L.over ? v > L.ln : v < L.ln) hit++;
+  }
+  xs.sort();
+  const q = f => xs[Math.min(n - 1, Math.floor(f * n))];
+  return {d, L, c, n, xs, hit: hit / n, push: push / n, exact: distSide(d, L.ln, L.over),
+    pct: [0.1, 0.25, 0.5, 0.75, 0.9].map(q), mean: sum / n};
+}
+/* What the simulated number is: a player's stat, a game's total, or
+   the backed side's margin. */
+function simWhat(p){
+  const mk = String(p.mkk || p.mk || '');
+  if (p.kd === 'team' || TEAM_MKS.has(p.mk)) {
+    if (/total/.test(mk)) return {lab: 'combined score', side: ''};
+    return {lab: `${nick(p.sd || p.pl)} margin`, side: 'margin'};
+  }
+  return {lab: (p.mk || '').replace(/_/g, ' '), side: ''};
+}
+const simFmt = (v, d) => d && d.k === 'n' && !d.int ? (Math.round(v * 10) / 10).toString() : String(Math.round(v));
+function simHist(S){
+  const {xs, d, L, n} = S;
+  const lo = xs[Math.floor(0.005 * n)], hi = xs[Math.min(n - 1, Math.floor(0.995 * n))];
+  const discrete = d.k === 'c' || d.int;
+  let w = discrete ? 1 : Math.max(0.5, (hi - lo) / 24);
+  if (discrete && hi - lo > 36) w = Math.ceil((hi - lo) / 30);
+  const start = discrete ? Math.floor(lo) : lo;
+  const nb = Math.max(1, Math.ceil((hi - start + (discrete ? 1 : 0)) / w));
+  const cnt = new Array(nb).fill(0);
+  for (let i = 0; i < n; i++) {
+    const b = Math.floor((xs[i] - start) / w);
+    if (b >= 0 && b < nb) cnt[b]++;
+  }
+  const W = 320, H = 110, pad = 18, bw = (W - 8) / nb, mx = Math.max(...cnt) || 1;
+  const xOf = v => 4 + ((v - start) / (w * nb)) * (W - 8);
+  const bars = cnt.map((c, b) => {
+    const v0 = start + b * w, mid = discrete ? v0 + (w - 1) / 2 : v0 + w / 2;
+    const win = L.over ? mid > L.ln : mid < L.ln, h = Math.max(c ? 1 : 0, (c / mx) * (H - pad - 16));
+    return `<rect x="${(4 + b * bw + 0.5).toFixed(1)}" y="${(H - pad - h).toFixed(1)}" width="${Math.max(1, bw - 1).toFixed(1)}" height="${h.toFixed(1)}" class="${win ? 'simw' : 'siml'}"><title>${
+      discrete && w === 1 ? simFmt(v0, d) : `${simFmt(v0, d)}\u2013${simFmt(v0 + w - (discrete ? 1 : 0), d)}`}: ${(100 * c / n).toFixed(1)}%</title></rect>`;
+  }).join('');
+  const lx = discrete ? xOf(L.ln + 0.5) : xOf(L.ln);
+  const ticks = [S.pct[0], S.pct[2], S.pct[4]].map(v => {
+    const x = discrete ? xOf(v + 0.5) : xOf(v);
+    return `<text x="${Math.max(10, Math.min(W - 10, x)).toFixed(1)}" y="${H - 4}" class="simtk" text-anchor="middle">${simFmt(v, d)}</text>`;
+  }).join('');
+  return `<svg class="simsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Simulated outcomes">${bars}
+    <line x1="${lx.toFixed(1)}" x2="${lx.toFixed(1)}" y1="13" y2="${H - pad}" class="simln"/>
+    <text x="${Math.max(16, Math.min(W - 16, lx)).toFixed(1)}" y="10" class="simlt" text-anchor="middle">line ${simFmt(L.ln, {k: 'n'})}</text>${ticks}</svg>`;
+}
+/* How the curve's ranges have landed on graded props of this kind
+   (audit/sim_coverage.py). */
+function simCovNote(p){
+  const C = (D && D.simcov) || {}, by = C.by || {};
+  const mk = p.kd === 'team' || TEAM_MKS.has(p.mk) ? String(p.mkk || p.mk || '') : p.mk;
+  const r = by[`${String(p.sp || '').toUpperCase()}|${mk}`];
+  if (!r || !(r.n >= 200)) return '<p class="dim">This curve has not been checked against graded results for this market yet.</p>';
+  const in80 = Math.round(100 * r.in80), b = Math.round(100 * r.below50);
+  const width = r.in80 < 0.75 ? 'The range runs too narrow here: real results land outside it more often than it shows.'
+    : r.in80 > 0.85 ? 'The range runs a little wide here.' : 'The width is about right.';
+  const centre = r.below50 > 0.57 ? ' It also sits too high: big games come up less often than it draws.'
+    : r.below50 < 0.43 ? ' It also sits too low: big games come up more often than it draws.' : '';
+  return `<p class="dim">Checked on ${r.n.toLocaleString()} graded ${esc(mk.replace(/_/g, ' '))} props: ${in80}% of results landed inside
+    the 10th\u201390th range (80% if the curve is right) and ${b}% below the middle (50% if centred). ${width}${centre}</p>`;
+}
+function simBox(p){
+  const S = simProp(p);
+  if (!S) return '<div class="dim">This prop has no fitted curve (no projection or spread on file), so it cannot be simulated. Pass.</div>';
+  const w = simWhat(p), f = v => simFmt(v, S.d), ou = /^(over|under)$/i.test(p.sd || '') || /total/.test(String(p.mkk || p.mk || ''));
+  const side = ou ? (S.L.over ? 'over' : 'under') : 'pick';
+  const hitN = Math.round(S.hit * S.n);
+  // Chance of at least k, at a few points across the middle.
+  const ks = [...new Set([S.pct[0], S.pct[1], S.pct[2], S.pct[3], S.pct[4]].map(v => S.d.k === 'n' && !S.d.int ? Math.round(v) : Math.round(v)))];
+  const ladder = ks.map(k => {
+    let c = 0; for (let i = 0; i < S.n; i++) if (S.xs[i] >= k) c++;
+    return `<span>${k < 0 ? '\u2265' + k : k + '+'} <b>${(100 * c / S.n).toFixed(0)}%</b></span>`;
+  }).join('');
+  const near = (() => { let c = 0; for (let i = 0; i < S.n; i++) if (Math.abs(S.xs[i] - S.L.ln) <= 1) c++; return c / S.n; })();
+  return `<div class="simbox">
+    <div class="simhead"><b>${S.n.toLocaleString()} simulated games</b> \u00b7 ${esc(w.lab)}</div>
+    <div class="simsum">The ${esc(side)} hit in <b>${hitN.toLocaleString()}</b> (${(100 * S.hit).toFixed(1)}%)${
+      S.push > 0.0005 ? `, pushed in ${(100 * S.push).toFixed(1)}%` : ''}. The card says ${(100 * S.exact).toFixed(1)}%; the gap is draw noise.</div>
+    ${simHist(S)}
+    <div class="simrow"><span>Middle half <b>${f(S.pct[1])} to ${f(S.pct[3])}</b></span><span>80% range <b>${f(S.pct[0])} to ${f(S.pct[4])}</b></span><span>Median <b>${f(S.pct[2])}</b></span></div>
+    <div class="simrow">${ladder}</div>
+    <div class="simrow"><span>Within 1 of the line <b>${(100 * near).toFixed(0)}%</b></span><span>Average <b>${f(S.mean)}</b></span></div>
+    ${simCovNote(p)}
+    <p class="dim">Green bars are games where the ${esc(side)} hits. The curve is fitted so it gives this card's chance at tonight's
+      line, using the projection's spread (${w.side ? 'the margin spread for this matchup' : 'how much his games have varied'}).
+      It cannot see foul trouble, injuries, a blowout or a lineup change; it shows the card's number as a range, not a second opinion.</p>
+  </div>`;
+}
+/* A parlay drawn 10,000 times with the same leg chances and the same
+   same-game correlations jointProb uses: each leg hits when its
+   correlated normal falls under its threshold. */
+function simParlay(legs, n = SIM_N){
+  const q = legs.map(calProb);
+  if (!legs.length || q.some(x => x == null)) return null;
+  const games = new Map();
+  legs.forEach((p, k) => { const g = p.mu || '#' + k; if (!games.has(g)) games.set(g, []); games.get(g).push(k); });
+  const blocks = [];
+  for (const ix of games.values()) {
+    const R = ix.map((_, a) => ix.map((_, b) => a === b ? 1 : 0));
+    for (let a = 0; a < ix.length; a++) for (let b = a + 1; b < ix.length; b++)
+      R[a][b] = R[b][a] = legRho(legs[ix[a]], legs[ix[b]], pairCorr(legs[ix[a]], legs[ix[b]])).r;
+    let L = null;
+    for (let s = 1; s >= 0 && !L; s -= 0.05) L = pcChol(R.map((r, a) => r.map((v, b) => a === b ? 1 : v * s)));
+    blocks.push({ix, L: L || R.map((r, a) => r.map((_, b) => a === b ? 1 : 0))});
+  }
+  const h = q.map(x => pcInv(Math.min(1 - 1e-6, Math.max(1e-6, x))));
+  const rng = simRng(simSeed(legs.map(p => [p.pl, p.mk, p.sd, p.ln].join('|')).join(',')));
+  const cnt = new Array(legs.length + 1).fill(0), legHit = new Array(legs.length).fill(0);
+  for (let t = 0; t < n; t++) {
+    let k = 0;
+    for (const {ix, L} of blocks) {
+      const e = ix.map(() => simNorm(rng));
+      for (let a = 0; a < ix.length; a++) {
+        let z = 0; for (let b = 0; b <= a; b++) z += L[a][b] * e[b];
+        if (z < h[ix[a]]) { k++; legHit[ix[a]]++; }
+      }
+    }
+    cnt[k]++;
+  }
+  return {n, cnt, all: cnt[legs.length] / n, legHit: legHit.map(c => c / n), q};
+}
+function simParlayHtml(legs, est){
+  const S = simParlay(legs); if (!S) return '';
+  const m = legs.length, mx = Math.max(...S.cnt) || 1;
+  const rows = S.cnt.map((c, k) => `<div class="spr"><span class="spk">${k} of ${m}</span><span class="spb"><i class="${k === m ? 'simw' : 'siml'}" style="width:${(100 * c / mx).toFixed(1)}%"></i></span><b>${(100 * c / S.n).toFixed(1)}%</b></div>`).reverse().join('');
+  const oneShort = m > 1 ? 100 * S.cnt[m - 1] / S.n : 0;
+  return `<div class="prsec"><h4>Simulated ${S.n.toLocaleString()} nights</h4>${rows}
+    <p>Every leg hit in <b>${(100 * S.all).toFixed(1)}%</b> of the simulated nights${est != null ? ` (the estimate above says ${pp(est)}; the gap is draw noise)` : ''}.
+      ${m > 1 ? `One leg short in ${oneShort.toFixed(1)}% \u2014 a parlay pays nothing on those.` : ''}</p>
+    <p class="dim">Same leg chances and same-game correlations as the estimate, drawn night by night, so the near misses the single number hides are visible. It adds no information the estimate does not have.</p></div>`;
+}
+
+/* ================================================================
+   LIVE PRICES TO BEAT (owner request 2026-11-28, gap 8). For every
+   prop in a game in progress, the live chance the tracker already
+   shows, and the worst price worth taking at that chance.
+
+   The bar is the pregame Moderate bar, undone from the anchor:
+   a pregame bet needs anchored edge >= 1.2 pts, and anchoring keeps
+   30% of the model's gap to fair, so the model must clear fair by
+   1.2 / 0.30 = 4 pts. Live, the book's price is all we have (no
+   second side to remove the vig from), so the 4 pts are measured
+   against the price's own implied chance, vig left in -- the
+   conservative way round.
+
+   Never tested against live book prices: Green15 has never logged
+   one. Display only; nothing here is logged as a pick. A bet you
+   track from here is marked live on the entry so the record can keep
+   live and pregame apart.
+   ================================================================ */
+const LIVE_BAR = 0.04;
+const LPPRICE = new Map();
+const LPF = {sp: '', show: 15};
+function amOfProb(p){
+  if (!(p > 0 && p < 1)) return null;
+  return p >= 0.5 ? -Math.round(100 * p / (1 - p)) : Math.round(100 * (1 - p) / p);
+}
+const amTxt = v => v == null ? '\u2014' : (v > 0 ? '+' : '') + v;
+function lpKey(p){
+  return p.kd === 'team' || TEAM_MKS.has(p.mk)
+    ? [p.mu, p.mkk || p.mk, /moneyline/.test(String(p.mkk || p.mk)) ? '' : Math.abs(p.ln)].join('|')
+    : [p.mu, p.pl, p.mk, p.ln].join('|');
+}
+function livePickRows(){
+  const out = new Map();
+  for (const lg of liveGames()) {
+    if (lg.g.st !== 'in') continue;
+    const c = LIVEBOX.get(lg.g.id), box = c && c.box;
+    if (!box || box.state !== 'in') continue;
+    for (const p of ALLP) {
+      if (p.mu !== lg.mu || p.ln == null && !/moneyline/.test(String(p.mkk || p.mk))) continue;
+      if (p.br === 'nba_game_total') continue;            // the pregame rule holds live
+      const team = p.kd === 'team' || TEAM_MKS.has(p.mk);
+      if (!team && !/^(over|under)$/i.test(p.sd || '')) continue;
+      const r = liveRead(p, box);
+      if (!r || r.st != null || r.dnp || !r.inBox || r.pct == null || !(r.left > 0 && r.left < 1)) continue;
+      // The ends are left off: the replay check found live chances least
+      // reliable there (said 3%, happened 6.5% at halftime).
+      if (r.pct < 0.10 || r.pct > 0.90) continue;
+      const need = r.pct - LIVE_BAR;
+      if (need < 0.05) continue;
+      const k = lpKey(p), prev = out.get(k);
+      if (prev && prev.r.pct >= r.pct) continue;
+      out.set(k, {k, p, r, lg, box, beat: amOfProb(need), fair: amOfProb(r.pct)});
+    }
+  }
+  return [...out.values()];
+}
+/* Bet or pass at the price the reader typed. */
+function lpVerdict(row, raw){
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  const v = Number(s);
+  if (!Number.isFinite(v) || (v > -100 && v < 100)) return '<span class="miss">Enter American odds, like -130 or +110.</span>';
+  const imp = 1 / dec(v), gap = row.r.pct - imp;
+  return gap >= LIVE_BAR
+    ? `<span class="hit">Bet: ${(100 * gap).toFixed(1)} pts over the price (needs 4)</span>`
+    : `<span class="miss">Pass: ${(100 * gap).toFixed(1)} pts, needs ${amTxt(row.beat)} or better</span>`;
+}
+function lpRowHtml(row){
+  const {p, r, box} = row, L = liveLegHtml(p, box);
+  const team = r.team, price = LPPRICE.get(row.k) ?? '';
+  const title = team ? `${esc(p.sd || p.pl)} ${esc(String(p.mkk || p.mk).replace(/_/g, ' '))}${p.ln != null && !/moneyline/.test(String(p.mkk || p.mk)) ? ' ' + (p.ln > 0 && !/total/.test(String(p.mkk || p.mk)) ? '+' : '') + p.ln : ''}`
+    : `${esc(p.pl)} <span class="dim">${esc(p.sd)} ${p.ln} ${esc((p.mk || '').replace(/_/g, ' '))}</span>`;
+  return `<div class="lprow" data-lprow="${esc(row.k)}">
+    <div class="lptop"><div class="lpnm">${title}<div class="sub">${sico(row.lg.sp)}${esc(row.lg.sp)} \u00b7 ${esc(row.lg.g.ab || p.mu)} \u00b7 ${esc(box.det || 'live')}</div></div>
+      <div class="lpbeat"><small>bet at</small><b>${amTxt(row.beat)}</b><small>or better</small></div></div>
+    <div class="lvline">${L.html}</div>
+    <div class="lpin"><input data-lpk="${esc(row.k)}" inputmode="numeric" autocomplete="off" placeholder="your price" value="${esc(price)}" aria-label="Your book's live price">
+      <span class="lpv" data-lpv="${esc(row.k)}">${lpVerdict(row, price)}</span>
+      <button class="lptrk" data-lptrk="${esc(row.k)}"${price ? '' : ' hidden'}>Track live</button></div>
+  </div>`;
+}
+let LPROWS = [];
+function drawLivePicks(){
+  const el = $('livepicks'); if (!el) return;
+  const a = document.activeElement;
+  if (a && a.dataset && a.dataset.lpk && el.contains(a)) return;   // never redraw under the reader's typing
+  const all = livePickRows();
+  LPROWS = all;
+  el.hidden = !all.length;
+  if (!all.length) { el.innerHTML = ''; return; }
+  const sports = [...new Set(all.map(x => x.lg.sp))].sort();
+  if (LPF.sp && !sports.includes(LPF.sp)) LPF.sp = '';
+  const rows = all.filter(x => !LPF.sp || x.lg.sp === LPF.sp).sort((x, y) => y.r.pct - x.r.pct);
+  const chips = sports.length > 1 ? `<div class="chips">${['', ...sports].map(s =>
+    `<button class="chip ${LPF.sp === s ? 'on' : ''}" data-lpsp="${esc(s)}">${s || 'All'}</button>`).join('')}</div>` : '';
+  const more = rows.length > LPF.show ? `<button class="chip" data-lpmore="1">Show all ${rows.length}</button>` : '';
+  el.innerHTML = `<h2>Live prices to beat</h2>
+    <p class="traynote">${rows.length} open prop${rows.length === 1 ? '' : 's'} in games in progress, most likely first. Each price is the
+      worst worth taking at our live chance: the chance minus 4 points, the same bar a pregame Moderate bet clears. Type your book's price
+      for a bet or pass. Chances under 10% or over 90% are left off; the replay check found the live number least reliable there. Green15 has never recorded a live book price, so whether these beat live books is untested; nothing here is logged as a pick.</p>
+    ${chips}${rows.slice(0, LPF.show).map(lpRowHtml).join('')}${more}`;
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('input', e => {
+    const t = e.target.closest && e.target.closest('[data-lpk]'); if (!t) return;
+    const k = t.dataset.lpk; LPPRICE.set(k, t.value);
+    const row = LPROWS.find(x => x.k === k); if (!row) return;
+    const v = document.querySelector(`[data-lpv="${CSS.escape(k)}"]`), b = document.querySelector(`[data-lptrk="${CSS.escape(k)}"]`);
+    if (v) v.innerHTML = lpVerdict(row, t.value);
+    const ok = Number.isFinite(Number(t.value)) && Math.abs(Number(t.value)) >= 100;
+    if (b) b.hidden = !ok;
+  });
+  document.addEventListener('click', e => {
+    const s = e.target.closest('[data-lpsp]');
+    if (s) { LPF.sp = s.dataset.lpsp; drawLivePicks(); return; }
+    if (e.target.closest('[data-lpmore]')) { LPF.show = 999; drawLivePicks(); return; }
+    const b = e.target.closest('[data-lptrk]'); if (!b) return;
+    const k = b.dataset.lptrk, row = LPROWS.find(x => x.k === k), pr = Number(LPPRICE.get(k));
+    if (!row || !Number.isFinite(pr) || Math.abs(pr) < 100) return;
+    trkMark({...row.p, live: 1, pr, lpc: row.r.pct, lleft: row.r.left, ldet: row.box.det || ''}, 'done');
+    b.textContent = 'Tracked'; b.disabled = true;
+  });
+}
+
+/* ================================================================
+   WHEN HE HITS (owner request 2026-11-28, gap 20). In this player's
+   saved box scores, split his games into the ones where he cleared
+   tonight's line and the ones he did not, and show how each teammate
+   on tonight's board did at HIS tonight's line in each half, plus the
+   team's result. Context only: graded history measured teammate pairs
+   close to zero and they did not help on held-out games, so parlay
+   prices treat teammates as independent.
+   ================================================================ */
+function boxVal(sp, row, mk){
+  const keys = ((((D && D.box) || {}).keys) || {})[String(sp || '').toUpperCase()] || [];
+  const want = BOX_MK[mk]; if (!want || !row) return null;
+  let s = 0, any = false;
+  for (const k of want) { const j = keys.indexOf(k); if (j < 0) continue; const v = row[3 + j]; if (v == null) return null; s += +v; any = true; }
+  return any ? s : null;
+}
+const sideHit = (v, ln, over) => v == null || v === ln ? null : over ? v > ln : v < ln;
+function mateSplit(p){
+  const team = playerTeam(p), rowsA = boxRows(p.sp, p.pl), over = !/^under$/i.test(p.sd || '');
+  if (!team || !rowsA.length || p.ln == null || !BOX_MK[p.mk]) return null;
+  const games = rowsA.filter(r => r[1] === team).map(r => ({r, h: sideHit(boxVal(p.sp, r, p.mk), p.ln, over)})).filter(g => g.h != null);
+  // Teammates on tonight's board: one line per teammate and market --
+  // the Over priced closest to even money, which is the main line.
+  const mates = new Map(), even = q => q.pr == null ? 9 : Math.abs(1 / dec(q.pr) - 0.5);
+  for (const q of ALLP) {
+    if (q.mu !== p.mu || q.kd === 'team' || TEAM_MKS.has(q.mk) || q.pl === p.pl || q.ln == null || !BOX_MK[q.mk]) continue;
+    if (!/^over$/i.test(q.sd || '') || playerTeam(q) !== team) continue;
+    const k = q.pl + '|' + q.mk, cur = mates.get(k);
+    if (!cur || even(q) < even(cur)) mates.set(k, q);
+  }
+  const rows = [];
+  for (const q of mates.values()) {
+    const rb = boxRows(q.sp, q.pl), qo = !/^under$/i.test(q.sd || '');
+    let hh = 0, hn = 0, mh = 0, mn = 0;
+    for (const g of games) {
+      const b = rb.find(x => x[0] === g.r[0] && x[1] === team); if (!b) continue;
+      const y = sideHit(boxVal(q.sp, b, q.mk), q.ln, qo); if (y == null) continue;
+      if (g.h) { hn++; hh += y ? 1 : 0; } else { mn++; mh += y ? 1 : 0; }
+    }
+    if (hn + mn < 8) continue;
+    const a = hn ? hh / hn : null, b = mn ? mh / mn : null;
+    // Two-proportion z on the split: under 2 is what chance alone does.
+    const pool = (hh + mh) / (hn + mn), se = hn && mn ? Math.sqrt(pool * (1 - pool) * (1 / hn + 1 / mn)) : 0;
+    const z = a != null && b != null && se > 0 ? (a - b) / se : 0;
+    rows.push({q, hh, hn, mh, mn, a, b, gap: a != null && b != null ? a - b : null, z, thin: Math.min(hn, mn) < 5});
+  }
+  rows.sort((x, y) => (x.thin - y.thin) || Math.abs(y.gap ?? 0) - Math.abs(x.gap ?? 0));
+  // The team's own results in the same two halves.
+  const tb = (((D && D.tbox) || {})[`${String(p.sp || '').toUpperCase()}|${team}`]) || [];
+  const tot = ALLP.find(q => q.mu === p.mu && (q.kd === 'team' || TEAM_MKS.has(q.mk)) && /^total$|game_total/.test(String(q.mkk || q.mk)) && /^over$/i.test(q.sd || ''));
+  const tm = {wonH: 0, wonM: 0, totH: 0, totM: 0, nH: 0, nM: 0, tnH: 0, tnM: 0};
+  for (const g of games) {
+    const t = tb.find(x => dayGap(x[0], g.r[0]) <= 1.01 && (!g.r[2] || !x[1] || teamNorm(x[1]) === teamNorm(g.r[2])));
+    if (!t || t[5] == null) continue;
+    if (g.h) { tm.nH++; tm.wonH += t[5] > 0 ? 1 : 0; } else { tm.nM++; tm.wonM += t[5] > 0 ? 1 : 0; }
+    if (tot && t[3] != null && t[4] != null && t[3] + t[4] !== tot.ln) {
+      const o = t[3] + t[4] > tot.ln;
+      if (g.h) { tm.tnH++; tm.totH += o ? 1 : 0; } else { tm.tnM++; tm.totM += o ? 1 : 0; }
+    }
+  }
+  return {team, games, over, rows, tm, tot};
+}
+function mateBox(p){
+  if (p.kd === 'team' || TEAM_MKS.has(p.mk)) return '';
+  const M = mateSplit(p);
+  if (!M) return '<div class="dim">No saved box scores for this player and market, so there is nothing to split. Pass.</div>';
+  const nH = M.games.filter(g => g.h).length, nM = M.games.length - nH;
+  if (nH < 3 || nM < 3) return `<div class="dim">He went ${esc(p.sd)} ${p.ln} in ${nH} of ${M.games.length} saved games; a split needs at least 3 on each side. Pass.</div>`;
+  const pc0 = (h, n) => n ? `${Math.round(100 * h / n)}% <small>${h}/${n}</small>` : '\u2014';
+  const body = M.rows.slice(0, 12).map(r => `<tr class="${r.thin ? 'dim' : ''}"><td>${esc(r.q.pl)}<div class="sub">${esc(r.q.sd)} ${r.q.ln} ${esc(r.q.mk.replace(/_/g, ' '))}</div></td>
+      <td>${pc0(r.hh, r.hn)}</td><td>${pc0(r.mh, r.mn)}</td><td class="${r.thin || Math.abs(r.z) < 2 ? '' : r.gap > 0 ? 'hit' : 'miss'}">${r.gap == null ? '\u2014' : sgn(100 * r.gap)}${
+        r.thin ? '<div class="sub">thin</div>' : Math.abs(r.z) < 2 ? '<div class="sub">within chance</div>' : ''}</td></tr>`).join('');
+  const t = M.tm;
+  const teamRows = [
+    t.nH >= 3 && t.nM >= 3 ? `<tr><td>${esc(M.team)} won</td><td>${pc0(t.wonH, t.nH)}</td><td>${pc0(t.wonM, t.nM)}</td><td>${sgn(100 * (t.wonH / t.nH - t.wonM / t.nM))}</td></tr>` : '',
+    M.tot && t.tnH >= 3 && t.tnM >= 3 ? `<tr><td>Game over ${M.tot.ln}</td><td>${pc0(t.totH, t.tnH)}</td><td>${pc0(t.totM, t.tnM)}</td><td>${sgn(100 * (t.totH / t.tnH - t.totM / t.tnM))}</td></tr>` : '',
+  ].join('');
+  const tested = M.rows.filter(r => !r.thin).length, sig = M.rows.filter(r => !r.thin && Math.abs(r.z) >= 2).length;
+  // About 1 in 20 splits clears the test by luck alone, so the count
+  // is read against how many were checked.
+  const luck = Math.round(tested * 0.05);
+  return `<div class="matebox">
+    <p>${esc(p.pl)} went <b>${esc(p.sd)} ${p.ln}</b> in ${nH} of ${M.games.length} saved games with ${esc(M.team)}. How tonight's
+      teammates did at their own lines tonight, in those games and in the rest:</p>
+    ${body ? `<div class="tscroll"><table class="matet"><thead><tr><th>Teammate</th><th>He hit</th><th>He missed</th><th>Gap</th></tr></thead><tbody>${body}${teamRows}</tbody></table></div>`
+      : teamRows ? `<div class="tscroll"><table class="matet"><thead><tr><th></th><th>He hit</th><th>He missed</th><th>Gap</th></tr></thead><tbody>${teamRows}</tbody></table></div>`
+      : '<div class="dim">No teammate on tonight\u2019s board shares 8 or more saved games with him.</div>'}
+    <p class="dim">${sig ? `${sig} of ${tested} split${tested === 1 ? '' : 's'} clear a two-proportion test (over 2); about ${luck} would by luck alone at this many${
+        sig <= Math.max(1, 2 * luck) ? ', so treat them as noise' : ''}. ` : 'No split here is bigger than chance alone produces on samples this size. '}
+      Thin = fewer than 5 games on one side. Same saved box scores as the Games tab, at tonight's lines. Across graded history, teammate
+      pairs moved together close to zero and the link did not hold up on games held out, so parlay prices treat teammates as independent.
+      Read this as context, not an edge.</p>
+  </div>`;
+}
+
 /* Tracked props whose game has started: live number beside the pick. */
 function trkLive(e){
   const g = gameInfo({sp: e.sp, mu: e.mu});
@@ -12413,7 +12894,7 @@ function checkAlerts(){
       if (p.outNow) say('out:' + k, `Listed ${p.outNow}: ${e.pl}`);
       if (e.bpr != null && p.pr != null && Math.abs(100 / dec(p.pr) - 100 / dec(e.bpr)) >= 3)
         say(`mv:${k}:${p.pr}`, `Price moved: ${who} ${e.ln ?? ''} now ${p.pr > 0 ? '+' : ''}${p.pr} (was ${e.bpr > 0 ? '+' : ''}${e.bpr})`);
-    } else if (e.ln != null && !e.alt) {
+    } else if (e.ln != null && !e.alt && !e.live) {
       // An alt rung is SUPPOSED to sit off the main line; that is not a move.
       const q = PROPS.find(x => x.sp === e.sp && x.pl === e.pl && x.mk === e.mk && x.sd === e.sd && x.mu === e.mu && x.ln !== e.ln);
       if (q) say(`ln:${k}:${q.ln}`, `Line moved: ${who} ${e.ln} is now ${q.ln} (${q.pr > 0 ? '+' : ''}${q.pr})`);
@@ -12468,7 +12949,9 @@ async function trkLiveFetch(force){
 function tabOn(name){ const el = $('tab-' + name); return el && !el.hidden; }
 async function liveTick(){
   if (document.hidden || !D) return;
-  const games = tabOn('games') && liveGames().some(lg => LIVEOPEN.has(lg.mu) && lg.g.st === 'in');
+  // The Today tab refreshes while any game is in progress: the live
+  // prices to beat move with every score.
+  const games = tabOn('games') && liveGames().some(lg => lg.g.st === 'in');
   const inPlay = [...TRK.values(), ...pkOpenLegs()].some(e => { const g = gameInfo({sp: e.sp, mu: e.mu}); return g && g.st === 'in'; });
   // With alerts on, tracked games are read on every tick wherever the
   // reader is in the app, not only on the Tracked tab.
