@@ -863,6 +863,15 @@ tr.sub td{font-size:11.5px;color:var(--ink-2)}
 .ldot{width:12px;height:12px;border-radius:50%;background:var(--rule);display:inline-block}
 .ldot.hit{background:var(--clover)} .ldot.miss{background:var(--under)} .ldot.pass{background:transparent;border:1.5px dashed var(--rule)}
 .ldot.open{background:var(--mark)}
+.rrtk{margin-top:4px}
+.rrpill{white-space:nowrap;flex:none}
+.rrleg{display:flex;gap:10px;align-items:center;border:1px solid var(--rule);border-radius:12px;padding:8px 12px;margin:0 0 6px;background:var(--card)}
+.rrn{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--raise);font-family:var(--m);font-size:11px;font-weight:700}
+.rrtx{flex:1;min-width:0} .rrtx .nm{font-weight:600;font-size:13.5px} .rrtx .sub{font-family:var(--m);font-size:11px;margin-top:2px}
+.rrspread{width:100%;border-collapse:collapse;font-family:var(--m);font-size:12px;margin:8px 0}
+.rrspread th,.rrspread td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule)}
+.rrspread tr.up td{color:var(--clover);font-weight:700}
+.rrall{margin:0 0 12px} .rrall summary{cursor:pointer;font-size:13px;font-weight:600;padding:6px 0}
 .sliprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 0 2px}
 .slipbtn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 13px;
   background:var(--clover);color:#fff;font-weight:700;font-size:13px;text-decoration:none}
@@ -1507,6 +1516,7 @@ body.trayon #totop{bottom:calc(var(--trayh,120px) + 12px)}
       from what you began with.</p>
     <div id="ladme"></div>
     <div id="ladtoday"></div>
+    <div id="ladrr"></div>
     <div id="ladrec"></div>
   </section>
 </div>
@@ -2121,7 +2131,7 @@ function drawHero(){
       </div>
       <div class="h2g">
         ${(top.lv || []).length ? cloverSvg(top, 64, {letter: true, cls: 'chero'}) : top.gr ? `<b class="grade ${gcls(top.gr)}">${esc(top.gr)}</b>` : ''}
-        <span class="tier">${esc(top.ti || '')}</span>
+        <span class="tier">${esc(tierWord(top))}</span>
       </div>
     </div>
     ${srail(top)}
@@ -5261,7 +5271,7 @@ function rowHtml(p0){
         </button>
         <span class="sc">${p.gr
           ? `<b class="grade ${gcls(p.gr)}">${esc(p.gr)}</b>`
-          : `<b>${p.sc ?? '-'}</b>`}<i class="tlab" title="${p.ti ? esc(p.ti) + ' tier: the evidence count the bet list uses' : ''}">${esc(p.ti||'')}</i>${
+          : `<b>${p.sc ?? '-'}</b>`}<i class="tlab" title="${p.ti ? esc(p.ti) + ' tier: the evidence count the bet list uses' : ''}">${esc(tierWord(p))}</i>${
           (p.lv || []).length ? cloverSvg(p, 32, {cls: 'cmini', mini: true}) : pips(p.lv)}</span>
         <button class="add" data-sel="${p.i}" aria-pressed="${on}"
           title="${on ? 'remove from parlay' : 'add to parlay'}"
@@ -6315,7 +6325,7 @@ function legReasonHtml(q, isWeak){
   return `<div class="prleg${isWeak ? ' prweak' : ''}">
     <div class="prh">${q.gr ? `<b class="grade ${gcls(q.gr)}">${esc(q.gr)}</b>` : ''}<b>${legName(q)}</b>
       <span class="dim">${q.pr > 0 ? '+' : ''}${q.pr} \u00b7 ${esc(gameLabel(q.mu))}${st ? ' \u00b7 ' + esc(st) : ''}</span></div>
-    <div class="prk">${q.sc != null ? `Clover ${q.sc}${q.mx ? '/' + q.mx : ''}` : ''}${q.ti ? ` \u00b7 ${esc(q.ti)}` : ''}${
+    <div class="prk">${q.sc != null ? `Clover ${q.sc}${q.mx ? '/' + q.mx : ''}` : ''}${tierWord(q) ? ` \u00b7 ${esc(tierWord(q))}` : ''}${
       q.et ? ` \u00b7 bet tier ${esc(q.et)}` : ''} \u00b7 ${esc(gamesText(q))}${isWeak ? ' \u00b7 <b class="miss">weakest leg</b>' : ''}</div>
     ${q.wy ? `<p>${esc(q.wy)}</p>` : ''}
     ${lines.length ? `<ul>${lines.map(([c, t]) => `<li${c ? ` class="${c}"` : ''}>${t}</li>`).join('')}</ul>` : ''}
@@ -7512,6 +7522,12 @@ function gameTeam(sp, nm, outs){
   return `<div class="gtm">${logo || `<span class="gbadge">${esc(ab)}</span>`}<span class="gtn">${esc(nm)}</span>${
     outs.length ? `<span class="gout" title="${esc(outs.map(o => o.name).join(', '))}">${outs.length} out</span>` : ''}</div>`;
 }
+// TIER WORD (owner-approved 2026-11-28). Where the pick letter is shown,
+// the tier word beside it ("Fringe", "Weak") repeated the score in a
+// second vocabulary and read as a verdict. It is hidden next to a letter
+// and kept where no letter exists; the tier still drives filters and
+// the bet list, and its name stays in the hover title.
+function tierWord(p) { return p && !p.gr ? (p.ti || '') : ''; }
 const G_TIERS = [['Legendary', 'var(--clover)'], ['Elite', 'var(--clover)'], ['Strong', 'var(--over)'], ['Playable', 'var(--over)'], ['Fringe', 'var(--mark)'], ['Weak', 'var(--flat)']];
 function drawGames(){
   drawLive();
@@ -7791,7 +7807,8 @@ const LAD_KEY = 'green15.ladder.v1';
 let LAD = (() => { try { const v = JSON.parse(localStorage.getItem(LAD_KEY) || 'null');
   return v && v.start > 0 && v.from ? v : null; } catch (_) { return null; } })();
 function ladSave(){ try { LAD ? localStorage.setItem(LAD_KEY, JSON.stringify(LAD)) : localStorage.removeItem(LAD_KEY); } catch (_) {} }
-const ladMoney = v => v == null || !isFinite(v) ? '\u2014' : '$' + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2));
+const ladMoney = v => v == null || !isFinite(v) ? '\u2014' : v < 0 ? '\u2212' + ladMoney(-v)
+  : '$' + (v >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2));
 const ladPr = pr => pr == null ? '' : (pr > 0 ? '+' : '') + pr;
 function ladSame(c, p){
   return p && p.sp === c.sp && p.pl === c.pl && p.mk === c.mk && p.sd === c.sd
@@ -7878,12 +7895,88 @@ function ladPickCard(c, i, inTicket, res){
     <div class="sliprow">${slip}${p ? `<button class="h2go" data-open="${p.i}">Open the case</button>` : ''}</div>
   </div>`;
 }
+/* ---------- round robin ----------
+   D.ladder.today.rr (ladder.py round_robin): the four or five best
+   picks under the ladder rule, $20 spread across every 2-leg and
+   3-leg parlay they make. Legs 1-3 are the ladder's picks. Settled
+   here the same way ladder.py settles it: a miss loses that ticket, a
+   push drops out of it, a ticket of only pushes is refunded. */
+function rrLeg(d, i){
+  const s = ((d.rr_settled || {}).legs || [])[i];
+  if (s) return s;
+  const c = (d.rr_legs || [])[i];
+  if (!c || typeof trkSettle !== 'function') return null;
+  const r = trkSettle(c);
+  return r === 'lost' ? 'miss' : r;
+}
+function rrSettle(d){
+  const R = d && d.rr;
+  if (!R) return null;
+  const legs = (d.rr_legs || []).map((c, i) => rrLeg(d, i));
+  let back = 0, alive = 0, dead = 0, open = 0;
+  for (const t of R.tickets) {
+    const rs = t.legs.map(i => legs[i]);
+    if (rs.some(x => x === 'miss')) { dead++; continue; }
+    if (rs.every(x => x === 'hit' || x === 'push')) {
+      back += R.per * t.legs.reduce((a, i) => a * (legs[i] === 'hit' ? dec(d.rr_legs[i].pr) : 1), 1); alive++;
+    } else open++;
+  }
+  return {legs, back, alive, dead, open, done: open === 0, profit: back - R.stake};
+}
+function rrBox(L){
+  const t = L.today || {}, R = t.rr;
+  const head = '<h3 class="ph">Round robin \u00b7 $20</h3>';
+  if (!R) return head + `<div class="empty">Fewer than four picks meet the ladder rule${t.day ? ' for ' + esc(t.day) : ''}. The round robin needs four or five; it passes rather than pad the list.</div>`;
+  const live = (L.live || []).find(d => d.day === t.day) || {};
+  const d = {...t, rr_settled: live.rr_settled};
+  const st = rrSettle(d);
+  const n = R.n_legs, nt = R.tickets.length;
+  const pct = v => v == null ? '\u2014' : Math.round(v * 100) + '%';
+  const status = st.done
+    ? `<b class="lres rrpill ${st.profit > 0 ? 'hit' : 'miss'}">${st.profit >= 0 ? 'up' : 'down'} ${ladMoney(Math.abs(st.profit))}</b>`
+    : t.locked_at ? `<b class="lres live">in play \u00b7 ${ladMoney(st.back)} won so far, ${st.open} ticket${st.open === 1 ? '' : 's'} open</b>`
+    : '<span class="dim">not started</span>';
+  const spread = Object.entries(R.by_hits || {}).filter(([k]) => +k >= 2).reverse().map(([k, v]) =>
+    `<tr${R.need_hits != null && +k >= R.need_hits ? ' class="up"' : ''}><td>${k} of ${n} hit</td><td>${v[0] === v[1] ? ladMoney(v[0]) : ladMoney(v[0]) + ' \u2013 ' + ladMoney(v[1])}</td></tr>`).join('');
+  const legRow = (c, i) => {
+    const r = st.legs[i], p = ladProp(c);
+    const nm = p ? headline(p) : `${esc(c.pl)} ${esc(c.sd)} ${c.ln ?? ''}`;
+    const tag = r === 'hit' ? '<b class="lres hit">hit</b>' : r === 'miss' ? '<b class="lres miss">miss</b>' : r === 'push' ? '<b class="lres">push</b>' : '';
+    return `<div class="rrleg"><span class="rrn">${i + 1}</span><div class="rrtx"><div class="nm">${nm}</div>
+      <div class="sub dim">${esc(String(c.mk || '').replace(/_/g, ' '))} \u00b7 ${sico(c.sp)}${esc(c.sp)}${i < 3 ? ' \u00b7 ladder pick' : ''}</div></div>
+      <div class="lpgr">${c.gr ? `<b class="grade ${gcls(c.gr)}">${esc(c.gr)}</b>` : ''}<span>${ladPr(c.pr)} \u00b7 ${pct(c.prob)}</span>${tag}</div></div>`;
+  };
+  const tix = R.tickets.map(k => `<tr><td>${k.legs.map(i => i + 1).join(' + ')}</td><td>\u00d7${k.dec.toFixed(2)}</td><td>${ladMoney(R.per * k.dec)}</td><td>${pct(k.prob)}</td></tr>`).join('');
+  return head + `<div class="ladtk rrtk"><div><div class="eyebrow">${n} legs \u00b7 by 2s and 3s</div>
+      <div class="ladtkn">${nt} tickets at ${ladMoney(R.per)} \u00b7 ${ladMoney(R.stake)} total</div>
+      <div class="dim">all ${n} hit pays ${ladMoney(R.max_back)} \u00b7 a profit needs ${R.need_hits ?? '\u2014'} of ${n}
+        \u00b7 model: ${pct(R.p_profit)} chance of a profit, ${pct(R.p_back)} of getting something back</div></div>
+      <div>${status}</div></div>
+    ${(d.rr_legs || []).map(legRow).join('')}
+    <table class="rrspread"><thead><tr><th>If</th><th>You get back</th></tr></thead><tbody>${spread}<tr><td>0 or 1 hit</td><td>${ladMoney(0)}</td></tr></tbody></table>
+    <p class="dim ladodds">On average the model expects ${ladMoney(R.ev_back)} back on ${ladMoney(R.stake)}; at the market's no-vig chances it is ${ladMoney(R.ev_back_price)}.
+      A round robin spreads the risk of one leg sinking the day, it does not add an edge the picks do not have.</p>
+    <details class="rrall"><summary>All ${nt} tickets</summary><table class="rrspread"><thead><tr><th>Legs</th><th>Pays</th><th>Returns</th><th>Model</th></tr></thead><tbody>${tix}</tbody></table></details>`;
+}
+function rrRecord(L){
+  const R = (L.replay || {}).rr || {}, V = L.rr_live || {};
+  const dots = ((L.replay || {}).rr_days || []).map(x =>
+    `<i class="ldot ${x.profit > 0 ? 'hit' : 'miss'}" title="${esc(x.day)}: ${x.profit >= 0 ? '+' : '-'}${ladMoney(Math.abs(x.profit))}"></i>`).join('');
+  const roi = v => v == null ? '\u2014' : (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+  return `<div><div class="eyebrow">Round robin \u00b7 live</div>
+      <b>${V.days ? roi(V.roi) : '\u2014'}</b> <span class="dim">${V.days ? `${ladMoney(V.back)} back on ${ladMoney(V.staked)} over ${V.days} day${V.days === 1 ? '' : 's'}, ${V.up_days} up` : 'no settled round robin yet'}</span>
+      ${(V.days || 0) < 10 ? '<div class="dim">Too few days to say anything yet.</div>' : ''}</div>
+    <div><div class="eyebrow">Round robin \u00b7 replay</div>
+      <b>${roi(R.roi)}</b> <span class="dim">${ladMoney(R.back)} back on ${ladMoney(R.staked)} over ${R.days ?? 0} graded days; ${R.up_days ?? 0} up${R.said_profit != null ? `, the model said ${Math.round(R.said_profit * 100)}% a day` : ''}</span>
+      <div class="ldots">${dots}</div>
+      <div class="dim">Running total from ${ladMoney(R.worst_run)} at the lowest to ${ladMoney(R.best_run)} at the highest. Same replay caveat as the ladder: today's rule over past days.</div></div>`;
+}
 function drawLadder(){
   const L = (D && D.ladder) || {};
   const cnt = $('cLadder'); if (cnt) cnt.textContent = ((L.today || {}).picks || []).length || '';
   if (!L.rev) {
     $('ladme').innerHTML = '<div class="empty">The ladder is not in this build yet. It appears after the next update.</div>';
-    $('ladtoday').innerHTML = $('ladrec').innerHTML = ''; return;
+    $('ladtoday').innerHTML = $('ladrec').innerHTML = ''; if ($('ladrr')) $('ladrr').innerHTML = ''; return;
   }
   const t = L.today || {}, tk = t.ticket;
   // Your ladder.
@@ -7927,6 +8020,7 @@ function drawLadder(){
     ${(t.picks || []).map((c, i) => ladPickCard(c, i, legs.has(i), ladLeg({...t, settled: ((L.live || []).find(d => d.day === t.day) || {}).settled}, i))).join('')}
     ${tk ? `<p class="dim ladodds">At ${Math.round(tk.prob * 100)}% a rung, two flips in a row happen ${(100 * tk.prob ** 2).toFixed(0)}% of the time and five ${(100 * tk.prob ** 5).toFixed(1)}%.
       That is the ladder's real shape: most climbs end on the first rung or two.</p>` : ''}`;
+  if ($('ladrr')) $('ladrr').innerHTML = rrBox(L);
   // Record.
   const R = L.replay || {}, LL = L.live_ladder || {};
   const live = (L.live || []).filter(d => d.locked_at);
@@ -7943,7 +8037,8 @@ function drawLadder(){
       <div class="ldots">${dots(R.days || [])}</div>
       <div class="dim">The picks one at a time: ${R.leg_hits ?? 0} of ${R.legs ?? 0} hit${R.flat_roi != null ? `, ${R.flat_roi >= 0 ? '+' : ''}${(R.flat_roi * 100).toFixed(1)}% a flat bet` : ''}.
         Longest climb ${(R.ladder || {}).best_rung ?? 0} rung${((R.ladder || {}).best_rung ?? 0) === 1 ? '' : 's'}.
-        A replay runs today's rule over past days with each row's grade rebuilt from what it logged; the board on those days did not use it.</div></div></div>`;
+        A replay runs today's rule over past days with each row's grade rebuilt from what it logged; the board on those days did not use it.</div></div>
+    ${R.rr ? rrRecord(L) : ''}</div>`;
 }
 if (typeof document !== 'undefined') document.addEventListener('click', e => {
   if (!e.target.closest) return;
@@ -8469,7 +8564,8 @@ function similarPeers(p, maxPeers = 5){
   const under = p.sd === 'Under';
   const scored = [];
   // NHL: forwards against forwards, defencemen against defencemen.
-  const posOf = sp === 'NHL' ? ((((typeof D !== 'undefined' && D && D.simopp) || {}).NHL || {}).pos || {}) : {};
+  // NFL: QB, RB, WR and TE each against their own position.
+  const posOf = sp === 'NHL' || sp === 'NFL' ? ((((typeof D !== 'undefined' && D && D.simopp) || {}).NHL || {}).pos || {}) : {};
   const myPos = posOf[myKey.split('|')[1]];
   for (const it of pool.items) {
     if (it.key === myKey) continue;
@@ -11774,7 +11870,7 @@ function parseLiveBox(j, sp){
   // Period and clock drive the live hit chance: how much of the game
   // is left is the whole difference between 18 of 22.5 in the first
   // quarter and 18 of 22.5 with two minutes to play.
-  // ESPN's latest home win chance (0..1), for live NBA sides.
+  // ESPN's latest home win chance (0..1), for live NBA and NFL sides.
   const wpl = Array.isArray(j.winprobability) && j.winprobability.length ? j.winprobability[j.winprobability.length - 1] : null;
   let wp = wpl && wpl.homeWinPercentage != null ? +wpl.homeWinPercentage : null;
   if (wp != null && wp > 1) wp /= 100;
@@ -11939,8 +12035,12 @@ const LIVE_WIDEN = {'NBA|player': 1.5};
    with only earlier days, and on a 2-fold split by game), at every
    break and in both markets. ESPN sees possessions, fouls and
    lineups the score alone cannot. Only while the game is in progress;
-   a weight of 0 is the old number exactly. */
-const ESPN_BLEND = {'NBA': 0.5};
+   a weight of 0 is the old number exactly.
+   NFL since 2026-11-28 (audit/espn_blend.py --sport NFL, 546 checks in
+   29 games): halfway to ESPN beat our number in all six market/break
+   cells, 77% of game resamples out of sample -- the same bar the NBA
+   weight cleared, on fewer games. NHL: ESPN publishes no live chance. */
+const ESPN_BLEND = {'NBA': 0.5, 'NFL': 0.5};
 /* Live NBA player props in a decided game. ESPN publishes no player
    chances, but its win chance says how settled a game is, and settled
    games get starters benched. Graded by audit/espn_blowout.py on every
@@ -11960,6 +12060,27 @@ function blowoutMul(x, wp){
   if (!c || wp == null || x.ln == null || !Number.isFinite(+wp)) return 1;
   const t = x.ln <= c[0] ? 0 : x.ln >= c[1] ? 2 : 1, q = Math.abs(2 * Math.min(1, Math.max(0, +wp)) - 1);
   return Math.max(0.05, 1 - B.a[t] * Math.pow(q, B.P));
+}
+/* Team legs early in a game were too sure of themselves. Replayed by
+   audit/live_calibration.py (1,862 NBA and 866 NHL team checks), the
+   chance after Q1 / P1 fit best pulled toward 50% on the log-odds
+   scale by these slopes, and the pull beat the raw number on days it
+   never saw (walk-forward by day) and on 16 of 20 random 2-fold game
+   splits. Halftime, Q3, P2 and every NFL checkpoint scored best
+   unchanged (NFL has 30 games; its fitted pull did worse out of
+   sample), so they stay at 1. Knots are [share of game left, slope];
+   between knots the slope is interpolated, so tipoff and the final
+   buzzer are untouched. */
+const LIVE_SLOPE = {'NBA|team': [[1, 1], [0.75, 0.73], [0.5, 1], [0, 1]],
+  'NHL|team': [[1, 1], [0.667, 0.71], [0.333, 1], [0, 1]]};
+function liveSlope(sp, kind, r){
+  const K = LIVE_SLOPE[String(sp || '').toUpperCase() + '|' + kind];
+  if (!K) return 1;
+  for (let i = 1; i < K.length; i++) {
+    const [r0, b0] = K[i - 1], [r1, b1] = K[i];
+    if (r <= r0 && r >= r1) return r0 === r1 ? b1 : b1 + (b0 - b1) * (r - r1) / (r0 - r1);
+  }
+  return 1;
 }
 /* `wps`: ESPN's live win chance. For a team side it is that side's
    chance; for a player prop either side's (only how decided matters). */
@@ -11981,7 +12102,9 @@ function liveChance(x, cur, left, c, wps){
     dR.mu = (1 - w) * dR.mu + w * (win + dR.sd * pcInv(p));
   }
   if (kind === 'player' && wps != null && r > 0 && r < 1) dR.mu *= blowoutMul(x, wps);
-  return distSide(dR, L.ln - cur, L.over);
+  const pc = distSide(dR, L.ln - cur, L.over), b = liveSlope(x.sp, kind, r);
+  if (b === 1 || pc == null || !(pc > 0 && pc < 1)) return pc;
+  return 1 / (1 + Math.pow((1 - pc) / pc, b));
 }
 /* Minutes on a display clock: "4:12" or, under a minute, "42.3". */
 function clockMin(s){
